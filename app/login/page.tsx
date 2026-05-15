@@ -9,13 +9,23 @@ function LoginContent() {
   const error = searchParams.get('error')
 
   async function signInWithGoogle() {
-    const supabase = createClient()
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    })
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: { access_type: 'offline', prompt: 'consent' },
+        },
+      })
+      if (error) {
+        console.error('OAuth error:', error.message)
+        window.location.href = '/login?error=oauth_failed'
+      }
+    } catch (e) {
+      console.error('Sign in failed:', e)
+      window.location.href = '/login?error=oauth_failed'
+    }
   }
 
   return (

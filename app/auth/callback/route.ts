@@ -6,9 +6,14 @@ export async function GET(request: Request) {
   const code = searchParams.get('code')
   const next = searchParams.get('next') ?? '/'
 
+  // On Vercel, origin is the internal container URL — use x-forwarded-host instead
+  const forwardedHost = request.headers.get('x-forwarded-host')
+  const baseUrl = forwardedHost ? `https://${forwardedHost}` : origin
+
   if (code) {
     const supabase = await createClient()
     const { error } = await supabase.auth.exchangeCodeForSession(code)
+
     if (!error) {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
@@ -19,12 +24,12 @@ export async function GET(request: Request) {
           .single()
 
         if (!profile) {
-          return NextResponse.redirect(`${origin}/onboarding`)
+          return NextResponse.redirect(`${baseUrl}/onboarding`)
         }
       }
-      return NextResponse.redirect(`${origin}${next}`)
+      return NextResponse.redirect(`${baseUrl}${next}`)
     }
   }
 
-  return NextResponse.redirect(`${origin}/login?error=auth_failed`)
+  return NextResponse.redirect(`${baseUrl}/login?error=auth_failed`)
 }
