@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { SECTION_CONFIG, SECTIONS } from '@/lib/constants'
 import Link from 'next/link'
+import Footer from '@/components/ui/Footer'
 import type { Section } from '@/types/database'
 
 export const dynamic = 'force-dynamic'
@@ -249,6 +250,7 @@ export default async function DashboardPage() {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   )
 }

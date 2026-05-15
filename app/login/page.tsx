@@ -78,6 +78,13 @@ function LoginContent() {
         <p className="mt-6 text-center text-zinc-600 text-sm">
           Used in classrooms nationwide to prepare for the HSPT entrance exam.
         </p>
+
+        <p className="mt-4 text-center text-zinc-700 text-xs">
+          © {new Date().getFullYear()} PrepClutch ·{' '}
+          <a href="/privacy" className="hover:text-zinc-500 transition-colors underline underline-offset-2">
+            Privacy Policy
+          </a>
+        </p>
       </div>
     </div>
   )
