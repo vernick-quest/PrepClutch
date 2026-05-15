@@ -26,7 +26,12 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   const { pathname } = request.nextUrl
 
-  // Public routes — let through, or redirect logged-in users
+  // Public routes — always let through
+  if (pathname === '/privacy') {
+    return supabaseResponse
+  }
+
+  // Auth routes — let through, or redirect logged-in users
   if (pathname === '/login' || pathname.startsWith('/auth')) {
     if (user) {
       const { data: profile } = await supabase
