@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { SECTION_CONFIG, SECTIONS } from '@/lib/constants'
 import type { Section, Question, QuizAnswer } from '@/types/database'
 import { createClient } from '@/lib/supabase/client'
+import confetti from 'canvas-confetti'
 
 interface StoredResult {
   section: Section | 'full'
@@ -16,11 +17,22 @@ interface StoredResult {
   questions: Question[]
 }
 
+type Achievement = { icon_emoji: string; label: string; description: string; rarity?: string; creature?: string; lore?: string }
+
 export default function ResultsPage() {
   const router = useRouter()
   const [result, setResult] = useState<StoredResult | null>(null)
-  const [newAchievements, setNewAchievements] = useState<{ icon_emoji: string; label: string; description: string }[]>([])
+  const [newAchievements, setNewAchievements] = useState<Achievement[]>([])
   const [showBreakdown, setShowBreakdown] = useState(false)
+  const [visibleBadge, setVisibleBadge] = useState(0)
+  const confettiFired = useRef(false)
+
+  function fireConfetti() {
+    const colors = ['#f59e0b', '#a855f7', '#06b6d4', '#10b981', '#f43f5e', '#818cf8']
+    confetti({ particleCount: 120, spread: 80, origin: { y: 0.5 }, colors })
+    setTimeout(() => confetti({ particleCount: 60, spread: 120, origin: { y: 0.3 }, colors }), 300)
+    setTimeout(() => confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 }, colors }), 600)
+  }
 
   useEffect(() => {
     const raw = sessionStorage.getItem('quiz_result')
@@ -29,22 +41,24 @@ export default function ResultsPage() {
     const parsed: StoredResult = JSON.parse(raw)
     setResult(parsed)
 
-    // Fetch newly earned achievements (compare before/after)
     const supabase = createClient()
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return
       const { data } = await supabase
         .from('user_achievements')
-        .select('achievement_key, achievement_definitions(icon_emoji, label, description)')
+        .select('achievement_key, achievement_definitions(icon_emoji, label, description, rarity, creature, lore)')
         .eq('user_id', user.id)
         .gte('earned_at', new Date(Date.now() - 60000).toISOString())
 
       if (data && data.length > 0) {
-        setNewAchievements(
-          data
-            .map((a: { achievement_definitions: unknown }) => a.achievement_definitions)
-            .filter(Boolean) as { icon_emoji: string; label: string; description: string }[]
-        )
+        const earned = data
+          .map((a: { achievement_definitions: unknown }) => a.achievement_definitions)
+          .filter(Boolean) as Achievement[]
+        setNewAchievements(earned)
+        if (!confettiFired.current) {
+          confettiFired.current = true
+          fireConfetti()
+        }
       }
     })
   }, [router])
@@ -126,21 +140,70 @@ export default function ResultsPage() {
           </div>
         </div>
 
-        {/* New achievements */}
+        {/* New badges */}
         {newAchievements.length > 0 && (
-          <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-5">
-            <h3 className="font-bold text-amber-400 mb-3">🏅 New Achievements!</h3>
-            <div className="space-y-2">
-              {newAchievements.map((ach, i) => (
-                <div key={i} className="flex items-center gap-3 animate-badge-pop">
-                  <span className="text-3xl">{ach.icon_emoji}</span>
-                  <div>
-                    <div className="font-semibold text-white">{ach.label}</div>
-                    <div className="text-sm text-zinc-400">{ach.description}</div>
-                  </div>
+          <div>
+            <h3 className="text-xl font-bold text-center text-white mb-2">🏅 Badge{newAchievements.length > 1 ? 's' : ''} Unlocked!</h3>
+            <p className="text-center text-zinc-500 text-sm mb-4">{visibleBadge + 1} of {newAchievements.length}</p>
+
+            {newAchievements.map((ach, i) => i === visibleBadge && (
+              <div
+                key={i}
+                className="rounded-3xl p-8 flex flex-col items-center gap-4 text-center"
+                style={{
+                  background: 'radial-gradient(ellipse at 50% 0%, #1a0828 0%, #0a0a0f 70%)',
+                  border: '1.5px solid #a855f744',
+                  boxShadow: '0 0 60px #a855f733',
+                  animation: 'badgePop 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards',
+                }}
+              >
+                <div
+                  className="text-7xl"
+                  style={{ filter: 'drop-shadow(0 0 20px #a855f788)', animation: 'badgeFloat 3s ease-in-out infinite' }}
+                >
+                  {ach.icon_emoji}
                 </div>
-              ))}
-            </div>
+                <div>
+                  <div className="text-2xl font-black text-white mb-1">{ach.label}</div>
+                  {ach.creature && (
+                    <div className="text-xs uppercase tracking-[3px] text-purple-400/70 mb-2">{ach.creature}</div>
+                  )}
+                  {ach.rarity && (
+                    <span className="inline-block text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 mb-3">
+                      {ach.rarity}
+                    </span>
+                  )}
+                  <p className="text-zinc-400 text-sm">{ach.description}</p>
+                  {ach.lore && (
+                    <p className="text-zinc-600 text-xs italic mt-3 leading-relaxed">{ach.lore}</p>
+                  )}
+                </div>
+                {newAchievements.length > 1 && (
+                  <button
+                    onClick={() => {
+                      if (visibleBadge < newAchievements.length - 1) {
+                        setVisibleBadge(v => v + 1)
+                        fireConfetti()
+                      }
+                    }}
+                    className="mt-2 px-6 py-2.5 rounded-2xl font-bold text-black bg-amber-500 hover:bg-amber-400 transition-colors text-sm"
+                  >
+                    {visibleBadge < newAchievements.length - 1 ? `Next Badge →` : 'All Done! 🎉'}
+                  </button>
+                )}
+              </div>
+            ))}
+
+            <style>{`
+              @keyframes badgePop {
+                from { opacity: 0; transform: scale(0.7); }
+                to   { opacity: 1; transform: scale(1); }
+              }
+              @keyframes badgeFloat {
+                0%, 100% { transform: translateY(0); }
+                50%       { transform: translateY(-8px); }
+              }
+            `}</style>
           </div>
         )}
 

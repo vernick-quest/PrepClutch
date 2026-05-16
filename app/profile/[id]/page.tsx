@@ -1,11 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
+import { redirect, notFound } from 'next/navigation'
 import { SECTION_CONFIG, SECTIONS } from '@/lib/constants'
 import Link from 'next/link'
 import Image from 'next/image'
 import Footer from '@/components/ui/Footer'
-import SignOutButton from '@/components/ui/SignOutButton'
-import ProfileActions from '@/components/profile/ProfileActions'
 import type { Section } from '@/types/database'
 
 export const dynamic = 'force-dynamic'
@@ -26,30 +24,33 @@ const RARITY_STYLE: Record<string, { border: string; bg: string; text: string; g
   Mythic:    { border: '#9333ea99', bg: '#0e0018', text: '#e879f9', glow: '0 0 48px #a855f777' },
 }
 
-export default async function ProfilePage() {
+export default async function AdminProfilePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single()
+  // Only admins can view other profiles
+  const { data: viewerProfile } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single()
+  if (!(viewerProfile as Record<string, unknown>)?.is_admin) redirect('/')
 
-  if (!profile) redirect('/onboarding')
+  // Redirect to own profile page
+  if (id === user.id) redirect('/profile')
+
+  const { data: profile } = await supabase.from('profiles').select('*').eq('id', id).single()
+  if (!profile) notFound()
 
   const { data: attempts } = await supabase
     .from('quiz_attempts')
     .select('*')
-    .eq('user_id', user.id)
+    .eq('user_id', id)
     .not('completed_at', 'is', null)
     .order('completed_at', { ascending: false })
 
   const { data: userAchievements } = await supabase
     .from('user_achievements')
     .select('achievement_key, earned_at')
-    .eq('user_id', user.id)
+    .eq('user_id', id)
 
   const { data: allAchievements } = await supabase
     .from('achievement_definitions')
@@ -59,7 +60,7 @@ export default async function ProfilePage() {
   const { data: leaderboardEntry } = await supabase
     .from('leaderboard_view')
     .select('*')
-    .eq('user_id', user.id)
+    .eq('user_id', id)
     .single()
 
   const totalXP = attempts?.reduce((s, a) => s + (a.total_xp ?? 0), 0) ?? 0
@@ -74,20 +75,19 @@ export default async function ProfilePage() {
       : 0
   }
 
-  const googleAvatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.picture || null
-  const hasGooglePhoto = !!(profile as Record<string, unknown>).avatar_url
   const displayAvatarUrl = (profile as Record<string, unknown>).avatar_url as string | null
-
   const badgeCategories = ['First Completion', 'Perfect Score', 'Speed', 'Combo', 'Milestone']
 
   return (
     <div className="min-h-screen bg-[#0a0a0f]">
-      {/* Nav */}
       <nav className="border-b border-white/5 sticky top-0 z-50 bg-[#0a0a0f]/80 backdrop-blur-sm">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/" className="text-zinc-400 hover:text-white transition-colors text-sm">← Dashboard</Link>
-          <h1 className="text-lg font-bold text-white">My Profile</h1>
-          <SignOutButton />
+          <div className="flex items-center gap-2">
+            <span className="text-xs bg-violet-500/20 border border-violet-500/30 text-violet-400 px-2 py-0.5 rounded-full font-mono">ADMIN VIEW</span>
+            <h1 className="text-lg font-bold text-white">{profile.display_name}</h1>
+          </div>
+          <div />
         </div>
       </nav>
 
@@ -96,18 +96,9 @@ export default async function ProfilePage() {
         <div className="bg-white/5 border border-white/10 rounded-3xl p-8 flex flex-col sm:flex-row items-center sm:items-start gap-6">
           <div className="shrink-0">
             {displayAvatarUrl ? (
-              <Image
-                src={displayAvatarUrl}
-                alt={profile.display_name}
-                width={96}
-                height={96}
-                className="rounded-full shadow-2xl"
-              />
+              <Image src={displayAvatarUrl} alt={profile.display_name} width={96} height={96} className="rounded-full shadow-2xl" />
             ) : (
-              <div
-                className="w-24 h-24 rounded-full flex items-center justify-center text-4xl font-black text-white shadow-2xl"
-                style={{ backgroundColor: profile.avatar_color }}
-              >
+              <div className="w-24 h-24 rounded-full flex items-center justify-center text-4xl font-black text-white shadow-2xl" style={{ backgroundColor: profile.avatar_color }}>
                 {profile.display_name[0].toUpperCase()}
               </div>
             )}
@@ -136,16 +127,6 @@ export default async function ProfilePage() {
           </div>
         </div>
 
-        {/* Profile actions: google photo + class change */}
-        <ProfileActions
-          userId={user.id}
-          currentClassCode={profile.class_code}
-          googleAvatarUrl={googleAvatarUrl}
-          hasGooglePhoto={hasGooglePhoto}
-          avatarColor={profile.avatar_color}
-          displayName={profile.display_name}
-        />
-
         {/* Section performance */}
         <div>
           <h3 className="text-xl font-bold text-white mb-4">📊 Performance by Section</h3>
@@ -164,76 +145,43 @@ export default async function ProfilePage() {
                   <div className="h-2 bg-white/10 rounded-full overflow-hidden mb-2">
                     <div className="h-full rounded-full" style={{ width: `${best}%`, backgroundColor: getAccentHex(cfg.accent) }} />
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-zinc-400">{sectionAttempts.length} attempt{sectionAttempts.length !== 1 ? 's' : ''}</span>
-                    <Link href={`/quiz/${section}`} className={`text-xs ${cfg.color} hover:underline`}>Practice →</Link>
-                  </div>
+                  <div className="text-xs text-zinc-400">{sectionAttempts.length} attempt{sectionAttempts.length !== 1 ? 's' : ''}</div>
                 </div>
               )
             })}
           </div>
         </div>
 
-        {/* Badge Bestiary */}
+        {/* Badges */}
         <div>
-          <div className="flex items-center gap-3 mb-2">
-            <h3 className="text-xl font-bold text-white">🏅 Badge Bestiary</h3>
-            <span className="text-sm text-zinc-500">{earnedKeys.size} / {allAchievements?.length ?? 0} earned</span>
+          <div className="flex items-center gap-3 mb-4">
+            <h3 className="text-xl font-bold text-white">🏅 Badges</h3>
+            <span className="text-sm text-zinc-500">{earnedKeys.size} / {allAchievements?.length ?? 0}</span>
           </div>
-          <div className="h-1.5 bg-white/10 rounded-full overflow-hidden mb-6">
-            <div
-              className="h-full rounded-full transition-all duration-700"
-              style={{
-                width: `${allAchievements?.length ? Math.round((earnedKeys.size / allAchievements.length) * 100) : 0}%`,
-                background: 'linear-gradient(90deg,#6366f1,#a855f7,#ec4899)',
-              }}
-            />
-          </div>
-
           {badgeCategories.map(cat => {
             const catBadges = (allAchievements ?? []).filter(b => b.category === cat)
             if (!catBadges.length) return null
-            const catEarned = catBadges.filter(b => earnedKeys.has(b.key)).length
             return (
-              <div key={cat} className="mb-8">
+              <div key={cat} className="mb-6">
                 <div className="flex items-center gap-3 mb-3">
                   <span className="text-[10px] font-bold text-zinc-500 tracking-[3px] uppercase">{cat}</span>
                   <div className="flex-1 h-px bg-white/5" />
-                  <span className="text-[10px] text-zinc-700">{catEarned}/{catBadges.length}</span>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-2">
                   {catBadges.map(badge => {
                     const earned = earnedKeys.has(badge.key)
                     const r = RARITY_STYLE[badge.rarity ?? 'Common'] ?? RARITY_STYLE.Common
                     return (
-                      <div
-                        key={badge.key}
-                        className="rounded-2xl p-4 flex flex-col items-center gap-2 text-center transition-all"
-                        style={{
-                          background: earned ? r.bg : '#080c14',
-                          border: `1.5px solid ${earned ? r.border : '#111827'}`,
-                          boxShadow: earned ? r.glow : 'none',
-                          opacity: earned ? 1 : 0.3,
-                          filter: earned ? 'none' : 'grayscale(1)',
-                        }}
-                      >
-                        <div className="text-3xl" style={{ filter: earned ? `drop-shadow(0 0 6px ${r.text}44)` : 'blur(6px)' }}>
-                          {earned ? badge.icon_emoji : '❓'}
-                        </div>
-                        <div className="text-[11px] font-bold leading-tight" style={{ color: earned ? r.text : '#1f2937' }}>
+                      <div key={badge.key} className="rounded-xl p-3 flex flex-col items-center gap-1.5 text-center" style={{
+                        background: earned ? r.bg : '#080c14',
+                        border: `1px solid ${earned ? r.border : '#111827'}`,
+                        opacity: earned ? 1 : 0.25,
+                        filter: earned ? 'none' : 'grayscale(1)',
+                      }}>
+                        <div className="text-2xl">{earned ? badge.icon_emoji : '❓'}</div>
+                        <div className="text-[10px] font-bold" style={{ color: earned ? r.text : '#1f2937' }}>
                           {earned ? badge.label : '???'}
                         </div>
-                        {earned && badge.creature && (
-                          <div className="text-[9px] uppercase tracking-widest" style={{ color: r.text + '66' }}>{badge.creature}</div>
-                        )}
-                        <div className="text-[9px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-full" style={{
-                          color: earned ? r.text + '99' : '#1f2937',
-                          background: earned ? r.text + '11' : 'transparent',
-                          border: earned ? `1px solid ${r.text}22` : 'none',
-                        }}>{badge.rarity}</div>
-                        {earned && (
-                          <div className="text-[10px] text-zinc-500 leading-relaxed">{badge.description}</div>
-                        )}
                       </div>
                     )
                   })}
@@ -246,20 +194,18 @@ export default async function ProfilePage() {
         {/* Recent attempts */}
         {attempts && attempts.length > 0 && (
           <div>
-            <h3 className="text-xl font-bold text-white mb-4">📝 Recent Quiz Attempts</h3>
+            <h3 className="text-xl font-bold text-white mb-4">📝 Quiz History</h3>
             <div className="space-y-2">
-              {attempts.slice(0, 10).map(attempt => {
+              {attempts.slice(0, 20).map(attempt => {
                 const pct = Math.round((attempt.score / attempt.total_questions) * 100)
                 const isSection = SECTIONS.includes(attempt.section as Section)
                 const cfg = isSection ? SECTION_CONFIG[attempt.section as Section] : null
                 return (
                   <div key={attempt.id} className="bg-white/3 border border-white/5 rounded-xl p-4 flex items-center gap-4">
                     <span className="text-xl">{cfg?.emoji ?? '🎯'}</span>
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1">
                       <div className="text-sm font-medium text-white">{cfg?.label ?? 'Full Practice Test'}</div>
-                      <div className="text-xs text-zinc-500">
-                        {new Date(attempt.completed_at!).toLocaleDateString()} · {attempt.total_questions} questions
-                      </div>
+                      <div className="text-xs text-zinc-500">{new Date(attempt.completed_at!).toLocaleDateString()} · {attempt.total_questions} Q</div>
                     </div>
                     <div className="text-right">
                       <div className={`text-lg font-bold ${pct >= 80 ? 'text-emerald-400' : pct >= 60 ? 'text-amber-400' : 'text-rose-400'}`}>{pct}%</div>
@@ -269,14 +215,6 @@ export default async function ProfilePage() {
                 )
               })}
             </div>
-          </div>
-        )}
-
-        {(!attempts || attempts.length === 0) && (
-          <div className="text-center py-16 bg-white/2 border border-white/5 rounded-2xl">
-            <p className="text-4xl mb-3">🎯</p>
-            <p className="text-zinc-400 mb-4">No quizzes taken yet.</p>
-            <Link href="/quiz/verbal" className="text-amber-400 hover:underline">Start your first quiz →</Link>
           </div>
         )}
       </div>

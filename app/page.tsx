@@ -44,18 +44,9 @@ export default async function DashboardPage() {
     .order('aggregate_score', { ascending: false })
     .limit(50)
 
-  const { data: userAchievements } = await supabase
-    .from('user_achievements')
-    .select('achievement_key')
-    .eq('user_id', user.id)
-
-  const { data: allAchievements } = await supabase
-    .from('achievement_definitions')
-    .select('*')
-
   const myEntry = leaderboard?.find(e => e.user_id === user.id)
   const myRank = leaderboard?.findIndex(e => e.user_id === user.id) ?? -1
-  const earnedKeys = new Set(userAchievements?.map(a => a.achievement_key) ?? [])
+  const isAdmin = (profile as Record<string, unknown>).is_admin === true
 
   return (
     <div className="min-h-screen bg-[#0a0a0f]">
@@ -98,26 +89,36 @@ export default async function DashboardPage() {
           </p>
         </div>
 
-        {/* Score tiles */}
-        {myEntry && (
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-            <div className="col-span-1 bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center min-h-[80px]">
-              <div className="text-2xl font-black text-amber-400">{myEntry.aggregate_score}%</div>
-              <div className="text-[10px] text-zinc-400 mt-1 text-center">Overall</div>
+        {/* Start Practice */}
+        <div>
+          <h2 className="text-xl font-bold text-white mb-3">⚡ Start Practice</h2>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Link
+              href="/quiz/full"
+              className="flex items-center gap-3 sm:w-56 bg-amber-500 hover:bg-amber-400 text-black font-bold py-3.5 px-4 rounded-2xl transition-colors group shrink-0"
+            >
+              <span className="text-xl">🎯</span>
+              <span>Full Practice Test</span>
+              <span className="ml-auto text-xs opacity-70 group-hover:opacity-100">50 Q</span>
+            </Link>
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 flex-1">
+              {SECTIONS.map(section => {
+                const cfg = SECTION_CONFIG[section]
+                return (
+                  <Link
+                    key={section}
+                    href={`/quiz/${section}`}
+                    className={`flex flex-col items-center gap-1 ${cfg.bg} border ${cfg.border} text-white font-medium py-3 px-2 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.99]`}
+                  >
+                    <span className="text-xl">{cfg.emoji}</span>
+                    <span className="text-[11px] text-center leading-tight">{cfg.label}</span>
+                    <span className="text-[10px] text-zinc-400">10 Q</span>
+                  </Link>
+                )
+              })}
             </div>
-            {SECTIONS.map(section => {
-              const score = (myEntry as Record<string, unknown>)[`${section}_score`] as number
-              const cfg = SECTION_CONFIG[section]
-              return (
-                <div key={section} className={`${cfg.bg} border ${cfg.border} rounded-2xl p-3 flex flex-col items-center justify-center gap-1`}>
-                  <div className="text-2xl">{cfg.emoji}</div>
-                  <div className="text-xl font-black" style={{ color: getAccentHex(cfg.accent) }}>{score}%</div>
-                  <div className="text-[10px] text-zinc-400 text-center leading-tight">{cfg.label}</div>
-                </div>
-              )
-            })}
           </div>
-        )}
+        </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Leaderboards */}
@@ -153,9 +154,15 @@ export default async function DashboardPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1 flex-wrap">
-                          <span className={`font-semibold ${isMe ? 'text-amber-400' : 'text-white'}`}>
-                            {entry.display_name}
-                          </span>
+                          {isAdmin && !isMe ? (
+                            <Link href={`/profile/${entry.user_id}`} className="font-semibold text-white hover:text-amber-400 transition-colors">
+                              {entry.display_name}
+                            </Link>
+                          ) : (
+                            <span className={`font-semibold ${isMe ? 'text-amber-400' : 'text-white'}`}>
+                              {entry.display_name}
+                            </span>
+                          )}
                           {isMe && <span className="text-xs text-amber-500/70">(you)</span>}
                         </div>
                         {/* Section mini-bars */}
@@ -226,9 +233,15 @@ export default async function DashboardPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1 flex-wrap">
-                            <span className={`font-semibold ${isMe ? 'text-amber-400' : 'text-white'}`}>
-                              {entry.display_name}
-                            </span>
+                            {isAdmin && !isMe ? (
+                              <Link href={`/profile/${entry.user_id}`} className="font-semibold text-white hover:text-amber-400 transition-colors">
+                                {entry.display_name}
+                              </Link>
+                            ) : (
+                              <span className={`font-semibold ${isMe ? 'text-amber-400' : 'text-white'}`}>
+                                {entry.display_name}
+                              </span>
+                            )}
                             {isMe && <span className="text-xs text-amber-500/70">(you)</span>}
                             <span className="text-xs text-zinc-600 ml-1">{entry.class_code}</span>
                           </div>
@@ -269,66 +282,45 @@ export default async function DashboardPage() {
 
           </div>
 
-          {/* Right panel */}
-          <div className="space-y-6">
-            {/* Practice CTA */}
-            <div>
-              <h2 className="text-xl font-bold text-white mb-4">⚡ Start Practice</h2>
-              <div className="space-y-2">
-                <Link
-                  href="/quiz/full"
-                  className="flex items-center gap-3 w-full bg-amber-500 hover:bg-amber-400 text-black font-bold py-3.5 px-4 rounded-2xl transition-colors group"
-                >
-                  <span className="text-xl">🎯</span>
-                  <span>Full Practice Test</span>
-                  <span className="ml-auto text-xs opacity-70 group-hover:opacity-100">50 Q</span>
-                </Link>
+          {/* Right panel — Progress */}
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold text-white">📊 Your Progress</h2>
+            {myEntry ? (
+              <>
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-4">
+                  <div className="text-3xl font-black text-amber-400 w-16 shrink-0">{myEntry.aggregate_score}%</div>
+                  <div className="flex-1">
+                    <div className="text-xs text-zinc-400 mb-1.5">Overall Score</div>
+                    <div className="h-2.5 bg-white/10 rounded-full overflow-hidden">
+                      <div className="h-full rounded-full bg-amber-500" style={{ width: `${myEntry.aggregate_score}%` }} />
+                    </div>
+                  </div>
+                </div>
                 {SECTIONS.map(section => {
+                  const score = (myEntry as Record<string, unknown>)[`${section}_score`] as number
                   const cfg = SECTION_CONFIG[section]
                   return (
-                    <Link
-                      key={section}
-                      href={`/quiz/${section}`}
-                      className={`flex items-center gap-3 w-full ${cfg.bg} border ${cfg.border} text-white font-medium py-3 px-4 rounded-xl transition-all hover:scale-[1.01] active:scale-[0.99]`}
-                    >
-                      <span>{cfg.emoji}</span>
-                      <span className="text-sm">{cfg.label}</span>
-                      <span className="ml-auto text-xs text-zinc-400">10 Q</span>
-                    </Link>
+                    <div key={section} className={`${cfg.bg} border ${cfg.border} rounded-2xl p-4 flex items-center gap-3`}>
+                      <span className="text-2xl shrink-0">{cfg.emoji}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-center mb-1.5">
+                          <span className={`text-xs font-semibold ${cfg.color}`}>{cfg.label}</span>
+                          <span className="text-xs font-bold text-white">{score}%</span>
+                        </div>
+                        <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                          <div className="h-full rounded-full" style={{ width: `${score}%`, backgroundColor: getAccentHex(cfg.accent) }} />
+                        </div>
+                      </div>
+                    </div>
                   )
                 })}
+              </>
+            ) : (
+              <div className="text-center py-12 bg-white/2 border border-white/5 rounded-2xl">
+                <p className="text-4xl mb-2">🎯</p>
+                <p className="text-zinc-500 text-sm">Complete a quiz to see your progress!</p>
               </div>
-            </div>
-
-            {/* Achievements */}
-            <div>
-              <h2 className="text-xl font-bold text-white mb-4">🏅 Achievements</h2>
-              <div className="bg-white/3 border border-white/5 rounded-2xl p-4">
-                {allAchievements && allAchievements.length > 0 ? (
-                  <div className="grid grid-cols-2 gap-2">
-                    {allAchievements.map(ach => {
-                      const earned = earnedKeys.has(ach.key)
-                      return (
-                        <div
-                          key={ach.key}
-                          title={`${ach.label}: ${ach.description}`}
-                          className={`rounded-xl p-2 text-center transition-all cursor-default ${
-                            earned
-                              ? 'bg-amber-500/10 border border-amber-500/20'
-                              : 'opacity-30 grayscale'
-                          }`}
-                        >
-                          <div className="text-2xl">{ach.icon_emoji}</div>
-                          <div className="text-[11px] text-zinc-300 mt-1 leading-tight">{ach.label}</div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                ) : (
-                  <p className="text-zinc-500 text-sm text-center py-6">Complete quizzes to earn achievements!</p>
-                )}
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

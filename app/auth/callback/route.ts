@@ -43,9 +43,15 @@ export async function GET(request: NextRequest) {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id')
+    .select('id, avatar_url')
     .eq('id', user.id)
     .single()
+
+  // Save Google avatar on first login (only if not already set)
+  const googleAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture || null
+  if (profile && googleAvatar && !(profile as Record<string, unknown>).avatar_url) {
+    await supabase.from('profiles').update({ avatar_url: googleAvatar }).eq('id', user.id)
+  }
 
   const destination = profile ? '/' : '/onboarding'
   const response = NextResponse.redirect(`${origin}${destination}`)
