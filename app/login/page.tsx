@@ -11,10 +11,12 @@ function LoginContent() {
   async function signInWithGoogle() {
     try {
       const supabase = createClient()
+      // Use canonical domain — avoids www vs non-www mismatch with Supabase allowed URLs
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${siteUrl}/auth/callback`,
           queryParams: { access_type: 'offline', prompt: 'consent' },
         },
       })
