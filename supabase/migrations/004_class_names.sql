@@ -2,7 +2,8 @@
 ALTER TABLE classes ADD COLUMN IF NOT EXISTS name TEXT NOT NULL DEFAULT '';
 
 -- Allow admins to update class names
-CREATE POLICY IF NOT EXISTS "Admins can update classes"
+DROP POLICY IF EXISTS "Admins can update classes" ON classes;
+CREATE POLICY "Admins can update classes"
   ON classes FOR UPDATE
   USING ((SELECT is_admin FROM profiles WHERE id = auth.uid()));
 
