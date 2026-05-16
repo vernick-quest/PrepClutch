@@ -63,7 +63,7 @@ function LoginContent() {
         <div className="bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur-sm">
           {error && (
             <div className="mb-4 p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 text-sm text-center">
-              Sign-in failed. Please try again.
+              Sign-in failed: <code className="text-xs break-all">{error}</code>
             </div>
           )}
 
