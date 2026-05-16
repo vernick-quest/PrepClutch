@@ -31,7 +31,7 @@ function ConfirmContent() {
 
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        router.push('/login?error=no_user')
+        window.location.href = '/login?error=no_user'
         return
       }
 
@@ -41,7 +41,8 @@ function ConfirmContent() {
         .eq('id', user.id)
         .single()
 
-      router.push(profile ? '/' : '/onboarding')
+      // Full reload so the server component sees the new session cookie
+      window.location.href = profile ? '/' : '/onboarding'
     }
 
     confirm()
