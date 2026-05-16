@@ -3,7 +3,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { SECTION_CONFIG, XP_PER_CORRECT, XP_SPEED_BONUS, SPEED_BONUS_THRESHOLD_MS, QUESTION_TIME_LIMIT_S } from '@/lib/constants'
+import { SECTION_CONFIG, QUESTION_TIME_LIMIT_S, DIFFICULTY_BASE_POINTS, DIFFICULTY_TIME_WEIGHT, IDEAL_TIME, SECTION_TO_BADGE, DIFF_NAME, MAX_BASE_SCORE } from '@/lib/constants'
+import { evaluateBadges } from '@/lib/badges'
+import type { BadgeStats } from '@/lib/badges'
 import type { Section, Question, QuizAnswer } from '@/types/database'
 import Link from 'next/link'
 
@@ -49,8 +51,17 @@ export default function QuizClient({ section, questions, userId }: Props) {
 
     const timeTaken = Date.now() - questionStartTime
     const isCorrect = index === currentQuestion.correct_index
-    let xp = isCorrect ? XP_PER_CORRECT : 0
-    if (isCorrect && timeTaken < SPEED_BONUS_THRESHOLD_MS) xp += XP_SPEED_BONUS
+    let xp = 0
+    if (isCorrect) {
+      const diffName = DIFF_NAME[currentQuestion.difficulty] ?? 'Medium'
+      const base = DIFFICULTY_BASE_POINTS[diffName] ?? 10
+      const badgeSec = SECTION_TO_BADGE[section === 'full' ? currentQuestion.section : section as string] ?? 'Verbal'
+      const idealSecs = IDEAL_TIME[badgeSec]?.[diffName] ?? 30
+      const takenSecs = timeTaken / 1000
+      const timeSaved = Math.max(0, idealSecs - takenSecs)
+      const bonus = Math.round(timeSaved * (DIFFICULTY_TIME_WEIGHT[diffName] ?? 1) * 0.3 * 10) / 10
+      xp = Math.round(base + bonus)
+    }
 
     setSelectedIndex(index)
     setAnswerState(isCorrect ? 'correct' : 'incorrect')
@@ -119,7 +130,7 @@ export default function QuizClient({ section, questions, userId }: Props) {
       .single()
 
     // Check and award achievements
-    await checkAchievements(supabase, userId, answers, score, totalQuestions, attemptSection)
+    await checkAchievements(supabase, userId, answers, score, totalQuestions, attemptSection, questions)
 
     // Store results in session storage for results page
     sessionStorage.setItem('quiz_result', JSON.stringify({
@@ -277,7 +288,7 @@ export default function QuizClient({ section, questions, userId }: Props) {
                 {answerState === 'correct' && (
                   <span className="ml-auto text-amber-400 font-bold text-sm">
                     +{answers[answers.length - 1]?.xp_earned} XP
-                    {answers[answers.length - 1]?.xp_earned > XP_PER_CORRECT && ' ⚡ Speed bonus!'}
+                    {answers[answers.length - 1]?.xp_earned > (DIFFICULTY_BASE_POINTS[DIFF_NAME[currentQuestion?.difficulty ?? 2] ?? 'Medium'] ?? 10) && ' ⚡ Speed bonus!'}
                   </span>
                 )}
               </div>
@@ -311,75 +322,96 @@ function getAccentHex(accent: string): string {
   return map[accent] ?? '#ffffff'
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function checkAchievements(supabase: any, userId: string, answers: QuizAnswer[], score: number, total: number, section: string) {
+async function checkAchievements(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
+  userId: string,
+  answers: QuizAnswer[],
+  score: number,
+  total: number,
+  section: string,
+  questions: Question[],
+) {
+  // Existing earned badge keys
   const { data: existing } = await supabase
     .from('user_achievements')
     .select('achievement_key')
     .eq('user_id', userId)
+  const earnedBadgeIds: string[] = (existing ?? []).map((a: { achievement_key: string }) => a.achievement_key)
 
-  const earned = new Set(existing?.map((a: { achievement_key: string }) => a.achievement_key) ?? [])
-  const toInsert: { user_id: string; achievement_key: string }[] = []
+  // Full attempt history for completions count
+  const { data: attempts } = await supabase
+    .from('quiz_attempts')
+    .select('section, score, total_questions')
+    .eq('user_id', userId)
+    .not('completed_at', 'is', null)
 
-  const add = (key: string) => {
-    if (!earned.has(key)) toInsert.push({ user_id: userId, achievement_key: key })
+  // badge_stats stores accumulated perfectSections, speedBadgeSections, highScoreSections
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('badge_stats')
+    .eq('id', userId)
+    .single()
+  const prevBadgeStats = (profile?.badge_stats ?? {}) as Partial<BadgeStats>
+
+  // Completions per badge section name (include current attempt)
+  const allAttempts = [...(attempts ?? []), { section, score, total_questions: total }]
+  const completions: Record<string, number> = {}
+  for (const a of allAttempts) {
+    const bs = SECTION_TO_BADGE[a.section]
+    if (bs) completions[bs] = (completions[bs] ?? 0) + 1
   }
 
-  // First Blood
-  add('first_blood')
+  const curBadgeSec = section !== 'full' ? SECTION_TO_BADGE[section] : null
+  const totalCompletions = allAttempts.length
 
-  // Sharp Shooter — 100% on a section
-  if (score === total) add('sharp_shooter')
-
-  // Speed Demon — 5 consecutive under 10s
-  let streak = 0
-  for (const a of answers) {
-    if (a.time_taken_ms < 10000 && a.selected_index === a.correct_index) {
-      streak++
-      if (streak >= 5) { add('speed_demon'); break }
-    } else streak = 0
+  // Perfect sections — persist from badge_stats, add current if 10/10
+  const perfectSections: string[] = [...(prevBadgeStats.perfectSections ?? [])]
+  if (curBadgeSec && score === total && !perfectSections.includes(curBadgeSec)) {
+    perfectSections.push(curBadgeSec)
   }
 
-  // Section aces (90%+)
-  const pct = (score / total) * 100
-  if (pct >= 90) {
-    const aceMap: Record<string, string> = {
-      verbal: 'verbal_ace',
-      math: 'math_ace',
-      reading: 'reading_ace',
-      quantitative: 'quant_ace',
-      language: 'language_ace',
-    }
-    if (aceMap[section]) add(aceMap[section])
-  }
-
-  // All-Rounder — check if all sections done
-  if (!earned.has('all_rounder')) {
-    const { data: attempts } = await supabase
-      .from('quiz_attempts')
-      .select('section')
-      .eq('user_id', userId)
-      .not('completed_at', 'is', null)
-
-    const completedSections = new Set(attempts?.map((a: { section: string }) => a.section) ?? [])
-    completedSections.add(section)
-    if (['verbal', 'quantitative', 'reading', 'math', 'language'].every(s => completedSections.has(s))) {
-      add('all_rounder')
+  // Speed — persist from badge_stats, add current if ≤60% ideal time
+  const speedBadgeSections: string[] = [...(prevBadgeStats.speedBadgeSections ?? [])]
+  if (curBadgeSec && !speedBadgeSections.includes(curBadgeSec)) {
+    const idealByDiff = IDEAL_TIME[curBadgeSec]
+    if (idealByDiff) {
+      const totalIdeal = questions.reduce((s, q) => s + (idealByDiff[DIFF_NAME[q.difficulty] ?? 'Medium'] ?? 30), 0)
+      const totalTakenSec = answers.reduce((s, a) => s + a.time_taken_ms / 1000, 0)
+      if (totalTakenSec <= totalIdeal * 0.6) speedBadgeSections.push(curBadgeSec)
     }
   }
 
-  // Top of Class
-  if (!earned.has('top_of_class')) {
-    const { data: lb } = await supabase
-      .from('leaderboard_view')
-      .select('user_id')
-      .order('aggregate_score', { ascending: false })
-      .limit(1)
-
-    if (lb?.[0]?.user_id === userId) add('top_of_class')
+  // High score — persist from badge_stats, add current if base pts ≥ 80% of max
+  const highScoreSections: string[] = [...(prevBadgeStats.highScoreSections ?? [])]
+  if (curBadgeSec && !highScoreSections.includes(curBadgeSec)) {
+    const baseEarned = answers.reduce((s, a) => {
+      if (a.selected_index !== a.correct_index) return s
+      const q = questions.find(q => q.id === a.question_id)
+      return s + (DIFFICULTY_BASE_POINTS[DIFF_NAME[q?.difficulty ?? 2] ?? 'Medium'] ?? 0)
+    }, 0)
+    if (baseEarned >= MAX_BASE_SCORE * 0.8) highScoreSections.push(curBadgeSec)
   }
 
-  if (toInsert.length > 0) {
-    await supabase.from('user_achievements').insert(toInsert)
+  // Save updated badge_stats back to profile
+  const newBadgeStats: BadgeStats = {
+    earnedBadgeIds,
+    completions,
+    perfectSections,
+    speedBadgeSections,
+    highScoreSections,
+    totalCompletions,
+  }
+  await supabase
+    .from('profiles')
+    .update({ badge_stats: { perfectSections, speedBadgeSections, highScoreSections } })
+    .eq('id', userId)
+
+  // Evaluate and award new badges
+  const newlyEarned = evaluateBadges(newBadgeStats)
+  if (newlyEarned.length > 0) {
+    await supabase.from('user_achievements').insert(
+      newlyEarned.map(key => ({ user_id: userId, achievement_key: key }))
+    )
   }
 }

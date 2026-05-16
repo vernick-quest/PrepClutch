@@ -50,7 +50,27 @@ export const AVATAR_COLORS = [
 
 export const SECTIONS: Section[] = ['verbal', 'quantitative', 'reading', 'math', 'language']
 
-export const XP_PER_CORRECT = 10
-export const XP_SPEED_BONUS = 5
-export const SPEED_BONUS_THRESHOLD_MS = 15000
 export const QUESTION_TIME_LIMIT_S = 60
+
+// New difficulty-based scoring (replaces flat XP_PER_CORRECT)
+export const DIFFICULTY_BASE_POINTS: Record<string, number> = {
+  Easy: 10, Medium: 20, Hard: 35,
+}
+export const DIFFICULTY_TIME_WEIGHT: Record<string, number> = {
+  Easy: 1, Medium: 2, Hard: 3,
+}
+// Ideal seconds per question — keyed by badge section name (Verbal/Quantitative/Reading/Mathematics/Language)
+export const IDEAL_TIME: Record<string, Record<string, number>> = {
+  Verbal:       { Easy: 10, Medium: 16, Hard: 25 },
+  Quantitative: { Easy: 20, Medium: 34, Hard: 55 },
+  Reading:      { Easy: 18, Medium: 28, Hard: 45 },
+  Mathematics:  { Easy: 25, Medium: 42, Hard: 70 },
+  Language:     { Easy: 15, Medium: 25, Hard: 40 },
+}
+// Maps PrepClutch section names → badge section names
+export const SECTION_TO_BADGE: Record<string, string> = {
+  verbal: 'Verbal', quantitative: 'Quantitative',
+  reading: 'Reading', math: 'Mathematics', language: 'Language',
+}
+export const DIFF_NAME: Record<number, string> = { 1: 'Easy', 2: 'Medium', 3: 'Hard' }
+export const MAX_BASE_SCORE = 215 // 3×10 + 4×20 + 3×35
