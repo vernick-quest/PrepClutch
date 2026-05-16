@@ -78,6 +78,14 @@ export default async function ProfilePage() {
   const hasGooglePhoto = !!(profile as Record<string, unknown>).avatar_url
   const displayAvatarUrl = (profile as Record<string, unknown>).avatar_url as string | null
 
+  // Fetch class name if the code is a 5-digit code
+  const { data: classRecord } = await supabase
+    .from('classes')
+    .select('name')
+    .eq('code', profile.class_code)
+    .single()
+  const className = classRecord?.name || null
+
   const badgeCategories = ['First Completion', 'Perfect Score', 'Speed', 'Combo', 'Milestone']
 
   return (
@@ -140,6 +148,7 @@ export default async function ProfilePage() {
         <ProfileActions
           userId={user.id}
           currentClassCode={profile.class_code}
+          currentClassName={className}
           googleAvatarUrl={googleAvatarUrl}
           hasGooglePhoto={hasGooglePhoto}
           avatarColor={profile.avatar_color}

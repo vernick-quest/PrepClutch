@@ -61,6 +61,11 @@ export default async function DashboardPage() {
             <span className="text-sm font-semibold text-zinc-400 tracking-widest uppercase">HSPT Prep</span>
           </div>
           <div className="flex items-center gap-3 justify-end">
+            {isAdmin && (
+              <Link href="/admin" className="text-xs bg-violet-500/20 border border-violet-500/30 text-violet-400 px-2 py-1 rounded-full font-mono hover:bg-violet-500/30 transition-colors">
+                Admin
+              </Link>
+            )}
             <Link href="/profile" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               <div
                 className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-md"

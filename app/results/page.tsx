@@ -75,8 +75,7 @@ export default function ResultsPage() {
     ? { label: 'Full Practice Test', emoji: '🎯', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/30' }
     : SECTION_CONFIG[section as Section]
 
-  const grade = pct >= 90 ? 'A' : pct >= 80 ? 'B' : pct >= 70 ? 'C' : pct >= 60 ? 'D' : 'F'
-  const gradeColor = pct >= 90 ? 'text-emerald-400' : pct >= 80 ? 'text-cyan-400' : pct >= 70 ? 'text-amber-400' : 'text-rose-400'
+  const rank = getRank(pct)
 
   const avgTime = answers.length > 0
     ? Math.round(answers.reduce((s, a) => s + a.time_taken_ms, 0) / answers.length / 1000)
@@ -87,22 +86,19 @@ export default function ResultsPage() {
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
         <div className="text-center">
-          <div className="text-6xl mb-3">
-            {pct === 100 ? '🏆' : pct >= 80 ? '🎉' : pct >= 60 ? '💪' : '📚'}
-          </div>
-          <h1 className="text-4xl font-black text-white mb-1">
-            {pct === 100 ? 'Perfect Score!' : pct >= 80 ? 'Great Job!' : pct >= 60 ? 'Keep Going!' : 'Keep Practicing!'}
-          </h1>
-          <p className="text-zinc-400">{cfg.emoji} {cfg.label}</p>
+          <p className="text-zinc-500 text-sm mb-1">{cfg.emoji} {cfg.label}</p>
         </div>
 
         {/* Score card */}
         <div className="bg-white/5 border border-white/10 rounded-3xl p-8">
-          <div className="flex items-center justify-around">
-            <div className="text-center">
-              <div className={`text-7xl font-black ${gradeColor}`}>{grade}</div>
-              <div className="text-zinc-400 text-sm mt-1">Grade</div>
-            </div>
+          {/* Rank */}
+          <div className="text-center mb-6">
+            <div className="text-6xl mb-2">{rank.emoji}</div>
+            <div className="text-3xl font-black" style={{ color: rank.color }}>{rank.name}</div>
+            <div className="text-zinc-400 text-sm mt-2 italic">{rank.blurb}</div>
+          </div>
+
+          <div className="flex items-center justify-around border-t border-white/10 pt-6">
             <div className="text-center">
               <div className="text-7xl font-black text-white">{pct}%</div>
               <div className="text-zinc-400 text-sm mt-1">{score}/{total_questions} correct</div>
@@ -298,6 +294,16 @@ export default function ResultsPage() {
       </div>
     </div>
   )
+}
+
+function getRank(pct: number): { emoji: string; name: string; color: string; blurb: string } {
+  if (pct === 100) return { emoji: '🌌', name: 'Wyrm',      color: '#a855f7', blurb: 'Flawless. The Tesseract Wyrm acknowledges you.' }
+  if (pct >= 90)  return { emoji: '✨', name: 'Elder',     color: '#f59e0b', blurb: "The Grand Wordumph says 'adequate.' That's high praise." }
+  if (pct >= 80)  return { emoji: '💫', name: 'Awakened',  color: '#10b981', blurb: 'Your creature is fully awake and paying attention.' }
+  if (pct >= 70)  return { emoji: '🔷', name: 'Beastling', color: '#3b82f6', blurb: "You're outgrowing the hatchling phase." }
+  if (pct >= 60)  return { emoji: '🌀', name: 'Stirring',  color: '#8b5cf6', blurb: 'Something is stirring inside your beast.' }
+  if (pct >= 40)  return { emoji: '🪶', name: 'Fledgling', color: '#f97316', blurb: 'Your wings exist. They just need practice.' }
+  return           { emoji: '🥚', name: 'Hatchling', color: '#64748b', blurb: 'The Pageslobber is not judging you.' }
 }
 
 function getAccentHex(accent: string): string {
