@@ -38,6 +38,12 @@ export default async function DashboardPage() {
     .eq('class_code', profile.class_code)
     .order('aggregate_score', { ascending: false })
 
+  const { data: globalLeaderboard } = await supabase
+    .from('leaderboard_view')
+    .select('*')
+    .order('aggregate_score', { ascending: false })
+    .limit(50)
+
   const { data: userAchievements } = await supabase
     .from('user_achievements')
     .select('achievement_key')
@@ -55,12 +61,15 @@ export default async function DashboardPage() {
     <div className="min-h-screen bg-[#0a0a0f]">
       {/* Nav */}
       <nav className="border-b border-white/5 sticky top-0 z-50 bg-[#0a0a0f]/80 backdrop-blur-sm">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 py-4 grid grid-cols-3 items-center">
           <Link href="/" className="text-xl font-black">
-            <span className="text-amber-400">HSPT</span>
-            <span className="text-white"> Prep</span>
+            <span className="text-amber-400">Prep</span>
+            <span className="text-white">Clutch</span>
           </Link>
-          <div className="flex items-center gap-3">
+          <div className="text-center">
+            <span className="text-sm font-semibold text-zinc-400 tracking-widest uppercase">HSPT Prep</span>
+          </div>
+          <div className="flex items-center gap-3 justify-end">
             <Link href="/profile" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               <div
                 className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-md"
@@ -100,9 +109,10 @@ export default async function DashboardPage() {
               const score = (myEntry as Record<string, unknown>)[`${section}_score`] as number
               const cfg = SECTION_CONFIG[section]
               return (
-                <div key={section} className={`${cfg.bg} border ${cfg.border} rounded-2xl p-3 flex flex-col items-center justify-center`}>
+                <div key={section} className={`${cfg.bg} border ${cfg.border} rounded-2xl p-3 flex flex-col items-center justify-center gap-1`}>
+                  <div className="text-2xl">{cfg.emoji}</div>
                   <div className="text-xl font-black" style={{ color: getAccentHex(cfg.accent) }}>{score}%</div>
-                  <div className="text-[10px] text-zinc-400 mt-1 text-center leading-tight">{cfg.emoji}</div>
+                  <div className="text-[10px] text-zinc-400 text-center leading-tight">{cfg.label}</div>
                 </div>
               )
             })}
@@ -110,10 +120,13 @@ export default async function DashboardPage() {
         )}
 
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Leaderboard */}
-          <div className="lg:col-span-2 space-y-4">
+          {/* Leaderboards */}
+          <div className="lg:col-span-2 space-y-8">
+
+            {/* Class leaderboard */}
+            <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold text-white">🏆 Leaderboard — {profile.class_code}</h2>
+              <h2 className="text-xl font-bold text-white">🏆 Class — {profile.class_code}</h2>
             </div>
 
             <div className="space-y-2">
@@ -185,6 +198,75 @@ export default async function DashboardPage() {
                 </div>
               )}
             </div>
+            </div>
+
+            {/* Global leaderboard */}
+            <div className="space-y-4">
+              <h2 className="text-xl font-bold text-white">🌍 Global Leaderboard</h2>
+              <div className="space-y-2">
+                {globalLeaderboard && globalLeaderboard.length > 0 ? globalLeaderboard.map((entry, idx) => {
+                  const isMe = entry.user_id === user.id
+                  const rankLabel = idx === 0 ? '👑' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`
+                  return (
+                    <div
+                      key={entry.user_id}
+                      className={`rounded-2xl p-4 border transition-all ${
+                        isMe
+                          ? 'bg-amber-500/10 border-amber-500/30'
+                          : 'bg-white/3 border-white/5 hover:border-white/10'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-xl w-8 text-center font-bold shrink-0">{rankLabel}</span>
+                        <div
+                          className="w-10 h-10 rounded-full flex items-center justify-center text-base font-black text-white shrink-0"
+                          style={{ backgroundColor: entry.avatar_color }}
+                        >
+                          {entry.display_name[0].toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1 flex-wrap">
+                            <span className={`font-semibold ${isMe ? 'text-amber-400' : 'text-white'}`}>
+                              {entry.display_name}
+                            </span>
+                            {isMe && <span className="text-xs text-amber-500/70">(you)</span>}
+                            <span className="text-xs text-zinc-600 ml-1">{entry.class_code}</span>
+                          </div>
+                          <div className="flex gap-1 mt-2">
+                            {SECTIONS.map(section => {
+                              const score = (entry as Record<string, unknown>)[`${section}_score`] as number
+                              const cfg = SECTION_CONFIG[section]
+                              return (
+                                <div key={section} className="flex-1" title={`${cfg.label}: ${score}%`}>
+                                  <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                                    <div
+                                      className="h-full rounded-full"
+                                      style={{
+                                        width: `${score}%`,
+                                        backgroundColor: score > 0 ? getAccentHex(cfg.accent) : 'transparent',
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <div className="text-xl font-black text-white">{entry.aggregate_score}%</div>
+                          <div className="text-xs text-zinc-500">{entry.total_xp} XP</div>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                }) : (
+                  <div className="text-center py-8 text-zinc-500 bg-white/2 border border-white/5 rounded-2xl">
+                    <p>No global entries yet.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
           </div>
 
           {/* Right panel */}
