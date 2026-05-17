@@ -57,9 +57,8 @@ export default async function DashboardPage() {
             <span className="text-amber-400">Prep</span>
             <span className="text-white">Clutch</span>
           </Link>
-          <div className="flex items-center justify-center gap-4">
-            <Link href="/challenge" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">⚡ Challenge</Link>
-            <Link href="/bestiary"  className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">🏅 Bestiary</Link>
+          <div className="text-center">
+            <Link href="/bestiary" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">🏅 Bestiary</Link>
           </div>
           <div className="flex items-center gap-3 justify-end">
             {isAdmin && (

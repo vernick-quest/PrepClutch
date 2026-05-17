@@ -15,78 +15,52 @@ interface Props {
   userId: string
 }
 
-type AnswerState = 'unanswered' | 'correct' | 'incorrect'
+function getAccentHex(accent: string): string {
+  const map: Record<string, string> = {
+    amber: '#f59e0b', cyan: '#06b6d4', emerald: '#10b981', rose: '#f43f5e', violet: '#8b5cf6',
+  }
+  return map[accent] ?? '#ffffff'
+}
 
 export default function QuizClient({ section, questions, userId }: Props) {
   const router = useRouter()
   const [currentIdx, setCurrentIdx] = useState(0)
-  const [answerState, setAnswerState] = useState<AnswerState>('unanswered')
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [timeLeft, setTimeLeft] = useState(QUESTION_TIME_LIMIT_S)
-  const [answers, setAnswers] = useState<QuizAnswer[]>([])
-  const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now())
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  // Use refs to avoid stale closure issues in the timer callback
+  const answersRef   = useRef<QuizAnswer[]>([])
+  const startTimeRef = useRef<number>(Date.now())
+  const handledRef   = useRef(false)   // prevents double-answer per question
+  const timerRef     = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const currentQuestion = questions[currentIdx]
-  const totalQuestions = questions.length
-  const progress = ((currentIdx + (answerState !== 'unanswered' ? 1 : 0)) / totalQuestions) * 100
+  const totalQuestions  = questions.length
+  const progress        = (currentIdx / totalQuestions) * 100
 
   const cfg = section === 'full'
     ? { label: 'Full Practice Test', color: 'text-amber-400', accent: 'amber', bg: 'bg-amber-500/10', border: 'border-amber-500/30', emoji: '🎯' }
     : SECTION_CONFIG[section as Section]
 
-  const getSectionCfg = (s: Section) => SECTION_CONFIG[s]
+  const currentSectionCfg = currentQuestion
+    ? (section === 'full' ? SECTION_CONFIG[currentQuestion.section as Section] : cfg)
+    : cfg
 
   const stopTimer = useCallback(() => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current)
-      timerRef.current = null
-    }
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }
   }, [])
 
-  const handleAnswer = useCallback((index: number) => {
-    if (answerState !== 'unanswered') return
-    stopTimer()
-
-    const timeTaken = Date.now() - questionStartTime
-    const isCorrect = index === currentQuestion.correct_index
-    let xp = 0
-    if (isCorrect) {
-      const diffName = DIFF_NAME[currentQuestion.difficulty] ?? 'Medium'
-      const base = DIFFICULTY_BASE_POINTS[diffName] ?? 10
-      const badgeSec = SECTION_TO_BADGE[section === 'full' ? currentQuestion.section : section as string] ?? 'Verbal'
-      const idealSecs = IDEAL_TIME[badgeSec]?.[diffName] ?? 30
-      const takenSecs = timeTaken / 1000
-      const timeSaved = Math.max(0, idealSecs - takenSecs)
-      const bonus = Math.round(timeSaved * (DIFFICULTY_TIME_WEIGHT[diffName] ?? 1) * 0.3 * 10) / 10
-      xp = Math.round(base + bonus)
-    }
-
-    setSelectedIndex(index)
-    setAnswerState(isCorrect ? 'correct' : 'incorrect')
-    setAnswers(prev => [...prev, {
-      question_id: currentQuestion.id,
-      selected_index: index,
-      correct_index: currentQuestion.correct_index,
-      time_taken_ms: timeTaken,
-      xp_earned: xp,
-    }])
-  }, [answerState, currentQuestion, questionStartTime, stopTimer])
-
-  // Auto-advance on time up
+  // ─── Timer: resets on each question ───────────────────────────────────────
   useEffect(() => {
+    handledRef.current = false
+    startTimeRef.current = Date.now()
     setTimeLeft(QUESTION_TIME_LIMIT_S)
-    setQuestionStartTime(Date.now())
-    setAnswerState('unanswered')
-    setSelectedIndex(null)
 
     timerRef.current = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
           stopTimer()
-          // Time's up — mark as wrong with no selection
-          handleAnswer(-1)
+          handleAnswer(-1) // time's up → no answer
           return 0
         }
         return prev - 1
@@ -97,46 +71,33 @@ export default function QuizClient({ section, questions, userId }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIdx])
 
-  async function handleNext() {
-    if (currentIdx < totalQuestions - 1) {
-      setCurrentIdx(i => i + 1)
-    } else {
-      await finishQuiz()
-    }
-  }
-
-  async function finishQuiz() {
+  const finishQuiz = useCallback(async (finalAnswers: QuizAnswer[]) => {
     setIsSubmitting(true)
     const supabase = createClient()
 
-    const score = answers.filter(a => a.selected_index === a.correct_index).length
-    const totalXP = answers.reduce((sum, a) => sum + a.xp_earned, 0)
-
-    // Determine section for the attempt
-    const attemptSection = section === 'full' ? 'full' : section
+    const score   = finalAnswers.filter(a => a.selected_index === a.correct_index).length
+    const totalXP = finalAnswers.reduce((s, a) => s + a.xp_earned, 0)
 
     const { data: attempt } = await supabase
       .from('quiz_attempts')
       .insert({
         user_id: userId,
-        section: attemptSection,
+        section: section === 'full' ? 'full' : section,
         score,
         total_questions: totalQuestions,
-        answers: answers,
+        answers: finalAnswers,
         total_xp: totalXP,
         completed_at: new Date().toISOString(),
       })
       .select()
       .single()
 
-    // Check and award achievements
-    await checkAchievements(supabase, userId, answers, score, totalQuestions, attemptSection, questions)
+    await checkAchievements(supabase, userId, finalAnswers, score, totalQuestions, section === 'full' ? 'full' : section, questions)
 
-    // Store results in session storage for results page
     sessionStorage.setItem('quiz_result', JSON.stringify({
       attempt_id: attempt?.id,
       section,
-      answers,
+      answers: finalAnswers,
       total_xp: totalXP,
       score,
       total_questions: totalQuestions,
@@ -144,15 +105,49 @@ export default function QuizClient({ section, questions, userId }: Props) {
     }))
 
     router.push('/results')
-  }
+  }, [userId, section, totalQuestions, questions, router])
+
+  // ─── Handle answer: record and immediately advance ─────────────────────────
+  const handleAnswer = useCallback((index: number) => {
+    if (handledRef.current) return
+    handledRef.current = true
+    stopTimer()
+
+    const timeTaken  = Date.now() - startTimeRef.current
+    const isCorrect  = index >= 0 && index === currentQuestion.correct_index
+    let xp = 0
+    if (isCorrect) {
+      const diffName  = DIFF_NAME[currentQuestion.difficulty] ?? 'Medium'
+      const base      = DIFFICULTY_BASE_POINTS[diffName] ?? 10
+      const badgeSec  = SECTION_TO_BADGE[section === 'full' ? currentQuestion.section : section as string] ?? 'Verbal'
+      const idealSecs = IDEAL_TIME[badgeSec]?.[diffName] ?? 30
+      const timeSaved = Math.max(0, idealSecs - timeTaken / 1000)
+      const bonus     = Math.round(timeSaved * (DIFFICULTY_TIME_WEIGHT[diffName] ?? 1) * 0.3 * 10) / 10
+      xp = Math.round(base + bonus)
+    }
+
+    const newAnswer: QuizAnswer = {
+      question_id:    currentQuestion.id,
+      selected_index: index,
+      correct_index:  currentQuestion.correct_index,
+      time_taken_ms:  timeTaken,
+      xp_earned:      xp,
+    }
+
+    const updatedAnswers = [...answersRef.current, newAnswer]
+    answersRef.current = updatedAnswers
+
+    if (currentIdx < totalQuestions - 1) {
+      setCurrentIdx(i => i + 1)
+    } else {
+      finishQuiz(updatedAnswers)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentIdx, currentQuestion, section, totalQuestions, stopTimer, finishQuiz])
 
   const timerPercent = (timeLeft / QUESTION_TIME_LIMIT_S) * 100
-  const timerColor = timeLeft > 20 ? '#10b981' : timeLeft > 10 ? '#f59e0b' : '#f43f5e'
+  const timerColor   = timeLeft > 20 ? '#10b981' : timeLeft > 10 ? '#f59e0b' : '#f43f5e'
   const circumference = 2 * Math.PI * 20
-
-  const currentSectionCfg = currentQuestion
-    ? (section === 'full' ? getSectionCfg(currentQuestion.section as Section) : cfg)
-    : cfg
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] flex flex-col">
@@ -164,21 +159,16 @@ export default function QuizClient({ section, questions, userId }: Props) {
             <div className="h-2 bg-white/10 rounded-full overflow-hidden">
               <div
                 className="h-full rounded-full transition-all duration-500"
-                style={{
-                  width: `${progress}%`,
-                  backgroundColor: section === 'full' ? '#f59e0b' : getAccentHex(cfg.accent),
-                }}
+                style={{ width: `${progress}%`, backgroundColor: section === 'full' ? '#f59e0b' : getAccentHex(cfg.accent) }}
               />
             </div>
           </div>
-          <span className="text-sm text-zinc-400 shrink-0">
-            {currentIdx + 1} / {totalQuestions}
-          </span>
+          <span className="text-sm text-zinc-400 shrink-0">{currentIdx + 1} / {totalQuestions}</span>
         </div>
       </div>
 
       <div className="flex-1 max-w-3xl mx-auto w-full px-4 py-8 flex flex-col">
-        {/* Section label */}
+        {/* Section label + timer */}
         <div className="flex items-center justify-between mb-6">
           <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${currentSectionCfg.bg} border ${currentSectionCfg.border}`}>
             <span>{currentSectionCfg.emoji}</span>
@@ -187,16 +177,12 @@ export default function QuizClient({ section, questions, userId }: Props) {
             </span>
           </div>
 
-          {/* Timer */}
           <div className="relative w-12 h-12">
             <svg className="w-12 h-12 -rotate-90" viewBox="0 0 48 48">
               <circle cx="24" cy="24" r="20" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="4" />
               <circle
-                cx="24" cy="24" r="20"
-                fill="none"
-                stroke={timerColor}
-                strokeWidth="4"
-                strokeLinecap="round"
+                cx="24" cy="24" r="20" fill="none"
+                stroke={timerColor} strokeWidth="4" strokeLinecap="round"
                 strokeDasharray={circumference}
                 strokeDashoffset={circumference * (1 - timerPercent / 100)}
                 style={{ transition: 'stroke-dashoffset 1s linear, stroke 0.5s' }}
@@ -206,7 +192,7 @@ export default function QuizClient({ section, questions, userId }: Props) {
           </div>
         </div>
 
-        {/* Passage (reading comprehension) */}
+        {/* Passage */}
         {currentQuestion?.passage && (
           <div className="mb-6 p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl max-h-48 overflow-y-auto">
             <p className="text-zinc-300 text-sm leading-relaxed">{currentQuestion.passage}</p>
@@ -215,56 +201,32 @@ export default function QuizClient({ section, questions, userId }: Props) {
 
         {/* Question */}
         <div className="mb-8">
-          <p className="text-xl font-semibold text-white leading-relaxed">
-            {currentQuestion?.prompt}
-          </p>
+          <p className="text-xl font-semibold text-white leading-relaxed">{currentQuestion?.prompt}</p>
           {currentQuestion?.difficulty && (
             <div className="flex gap-1 mt-3">
               {[1, 2, 3].map(d => (
-                <div
-                  key={d}
-                  className={`w-2 h-2 rounded-full ${d <= currentQuestion.difficulty ? 'bg-amber-400' : 'bg-white/20'}`}
-                />
+                <div key={d} className={`w-2 h-2 rounded-full ${d <= currentQuestion.difficulty ? 'bg-amber-400' : 'bg-white/20'}`} />
               ))}
               <span className="text-xs text-zinc-500 ml-1">
-                {currentQuestion.difficulty === 1 ? 'Easy' : currentQuestion.difficulty === 2 ? 'Medium' : 'Hard'}
+                {DIFF_NAME[currentQuestion.difficulty] ?? 'Medium'}
               </span>
             </div>
           )}
         </div>
 
-        {/* Answer options */}
+        {/* Answer choices — no feedback coloring */}
         <div className="space-y-3 flex-1">
           {currentQuestion?.options?.map((option: string, idx: number) => {
             const letter = ['A', 'B', 'C', 'D'][idx]
-            let state: 'default' | 'correct' | 'incorrect' | 'missed' = 'default'
-
-            if (answerState !== 'unanswered') {
-              if (idx === currentQuestion.correct_index) state = 'correct'
-              else if (idx === selectedIndex) state = 'incorrect'
-            }
-
             return (
               <button
                 key={idx}
                 onClick={() => handleAnswer(idx)}
-                disabled={answerState !== 'unanswered'}
-                className={`w-full flex items-center gap-4 p-4 rounded-2xl border text-left transition-all ${
-                  state === 'correct'
-                    ? 'bg-emerald-500/20 border-emerald-500 text-white'
-                    : state === 'incorrect'
-                    ? 'bg-rose-500/20 border-rose-500 text-white'
-                    : answerState !== 'unanswered'
-                    ? 'bg-white/3 border-white/5 text-zinc-500'
-                    : 'bg-white/5 border-white/10 text-white hover:bg-white/8 hover:border-white/20 active:scale-[0.99]'
-                }`}
+                disabled={isSubmitting}
+                className="w-full flex items-center gap-4 p-4 rounded-2xl border text-left transition-all bg-white/5 border-white/10 text-white hover:bg-white/8 hover:border-white/20 active:scale-[0.99] disabled:opacity-50"
               >
-                <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0 ${
-                  state === 'correct' ? 'bg-emerald-500 text-black'
-                  : state === 'incorrect' ? 'bg-rose-500 text-white'
-                  : 'bg-white/10 text-zinc-400'
-                }`}>
-                  {state === 'correct' ? '✓' : state === 'incorrect' ? '✗' : letter}
+                <span className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold shrink-0 bg-white/10 text-zinc-400">
+                  {letter}
                 </span>
                 <span className="text-base">{option}</span>
               </button>
@@ -272,54 +234,17 @@ export default function QuizClient({ section, questions, userId }: Props) {
           })}
         </div>
 
-        {/* Feedback + Next */}
-        {answerState !== 'unanswered' && (
-          <div className="mt-6 space-y-4">
-            <div className={`p-4 rounded-2xl border ${
-              answerState === 'correct'
-                ? 'bg-emerald-500/10 border-emerald-500/30'
-                : 'bg-rose-500/10 border-rose-500/30'
-            }`}>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-xl">{answerState === 'correct' ? '🎉' : '💡'}</span>
-                <span className={`font-bold ${answerState === 'correct' ? 'text-emerald-400' : 'text-rose-400'}`}>
-                  {answerState === 'correct' ? 'Correct!' : 'Not quite.'}
-                </span>
-                {answerState === 'correct' && (
-                  <span className="ml-auto text-amber-400 font-bold text-sm">
-                    +{answers[answers.length - 1]?.xp_earned} XP
-                    {answers[answers.length - 1]?.xp_earned > (DIFFICULTY_BASE_POINTS[DIFF_NAME[currentQuestion?.difficulty ?? 2] ?? 'Medium'] ?? 10) && ' ⚡ Speed bonus!'}
-                  </span>
-                )}
-              </div>
-              {currentQuestion?.explanation && (
-                <p className="text-zinc-300 text-sm">{currentQuestion.explanation}</p>
-              )}
-            </div>
+        {/* Exam-mode notice */}
+        <p className="text-center text-xs text-zinc-600 mt-6">
+          Click to lock in your answer — full review shown at the end
+        </p>
 
-            <button
-              onClick={handleNext}
-              disabled={isSubmitting}
-              className="w-full bg-white text-black font-bold py-3.5 rounded-2xl hover:bg-zinc-100 transition-colors disabled:opacity-50"
-            >
-              {isSubmitting ? 'Saving…' : currentIdx < totalQuestions - 1 ? 'Next Question →' : 'See Results 🏁'}
-            </button>
-          </div>
+        {isSubmitting && (
+          <div className="text-center text-zinc-400 text-sm mt-4">Saving results…</div>
         )}
       </div>
     </div>
   )
-}
-
-function getAccentHex(accent: string): string {
-  const map: Record<string, string> = {
-    amber: '#f59e0b',
-    cyan: '#06b6d4',
-    emerald: '#10b981',
-    rose: '#f43f5e',
-    violet: '#8b5cf6',
-  }
-  return map[accent] ?? '#ffffff'
 }
 
 async function checkAchievements(
@@ -332,21 +257,18 @@ async function checkAchievements(
   section: string,
   questions: Question[],
 ) {
-  // Existing earned badge keys
   const { data: existing } = await supabase
     .from('user_achievements')
     .select('achievement_key')
     .eq('user_id', userId)
   const earnedBadgeIds: string[] = (existing ?? []).map((a: { achievement_key: string }) => a.achievement_key)
 
-  // Full attempt history for completions count
   const { data: attempts } = await supabase
     .from('quiz_attempts')
     .select('section, score, total_questions')
     .eq('user_id', userId)
     .not('completed_at', 'is', null)
 
-  // badge_stats stores accumulated perfectSections, speedBadgeSections, highScoreSections
   const { data: profile } = await supabase
     .from('profiles')
     .select('badge_stats')
@@ -354,7 +276,6 @@ async function checkAchievements(
     .single()
   const prevBadgeStats = (profile?.badge_stats ?? {}) as Partial<BadgeStats>
 
-  // Completions per badge section name (include current attempt)
   const allAttempts = [...(attempts ?? []), { section, score, total_questions: total }]
   const completions: Record<string, number> = {}
   for (const a of allAttempts) {
@@ -362,27 +283,24 @@ async function checkAchievements(
     if (bs) completions[bs] = (completions[bs] ?? 0) + 1
   }
 
-  const curBadgeSec = section !== 'full' ? SECTION_TO_BADGE[section] : null
+  const curBadgeSec     = section !== 'full' ? SECTION_TO_BADGE[section] : null
   const totalCompletions = allAttempts.length
 
-  // Perfect sections — persist from badge_stats, add current if 10/10
   const perfectSections: string[] = [...(prevBadgeStats.perfectSections ?? [])]
   if (curBadgeSec && score === total && !perfectSections.includes(curBadgeSec)) {
     perfectSections.push(curBadgeSec)
   }
 
-  // Speed — persist from badge_stats, add current if ≤60% ideal time
   const speedBadgeSections: string[] = [...(prevBadgeStats.speedBadgeSections ?? [])]
   if (curBadgeSec && !speedBadgeSections.includes(curBadgeSec)) {
     const idealByDiff = IDEAL_TIME[curBadgeSec]
     if (idealByDiff) {
-      const totalIdeal = questions.reduce((s, q) => s + (idealByDiff[DIFF_NAME[q.difficulty] ?? 'Medium'] ?? 30), 0)
+      const totalIdeal   = questions.reduce((s, q) => s + (idealByDiff[DIFF_NAME[q.difficulty] ?? 'Medium'] ?? 30), 0)
       const totalTakenSec = answers.reduce((s, a) => s + a.time_taken_ms / 1000, 0)
       if (totalTakenSec <= totalIdeal * 0.6) speedBadgeSections.push(curBadgeSec)
     }
   }
 
-  // High score — persist from badge_stats, add current if base pts ≥ 80% of max
   const highScoreSections: string[] = [...(prevBadgeStats.highScoreSections ?? [])]
   if (curBadgeSec && !highScoreSections.includes(curBadgeSec)) {
     const baseEarned = answers.reduce((s, a) => {
@@ -393,7 +311,6 @@ async function checkAchievements(
     if (baseEarned >= MAX_BASE_SCORE * 0.8) highScoreSections.push(curBadgeSec)
   }
 
-  // Save updated badge_stats back to profile
   const newBadgeStats: BadgeStats = {
     earnedBadgeIds,
     completions,
@@ -402,12 +319,12 @@ async function checkAchievements(
     highScoreSections,
     totalCompletions,
   }
+
   await supabase
     .from('profiles')
     .update({ badge_stats: { perfectSections, speedBadgeSections, highScoreSections } })
     .eq('id', userId)
 
-  // Evaluate and award new badges
   const newlyEarned = evaluateBadges(newBadgeStats)
   if (newlyEarned.length > 0) {
     await supabase.from('user_achievements').insert(

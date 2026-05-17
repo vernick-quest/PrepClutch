@@ -17,15 +17,6 @@ function getAccentHex(accent: string): string {
   return map[accent] ?? '#ffffff'
 }
 
-const RARITY_STYLE: Record<string, { border: string; bg: string; text: string; glow: string }> = {
-  Common:    { border: '#1f2937', bg: '#0d1117', text: '#6b7280', glow: 'none' },
-  Uncommon:  { border: '#16a34a55', bg: '#0a1a0a', text: '#4ade80', glow: '0 0 16px #22c55e22' },
-  Rare:      { border: '#4f46e555', bg: '#0c0c2a', text: '#818cf8', glow: '0 0 20px #6366f133' },
-  Epic:      { border: '#7c3aed66', bg: '#160820', text: '#c084fc', glow: '0 0 28px #a855f744' },
-  Legendary: { border: '#d9770666', bg: '#1a1200', text: '#fbbf24', glow: '0 0 36px #f59e0b55' },
-  Mythic:    { border: '#9333ea99', bg: '#0e0018', text: '#e879f9', glow: '0 0 48px #a855f777' },
-}
-
 export default async function ProfilePage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -85,8 +76,6 @@ export default async function ProfilePage() {
     .eq('code', profile.class_code)
     .single()
   const className = classRecord?.name || null
-
-  const badgeCategories = ['First Completion', 'Perfect Score', 'Speed', 'Combo', 'Milestone']
 
   return (
     <div className="min-h-screen bg-[#0a0a0f]">
@@ -184,72 +173,28 @@ export default async function ProfilePage() {
         </div>
 
         {/* Badge Bestiary */}
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <h3 className="text-xl font-bold text-white">🏅 Badge Bestiary</h3>
-            <span className="text-sm text-zinc-500">{earnedKeys.size} / {allAchievements?.length ?? 0} earned</span>
+        <div className="bg-white/3 border border-white/10 rounded-2xl p-5 flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-bold text-white mb-1">🏅 Badge Bestiary</h3>
+            <p className="text-zinc-400 text-sm">
+              {earnedKeys.size} of {allAchievements?.length ?? 0} creatures collected
+            </p>
+            <div className="h-1.5 bg-white/10 rounded-full overflow-hidden mt-2 w-48">
+              <div
+                className="h-full rounded-full transition-all duration-700"
+                style={{
+                  width: `${allAchievements?.length ? Math.round((earnedKeys.size / allAchievements.length) * 100) : 0}%`,
+                  background: 'linear-gradient(90deg,#6366f1,#a855f7,#ec4899)',
+                }}
+              />
+            </div>
           </div>
-          <div className="h-1.5 bg-white/10 rounded-full overflow-hidden mb-6">
-            <div
-              className="h-full rounded-full transition-all duration-700"
-              style={{
-                width: `${allAchievements?.length ? Math.round((earnedKeys.size / allAchievements.length) * 100) : 0}%`,
-                background: 'linear-gradient(90deg,#6366f1,#a855f7,#ec4899)',
-              }}
-            />
-          </div>
-
-          {badgeCategories.map(cat => {
-            const catBadges = (allAchievements ?? []).filter(b => b.category === cat)
-            if (!catBadges.length) return null
-            const catEarned = catBadges.filter(b => earnedKeys.has(b.key)).length
-            return (
-              <div key={cat} className="mb-8">
-                <div className="flex items-center gap-3 mb-3">
-                  <span className="text-[10px] font-bold text-zinc-500 tracking-[3px] uppercase">{cat}</span>
-                  <div className="flex-1 h-px bg-white/5" />
-                  <span className="text-[10px] text-zinc-700">{catEarned}/{catBadges.length}</span>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {catBadges.map(badge => {
-                    const earned = earnedKeys.has(badge.key)
-                    const r = RARITY_STYLE[badge.rarity ?? 'Common'] ?? RARITY_STYLE.Common
-                    return (
-                      <div
-                        key={badge.key}
-                        className="rounded-2xl p-4 flex flex-col items-center gap-2 text-center transition-all"
-                        style={{
-                          background: earned ? r.bg : '#080c14',
-                          border: `1.5px solid ${earned ? r.border : '#111827'}`,
-                          boxShadow: earned ? r.glow : 'none',
-                          opacity: earned ? 1 : 0.3,
-                          filter: earned ? 'none' : 'grayscale(1)',
-                        }}
-                      >
-                        <div className="text-3xl" style={{ filter: earned ? `drop-shadow(0 0 6px ${r.text}44)` : 'blur(6px)' }}>
-                          {earned ? badge.icon_emoji : '❓'}
-                        </div>
-                        <div className="text-[11px] font-bold leading-tight" style={{ color: earned ? r.text : '#1f2937' }}>
-                          {earned ? badge.label : '???'}
-                        </div>
-                        {earned && badge.creature && (
-                          <div className="text-[9px] uppercase tracking-widest" style={{ color: r.text + '66' }}>{badge.creature}</div>
-                        )}
-                        <div className="text-[9px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-full" style={{
-                          color: earned ? r.text + '99' : '#1f2937',
-                          background: earned ? r.text + '11' : 'transparent',
-                          border: earned ? `1px solid ${r.text}22` : 'none',
-                        }}>{badge.rarity}</div>
-                        {earned && (
-                          <div className="text-[10px] text-zinc-500 leading-relaxed">{badge.description}</div>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            )
-          })}
+          <Link
+            href="/bestiary"
+            className="shrink-0 bg-purple-500/20 border border-purple-500/30 text-purple-300 hover:bg-purple-500/30 transition-colors px-4 py-2 rounded-xl text-sm font-semibold"
+          >
+            View Bestiary →
+          </Link>
         </div>
 
         {/* Recent attempts */}

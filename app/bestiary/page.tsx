@@ -18,7 +18,13 @@ export default async function BestiaryPage() {
 
   if (!profile) redirect('/onboarding')
 
-  const isAdmin = (profile as Record<string, unknown>).is_admin === true
+  const [{ data: allBadges }, { data: userAchievements }] = await Promise.all([
+    supabase.from('achievement_definitions').select('key, label, icon_emoji, description, rarity, creature, category, lore').order('category'),
+    supabase.from('user_achievements').select('achievement_key').eq('user_id', user.id),
+  ])
+
+  const isAdmin   = (profile as Record<string, unknown>).is_admin === true
+  const earnedKeys = (userAchievements ?? []).map(a => a.achievement_key)
 
   return (
     <div className="min-h-screen bg-[#080c14]">
@@ -28,9 +34,8 @@ export default async function BestiaryPage() {
             <span className="text-amber-400">Prep</span>
             <span className="text-white">Clutch</span>
           </Link>
-          <div className="flex items-center justify-center gap-4">
-            <Link href="/challenge" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">⚡ Challenge</Link>
-            <Link href="/bestiary"  className="text-sm font-bold text-white border-b-2 border-purple-400 pb-0.5">🏅 Bestiary</Link>
+          <div className="text-center">
+            <span className="text-sm font-semibold text-zinc-400 tracking-widest uppercase">Badge Bestiary</span>
           </div>
           <div className="flex items-center gap-3 justify-end">
             {isAdmin && (
@@ -54,6 +59,8 @@ export default async function BestiaryPage() {
       <BestiaryClient
         displayName={profile.display_name}
         avatarColor={profile.avatar_color}
+        allBadges={allBadges ?? []}
+        earnedKeys={earnedKeys}
       />
     </div>
   )
