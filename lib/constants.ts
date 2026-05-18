@@ -2,7 +2,7 @@ import { Section } from '@/types/database'
 
 export const SECTION_CONFIG: Record<Section, { label: string; color: string; accent: string; bg: string; border: string; emoji: string }> = {
   verbal: {
-    label: 'Verbal Skills',
+    label: 'Verbal',
     color: 'text-amber-400',
     accent: 'amber',
     bg: 'bg-amber-500/10',
@@ -10,7 +10,7 @@ export const SECTION_CONFIG: Record<Section, { label: string; color: string; acc
     emoji: '📚',
   },
   quantitative: {
-    label: 'Quantitative Skills',
+    label: 'Quantitative',
     color: 'text-cyan-400',
     accent: 'cyan',
     bg: 'bg-cyan-500/10',
@@ -18,7 +18,7 @@ export const SECTION_CONFIG: Record<Section, { label: string; color: string; acc
     emoji: '🔢',
   },
   reading: {
-    label: 'Reading Comprehension',
+    label: 'Reading',
     color: 'text-emerald-400',
     accent: 'emerald',
     bg: 'bg-emerald-500/10',
@@ -31,10 +31,10 @@ export const SECTION_CONFIG: Record<Section, { label: string; color: string; acc
     accent: 'rose',
     bg: 'bg-rose-500/10',
     border: 'border-rose-500/30',
-    emoji: '➕',
+    emoji: '🧮',
   },
   language: {
-    label: 'Language Skills',
+    label: 'Language',
     color: 'text-violet-400',
     accent: 'violet',
     bg: 'bg-violet-500/10',

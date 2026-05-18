@@ -120,7 +120,7 @@ export default async function DashboardPage() {
               className="flex items-center gap-3 sm:w-56 bg-amber-500 hover:bg-amber-400 text-black font-bold py-3.5 px-4 rounded-2xl transition-colors group shrink-0"
             >
               <span className="text-xl">🎯</span>
-              <span>Full Practice Test</span>
+              <span>All Sections</span>
               <span className="ml-auto text-xs opacity-70 group-hover:opacity-100">50 Q</span>
             </Link>
             <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 flex-1">
@@ -130,11 +130,11 @@ export default async function DashboardPage() {
                   <Link
                     key={section}
                     href={`/quiz/${section}`}
-                    className={`flex flex-col items-center gap-1 ${cfg.bg} border ${cfg.border} text-white font-medium py-3 px-2 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.99]`}
+                    className={`flex flex-col items-center gap-1 ${cfg.bg} border ${cfg.border} text-white font-bold py-3 px-2 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.99]`}
                   >
                     <span className="text-xl">{cfg.emoji}</span>
-                    <span className="text-[11px] text-center leading-tight">{cfg.label}</span>
-                    <span className="text-[10px] text-zinc-400">10 Q</span>
+                    <span className="text-[12px] text-center leading-tight">{cfg.label}</span>
+                    <span className="text-[10px] text-zinc-400 font-normal">10 Q</span>
                   </Link>
                 )
               })}
