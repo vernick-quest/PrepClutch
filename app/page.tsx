@@ -257,12 +257,22 @@ export default async function DashboardPage() {
                     >
                       <div className="flex items-center gap-3">
                         <span className="text-xl w-8 text-center font-bold shrink-0">{rankLabel}</span>
-                        <div
-                          className="w-10 h-10 rounded-full flex items-center justify-center text-base font-black text-white shrink-0"
-                          style={{ backgroundColor: entry.avatar_color }}
-                        >
-                          {entry.display_name[0].toUpperCase()}
-                        </div>
+                        {entry.avatar_url ? (
+                          <Image
+                            src={entry.avatar_url}
+                            alt={entry.display_name}
+                            width={40}
+                            height={40}
+                            className="rounded-full shrink-0"
+                          />
+                        ) : (
+                          <div
+                            className="w-10 h-10 rounded-full flex items-center justify-center text-base font-black text-white shrink-0"
+                            style={{ backgroundColor: entry.avatar_color }}
+                          >
+                            {entry.display_name[0].toUpperCase()}
+                          </div>
+                        )}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1 flex-wrap">
                             {isAdmin && !isMe ? (
