@@ -168,9 +168,9 @@ export default async function DashboardPage() {
                   >
                     <div className="flex items-center gap-3">
                       <span className="text-xl w-8 text-center font-bold shrink-0">{rankLabel}</span>
-                      {(entry as Record<string, unknown>).avatar_url ? (
+                      {entry.avatar_url ? (
                         <Image
-                          src={(entry as Record<string, unknown>).avatar_url as string}
+                          src={entry.avatar_url}
                           alt={entry.display_name}
                           width={40}
                           height={40}
@@ -200,7 +200,7 @@ export default async function DashboardPage() {
                         {/* Section mini-bars */}
                         <div className="flex gap-1 mt-2">
                           {SECTIONS.map(section => {
-                            const score = (entry as Record<string, unknown>)[`${section}_score`] as number
+                            const score = entry[`${section}_score` as keyof typeof entry] as number
                             const cfg = SECTION_CONFIG[section]
                             return (
                               <div
@@ -279,7 +279,7 @@ export default async function DashboardPage() {
                           </div>
                           <div className="flex gap-1 mt-2">
                             {SECTIONS.map(section => {
-                              const score = (entry as Record<string, unknown>)[`${section}_score`] as number
+                              const score = entry[`${section}_score` as keyof typeof entry] as number
                               const cfg = SECTION_CONFIG[section]
                               return (
                                 <div key={section} className="flex-1" title={`${cfg.label}: ${score}%`}>
@@ -329,7 +329,7 @@ export default async function DashboardPage() {
                   </div>
                 </div>
                 {SECTIONS.map(section => {
-                  const score = (myEntry as Record<string, unknown>)[`${section}_score`] as number
+                  const score = myEntry[`${section}_score` as keyof typeof myEntry] as number
                   const cfg = SECTION_CONFIG[section]
                   return (
                     <div key={section} className={`${cfg.bg} border ${cfg.border} rounded-2xl p-4 flex items-center gap-3`}>

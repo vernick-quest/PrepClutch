@@ -48,9 +48,15 @@ export interface LeaderboardEntry {
   user_id: string
   display_name: string
   avatar_color: string
+  avatar_url: string | null
+  class_code: string
   aggregate_score: number
-  section_scores: Record<Section, number>
-  achievements: string[]
+  verbal_score: number
+  quantitative_score: number
+  reading_score: number
+  math_score: number
+  language_score: number
+  total_xp: number
 }
 
 export interface QuizAnswer {
