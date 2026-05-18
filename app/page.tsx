@@ -45,6 +45,14 @@ export default async function DashboardPage() {
     .order('aggregate_score', { ascending: false })
     .limit(50)
 
+  const { data: classRow } = await supabase
+    .from('classes')
+    .select('name')
+    .eq('code', profile.class_code)
+    .single()
+
+  const className = classRow?.name || profile.class_code
+
   const myEntry = leaderboard?.find(e => e.user_id === user.id)
   const myRank = leaderboard?.findIndex(e => e.user_id === user.id) ?? -1
   const isAdmin = (profile as Record<string, unknown>).is_admin === true
@@ -97,8 +105,8 @@ export default async function DashboardPage() {
             {myRank === 0
               ? '👑 You\'re #1 in your class!'
               : myRank > 0
-              ? `Ranked #${myRank + 1} in ${profile.class_code}`
-              : `Class: ${profile.class_code}`}
+              ? `Ranked #${myRank + 1} in ${className}`
+              : `Class: ${className}`}
           </p>
         </div>
 
@@ -140,7 +148,7 @@ export default async function DashboardPage() {
             {/* Class leaderboard */}
             <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold text-white">🏆 Class — {profile.class_code}</h2>
+              <h2 className="text-xl font-bold text-white">🏆 Class — {className}</h2>
             </div>
 
             <div className="space-y-2">
