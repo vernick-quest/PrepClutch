@@ -1,4 +1,6 @@
-create or replace view leaderboard_view as
+drop view if exists leaderboard_view;
+
+create view leaderboard_view as
 select
   p.id as user_id,
   p.display_name,
