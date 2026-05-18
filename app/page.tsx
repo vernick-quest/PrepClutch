@@ -112,7 +112,8 @@ export default async function DashboardPage() {
 
         {/* Start Practice */}
         <div>
-          <h2 className="text-xl font-bold text-white mb-3">⚡ Start Practice</h2>
+          <h2 className="text-xl font-bold text-white mb-1">⚡ Start Practice</h2>
+          <p className="text-zinc-500 text-sm mb-3">Choose a full practice run, or select an individual test section.</p>
           <div className="flex flex-col sm:flex-row gap-2">
             <Link
               href="/quiz/full"
