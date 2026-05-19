@@ -24,7 +24,7 @@ export default function ResultsPage() {
   const router = useRouter()
   const [result, setResult] = useState<StoredResult | null>(null)
   const [newAchievements, setNewAchievements] = useState<Achievement[]>([])
-  const [showBreakdown, setShowBreakdown] = useState(false)
+  const [showBreakdown, setShowBreakdown] = useState(true)
   const [visibleBadge, setVisibleBadge] = useState(0)
   const confettiFired = useRef(false)
 
@@ -234,70 +234,115 @@ export default function ResultsPage() {
           </div>
         )}
 
-        {/* Question review toggle */}
+        {/* Question review */}
         <div>
           <button
             onClick={() => setShowBreakdown(!showBreakdown)}
-            className="w-full flex items-center justify-between p-4 bg-white/3 border border-white/10 rounded-2xl hover:border-white/20 transition-colors"
+            className="w-full flex items-center justify-between p-4 bg-white/3 border border-white/10 rounded-2xl hover:border-white/20 transition-colors mb-3"
           >
-            <span className="font-medium text-white">Review Answers</span>
-            <span className="text-zinc-400">{showBreakdown ? '▲' : '▼'}</span>
+            <span className="font-bold text-white">📋 Review Answers ({questions.length})</span>
+            <span className="text-zinc-400 text-sm">{showBreakdown ? '▲ collapse' : '▼ expand'}</span>
           </button>
 
           {showBreakdown && (
-            <div className="mt-2 space-y-2">
+            <div className="space-y-3">
               {questions.map((q, i) => {
-                const a = answers[i]
-                const isCorrect  = a?.selected_index === q.correct_index
-                const qSection   = (a?.section ?? q.section) as Section
-                const benchmarkMs = SECTION_BENCHMARKS_MS[qSection] ?? 0
-                const benchmarkS  = (benchmarkMs / 1000).toFixed(0)
-                const takenS      = a ? (a.time_taken_ms / 1000).toFixed(1) : null
-                const flag        = a ? classifyTiming(isCorrect, a.time_taken_ms, qSection) : null
-                const flagInfo    = flag ? FLAG_LABELS[flag] : null
+                const a            = answers[i]
+                const isCorrect    = a?.selected_index === q.correct_index
+                const timedOut     = a?.selected_index === -1
+                const qSection     = (a?.section ?? q.section) as Section
+                const benchmarkMs  = SECTION_BENCHMARKS_MS[qSection] ?? 30000
+                const benchmarkS   = (benchmarkMs / 1000).toFixed(0)
+                const takenMs      = a?.time_taken_ms ?? 0
+                const takenS       = (takenMs / 1000).toFixed(1)
+                const difficulty   = q.difficulty ?? 2
+                const diffLabel    = difficulty === 1 ? 'Easy' : difficulty === 3 ? 'Hard' : 'Medium'
+
+                // Time color: green ≤ target, yellow ≤ 125% of target, red > 125%
+                const overRatio    = takenMs / benchmarkMs
+                const timeColor    = overRatio <= 1 ? '#10b981' : overRatio <= 1.25 ? '#f59e0b' : '#f43f5e'
+                const timeBg       = overRatio <= 1 ? '#10b98118' : overRatio <= 1.25 ? '#f59e0b18' : '#f43f5e18'
+
+                const userAnswer   = (a && a.selected_index >= 0) ? q.options[a.selected_index] : null
+                const correctAnswer = q.options[q.correct_index]
 
                 return (
                   <div
                     key={q.id}
-                    className={`rounded-2xl p-4 border ${isCorrect ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-rose-500/5 border-rose-500/20'}`}
+                    className={`rounded-2xl border overflow-hidden ${
+                      isCorrect
+                        ? 'border-emerald-500/25 bg-emerald-500/5'
+                        : 'border-rose-500/25 bg-rose-500/5'
+                    }`}
                   >
-                    <div className="flex items-start gap-2">
-                      <span className="text-lg shrink-0">{isCorrect ? '✅' : '❌'}</span>
-                      <div className="flex-1">
-                        <p className="text-sm text-zinc-300 mb-2">{q.prompt}</p>
+                    {/* ── Topline ── */}
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-4 py-3 border-b border-white/5">
+                      {/* Correct / Wrong */}
+                      <span className="text-base font-bold shrink-0">
+                        {isCorrect ? '✅ Correct' : timedOut ? '⏰ Timed Out' : '❌ Wrong'}
+                      </span>
 
-                        {/* Time vs benchmark row */}
-                        {takenS && (
-                          <div className="flex flex-wrap items-center gap-2 mb-2">
-                            <span className="text-xs text-zinc-500">
-                              Your time: <span className="text-zinc-300 font-semibold">{takenS}s</span>
-                              <span className="mx-1 text-zinc-700">|</span>
-                              Target: <span className="text-zinc-300 font-semibold">{benchmarkS}s</span>
+                      {/* Difficulty dots */}
+                      <div className="flex items-center gap-1 shrink-0">
+                        {[1, 2, 3].map(d => (
+                          <div
+                            key={d}
+                            className="w-2 h-2 rounded-full"
+                            style={{ backgroundColor: d <= difficulty ? '#f59e0b' : 'rgba(255,255,255,0.15)' }}
+                          />
+                        ))}
+                        <span className="text-xs text-zinc-500 ml-1">{diffLabel}</span>
+                      </div>
+
+                      {/* Time chip */}
+                      <div
+                        className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold shrink-0"
+                        style={{ color: timeColor, backgroundColor: timeBg }}
+                      >
+                        ⏱ {takenS}s
+                      </div>
+
+                      {/* Target time */}
+                      <span className="text-xs text-zinc-500 shrink-0">
+                        Target <span className="text-zinc-300 font-medium">{benchmarkS}s</span>
+                      </span>
+                    </div>
+
+                    {/* ── Body ── */}
+                    <div className="px-4 py-4 space-y-3">
+                      {/* Question */}
+                      <p className="text-sm text-zinc-200 leading-relaxed font-medium">{q.prompt}</p>
+
+                      {/* Answers */}
+                      <div className="space-y-1.5">
+                        {/* Your answer — always shown */}
+                        <div className="flex items-start gap-2">
+                          <span className="text-xs text-zinc-500 shrink-0 mt-0.5 w-24">Your answer:</span>
+                          {userAnswer ? (
+                            <span className={`text-xs font-medium ${isCorrect ? 'text-emerald-400' : 'text-rose-400'}`}>
+                              {userAnswer}
                             </span>
-                            {flagInfo && (
-                              <span
-                                className="text-xs font-bold px-2 py-0.5 rounded-full"
-                                style={{ color: flagInfo.color, background: flagInfo.bg }}
-                              >
-                                {flagInfo.label}: {flagInfo.message}
-                              </span>
-                            )}
-                          </div>
-                        )}
+                          ) : (
+                            <span className="text-xs text-zinc-600 italic">No answer (timed out)</span>
+                          )}
+                        </div>
 
+                        {/* Correct answer — always shown if wrong, or as confirmation if right */}
                         {!isCorrect && (
-                          <div className="space-y-1">
-                            {a?.selected_index !== undefined && a.selected_index >= 0 && (
-                              <p className="text-xs text-rose-400">Your answer: {q.options[a.selected_index]}</p>
-                            )}
-                            <p className="text-xs text-emerald-400">Correct: {q.options[q.correct_index]}</p>
-                            {q.explanation && <p className="text-xs text-zinc-400 mt-1">{q.explanation}</p>}
+                          <div className="flex items-start gap-2">
+                            <span className="text-xs text-zinc-500 shrink-0 mt-0.5 w-24">Correct answer:</span>
+                            <span className="text-xs font-medium text-emerald-400">{correctAnswer}</span>
                           </div>
-                        )}
-                        {isCorrect && q.explanation && (
-                          <p className="text-xs text-zinc-500 mt-1">{q.explanation}</p>
                         )}
                       </div>
+
+                      {/* Rationale — always shown */}
+                      {q.explanation && (
+                        <div className="pt-2 border-t border-white/5">
+                          <p className="text-xs text-zinc-500 font-semibold mb-1 uppercase tracking-wide">💡 Rationale</p>
+                          <p className="text-xs text-zinc-400 leading-relaxed">{q.explanation}</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )
