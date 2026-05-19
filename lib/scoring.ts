@@ -30,13 +30,13 @@ export function scoreQuestion(
 
   if (timeTakenMs <= benchmark) {
     const ratio      = 1 - timeTakenMs / benchmark            // 1 at t=0, 0 at t=benchmark
-    const speedBonus = Math.round(base * ratio * 10) / 10
-    const total      = Math.round((base + speedBonus) * 10) / 10
+    const speedBonus = Math.ceil(base * ratio)
+    const total      = base + speedBonus
     return { base, speedBonus, total }
   }
 
   // Over benchmark — 20% floor
-  const floor = Math.round(base * 0.2 * 10) / 10
+  const floor = Math.ceil(base * 0.2)
   return { base: floor, speedBonus: 0, total: floor }
 }
 
