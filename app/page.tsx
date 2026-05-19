@@ -353,13 +353,14 @@ export default async function DashboardPage() {
                   </div>
                 </div>
 
-                {/* Per-section cards — bar = mastery (correct / total questions in bank) */}
+                {/* Per-section cards */}
                 {SECTIONS.map(section => {
                   const score = myEntry[`${section}_score` as keyof typeof myEntry] as number
                   const cov   = coverage.get(section)
                   const cfg   = SECTION_CONFIG[section]
+                  const cpPct = Math.min(score / MAX_SECTION_XP * 100, 100)
                   const masteryPct = cov && cov.total > 0
-                    ? Math.round((cov.correct / cov.total) * 100)
+                    ? Math.min((cov.correct / cov.total) * 100, 100)
                     : 0
 
                   return (
@@ -370,22 +371,36 @@ export default async function DashboardPage() {
                           <span className="text-xl">{cfg.emoji}</span>
                           <span className={`text-xs font-semibold ${cfg.color}`}>{cfg.label}</span>
                         </div>
-                        <span className="text-xs font-bold text-white tabular-nums">{score} pts</span>
+                        <span className="text-sm font-black text-white tabular-nums">
+                          {score}
+                          <span className="text-xs font-normal text-zinc-500"> / 500 pts</span>
+                        </span>
                       </div>
 
-                      {/* Mastery bar: correct answers / total in question bank */}
+                      {/* Clutch Points bar — primary */}
+                      <div className="h-3 bg-white/10 rounded-full overflow-hidden mb-3">
+                        <div
+                          className="h-full rounded-full transition-all duration-500"
+                          style={{
+                            width: `${cpPct}%`,
+                            backgroundColor: getAccentHex(cfg.accent),
+                          }}
+                        />
+                      </div>
+
+                      {/* Mastery bar — secondary, more subtle */}
                       <div className="flex justify-between items-center mb-1">
-                        <span className="text-[10px] text-zinc-500">Mastered</span>
-                        <span className="text-[10px] text-zinc-400 tabular-nums">
+                        <span className="text-[10px] text-zinc-600">Questions mastered</span>
+                        <span className="text-[10px] text-zinc-600 tabular-nums">
                           {cov ? `${cov.correct} / ${cov.total}` : '— / —'}
                         </span>
                       </div>
-                      <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                      <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
                         <div
                           className="h-full rounded-full transition-all duration-500"
                           style={{
                             width: `${masteryPct}%`,
-                            backgroundColor: getAccentHex(cfg.accent),
+                            backgroundColor: getAccentHex(cfg.accent) + '70',
                           }}
                         />
                       </div>
