@@ -31,6 +31,10 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    // Exclude static assets AND the auth callback route.
+    // The callback must not run through session-refresh middleware because
+    // supabase.auth.getUser() can overwrite the PKCE code-verifier cookie
+    // before the client page has a chance to call exchangeCodeForSession().
+    '/((?!_next/static|_next/image|favicon.ico|auth/callback|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

@@ -3,7 +3,8 @@
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { SECTION_CONFIG, SECTIONS } from '@/lib/constants'
+import { SECTION_CONFIG, SECTIONS, SECTION_BENCHMARKS_MS } from '@/lib/constants'
+import { classifyTiming, FLAG_LABELS } from '@/lib/scoring'
 import type { Section, Question, QuizAnswer } from '@/types/database'
 import { createClient } from '@/lib/supabase/client'
 import confetti from 'canvas-confetti'
@@ -100,16 +101,16 @@ export default function ResultsPage() {
 
           <div className="flex items-center justify-around border-t border-white/10 pt-6">
             <div className="text-center">
-              <div className="text-7xl font-black text-white">{pct}%</div>
-              <div className="text-zinc-400 text-sm mt-1">{score}/{total_questions} correct</div>
+              <div className="text-7xl font-black text-white">{score}<span className="text-3xl text-zinc-500">/{total_questions}</span></div>
+              <div className="text-zinc-400 text-sm mt-1">questions correct</div>
             </div>
             <div className="text-center">
               <div className="text-5xl font-black text-amber-400">+{total_xp}</div>
-              <div className="text-zinc-400 text-sm mt-1">XP Earned</div>
+              <div className="text-zinc-400 text-sm mt-1">Clutch Points</div>
             </div>
           </div>
 
-          {/* XP bar */}
+          {/* Score bar */}
           <div className="mt-6">
             <div className="h-3 bg-white/10 rounded-full overflow-hidden">
               <div
@@ -247,7 +248,14 @@ export default function ResultsPage() {
             <div className="mt-2 space-y-2">
               {questions.map((q, i) => {
                 const a = answers[i]
-                const isCorrect = a?.selected_index === q.correct_index
+                const isCorrect  = a?.selected_index === q.correct_index
+                const qSection   = (a?.section ?? q.section) as Section
+                const benchmarkMs = SECTION_BENCHMARKS_MS[qSection] ?? 0
+                const benchmarkS  = (benchmarkMs / 1000).toFixed(0)
+                const takenS      = a ? (a.time_taken_ms / 1000).toFixed(1) : null
+                const flag        = a ? classifyTiming(isCorrect, a.time_taken_ms, qSection) : null
+                const flagInfo    = flag ? FLAG_LABELS[flag] : null
+
                 return (
                   <div
                     key={q.id}
@@ -257,6 +265,26 @@ export default function ResultsPage() {
                       <span className="text-lg shrink-0">{isCorrect ? '✅' : '❌'}</span>
                       <div className="flex-1">
                         <p className="text-sm text-zinc-300 mb-2">{q.prompt}</p>
+
+                        {/* Time vs benchmark row */}
+                        {takenS && (
+                          <div className="flex flex-wrap items-center gap-2 mb-2">
+                            <span className="text-xs text-zinc-500">
+                              Your time: <span className="text-zinc-300 font-semibold">{takenS}s</span>
+                              <span className="mx-1 text-zinc-700">|</span>
+                              Target: <span className="text-zinc-300 font-semibold">{benchmarkS}s</span>
+                            </span>
+                            {flagInfo && (
+                              <span
+                                className="text-xs font-bold px-2 py-0.5 rounded-full"
+                                style={{ color: flagInfo.color, background: flagInfo.bg }}
+                              >
+                                {flagInfo.label}: {flagInfo.message}
+                              </span>
+                            )}
+                          </div>
+                        )}
+
                         {!isCorrect && (
                           <div className="space-y-1">
                             {a?.selected_index !== undefined && a.selected_index >= 0 && (
@@ -266,8 +294,10 @@ export default function ResultsPage() {
                             {q.explanation && <p className="text-xs text-zinc-400 mt-1">{q.explanation}</p>}
                           </div>
                         )}
+                        {isCorrect && q.explanation && (
+                          <p className="text-xs text-zinc-500 mt-1">{q.explanation}</p>
+                        )}
                       </div>
-                      <span className="text-xs text-zinc-500 shrink-0">{a ? `${Math.round(a.time_taken_ms / 1000)}s` : ''}</span>
                     </div>
                   </div>
                 )

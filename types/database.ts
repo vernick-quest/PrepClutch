@@ -13,6 +13,7 @@ export interface Question {
   section: Section
   prompt: string
   passage: string | null
+  passage_id: string | null
   options: string[]
   correct_index: number
   difficulty: number
@@ -65,6 +66,16 @@ export interface QuizAnswer {
   correct_index: number
   time_taken_ms: number
   xp_earned: number
+  section: string
+}
+
+export interface UserQuestionHistory {
+  user_id: string
+  question_id: string
+  last_answered_at: string
+  times_seen: number
+  times_correct: number
+  times_wrong: number
 }
 
 export interface QuizResult {

@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { SECTION_CONFIG, SECTIONS } from '@/lib/constants'
+import { SECTION_CONFIG, SECTIONS, MAX_SECTION_XP } from '@/lib/constants'
 import Link from 'next/link'
 import Image from 'next/image'
 import Footer from '@/components/ui/Footer'
@@ -52,6 +52,15 @@ export default async function DashboardPage() {
     .single()
 
   const className = classRow?.name || profile.class_code
+
+  const { data: coverageRaw } = await supabase
+    .rpc('get_section_coverage', { p_user_id: user.id })
+
+  const coverage = new Map<string, { correct: number; seen: number; total: number }>(
+    (coverageRaw ?? []).map((r: { section: string; correct: number; seen: number; total: number }) =>
+      [r.section, { correct: r.correct ?? r.seen ?? 0, seen: r.seen ?? 0, total: r.total ?? 0 }]
+    )
+  )
 
   const myEntry = leaderboard?.find(e => e.user_id === user.id)
   const myRank = leaderboard?.findIndex(e => e.user_id === user.id) ?? -1
@@ -186,14 +195,14 @@ export default async function DashboardPage() {
                       )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1 flex-wrap">
-                          {isAdmin && !isMe ? (
-                            <Link href={`/profile/${entry.user_id}`} className="font-semibold text-white hover:text-amber-400 transition-colors">
+                          {isMe ? (
+                            <Link href="/profile" className="font-semibold text-amber-400 hover:text-amber-300 transition-colors">
                               {entry.display_name}
                             </Link>
                           ) : (
-                            <span className={`font-semibold ${isMe ? 'text-amber-400' : 'text-white'}`}>
+                            <Link href={`/profile/${entry.user_id}`} className="font-semibold text-white hover:text-amber-400 transition-colors">
                               {entry.display_name}
-                            </span>
+                            </Link>
                           )}
                           {isMe && <span className="text-xs text-amber-500/70">(you)</span>}
                         </div>
@@ -206,13 +215,13 @@ export default async function DashboardPage() {
                               <div
                                 key={section}
                                 className="flex-1"
-                                title={`${cfg.label}: ${score}%`}
+                                title={`${cfg.label}: ${score} pts`}
                               >
                                 <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
                                   <div
                                     className="h-full rounded-full"
                                     style={{
-                                      width: `${score}%`,
+                                      width: `${Math.min(score / MAX_SECTION_XP * 100, 100)}%`,
                                       backgroundColor: score > 0 ? getAccentHex(cfg.accent) : 'transparent',
                                     }}
                                   />
@@ -223,8 +232,7 @@ export default async function DashboardPage() {
                         </div>
                       </div>
                       <div className="text-right shrink-0">
-                        <div className="text-xl font-black text-white">{entry.aggregate_score}%</div>
-                        <div className="text-xs text-zinc-500">{entry.total_xp} XP</div>
+                        <div className="text-xl font-black text-white">{entry.aggregate_score} <span className="text-sm font-normal text-zinc-500">pts</span></div>
                       </div>
                     </div>
                   </div>
@@ -275,14 +283,14 @@ export default async function DashboardPage() {
                         )}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1 flex-wrap">
-                            {isAdmin && !isMe ? (
-                              <Link href={`/profile/${entry.user_id}`} className="font-semibold text-white hover:text-amber-400 transition-colors">
+                            {isMe ? (
+                              <Link href="/profile" className="font-semibold text-amber-400 hover:text-amber-300 transition-colors">
                                 {entry.display_name}
                               </Link>
                             ) : (
-                              <span className={`font-semibold ${isMe ? 'text-amber-400' : 'text-white'}`}>
+                              <Link href={`/profile/${entry.user_id}`} className="font-semibold text-white hover:text-amber-400 transition-colors">
                                 {entry.display_name}
-                              </span>
+                              </Link>
                             )}
                             {isMe && <span className="text-xs text-amber-500/70">(you)</span>}
                             <span className="text-xs text-zinc-600 ml-1">{entry.class_code}</span>
@@ -292,12 +300,12 @@ export default async function DashboardPage() {
                               const score = entry[`${section}_score` as keyof typeof entry] as number
                               const cfg = SECTION_CONFIG[section]
                               return (
-                                <div key={section} className="flex-1" title={`${cfg.label}: ${score}%`}>
+                                <div key={section} className="flex-1" title={`${cfg.label}: ${score} pts`}>
                                   <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
                                     <div
                                       className="h-full rounded-full"
                                       style={{
-                                        width: `${score}%`,
+                                        width: `${Math.min(score / MAX_SECTION_XP * 100, 100)}%`,
                                         backgroundColor: score > 0 ? getAccentHex(cfg.accent) : 'transparent',
                                       }}
                                     />
@@ -308,8 +316,7 @@ export default async function DashboardPage() {
                           </div>
                         </div>
                         <div className="text-right shrink-0">
-                          <div className="text-xl font-black text-white">{entry.aggregate_score}%</div>
-                          <div className="text-xs text-zinc-500">{entry.total_xp} XP</div>
+                          <div className="text-xl font-black text-white">{entry.aggregate_score} <span className="text-sm font-normal text-zinc-500">pts</span></div>
                         </div>
                       </div>
                     </div>
@@ -329,29 +336,58 @@ export default async function DashboardPage() {
             <h2 className="text-xl font-bold text-white">📊 Your Progress</h2>
             {myEntry ? (
               <>
-                <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-4">
-                  <div className="text-3xl font-black text-amber-400 w-16 shrink-0">{myEntry.aggregate_score}%</div>
-                  <div className="flex-1">
-                    <div className="text-xs text-zinc-400 mb-1.5">Overall Score</div>
-                    <div className="h-2.5 bg-white/10 rounded-full overflow-hidden">
-                      <div className="h-full rounded-full bg-amber-500" style={{ width: `${myEntry.aggregate_score}%` }} />
-                    </div>
+                {/* Overall Clutch Points card — no fixed width so large numbers don't clip */}
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs text-zinc-400">Overall Clutch Points</span>
+                    <span className="text-2xl font-black text-amber-400 tabular-nums">
+                      {myEntry.aggregate_score}
+                      <span className="text-sm font-normal text-zinc-500 ml-1">pts</span>
+                    </span>
+                  </div>
+                  <div className="h-2.5 bg-white/10 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-amber-500"
+                      style={{ width: `${Math.min(myEntry.aggregate_score / (MAX_SECTION_XP * SECTIONS.length) * 100, 100)}%` }}
+                    />
                   </div>
                 </div>
+
+                {/* Per-section cards — bar = mastery (correct / total questions in bank) */}
                 {SECTIONS.map(section => {
                   const score = myEntry[`${section}_score` as keyof typeof myEntry] as number
-                  const cfg = SECTION_CONFIG[section]
+                  const cov   = coverage.get(section)
+                  const cfg   = SECTION_CONFIG[section]
+                  const masteryPct = cov && cov.total > 0
+                    ? Math.round((cov.correct / cov.total) * 100)
+                    : 0
+
                   return (
-                    <div key={section} className={`${cfg.bg} border ${cfg.border} rounded-2xl p-4 flex items-center gap-3`}>
-                      <span className="text-2xl shrink-0">{cfg.emoji}</span>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-center mb-1.5">
+                    <div key={section} className={`${cfg.bg} border ${cfg.border} rounded-2xl p-4`}>
+                      {/* Header row */}
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl">{cfg.emoji}</span>
                           <span className={`text-xs font-semibold ${cfg.color}`}>{cfg.label}</span>
-                          <span className="text-xs font-bold text-white">{score}%</span>
                         </div>
-                        <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                          <div className="h-full rounded-full" style={{ width: `${score}%`, backgroundColor: getAccentHex(cfg.accent) }} />
-                        </div>
+                        <span className="text-xs font-bold text-white tabular-nums">{score} pts</span>
+                      </div>
+
+                      {/* Mastery bar: correct answers / total in question bank */}
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-[10px] text-zinc-500">Mastered</span>
+                        <span className="text-[10px] text-zinc-400 tabular-nums">
+                          {cov ? `${cov.correct} / ${cov.total}` : '— / —'}
+                        </span>
+                      </div>
+                      <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-500"
+                          style={{
+                            width: `${masteryPct}%`,
+                            backgroundColor: getAccentHex(cfg.accent),
+                          }}
+                        />
                       </div>
                     </div>
                   )

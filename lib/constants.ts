@@ -52,21 +52,17 @@ export const SECTIONS: Section[] = ['verbal', 'quantitative', 'reading', 'math',
 
 export const QUESTION_TIME_LIMIT_S = 60
 
-// New difficulty-based scoring (replaces flat XP_PER_CORRECT)
+// Difficulty base points — difficulty 1=Easy, 2=Medium, 3=Hard
 export const DIFFICULTY_BASE_POINTS: Record<string, number> = {
   Easy: 10, Medium: 20, Hard: 35,
 }
-export const DIFFICULTY_TIME_WEIGHT: Record<string, number> = {
-  Easy: 1, Medium: 2, Hard: 3,
+// Per-section time benchmarks (ms) derived from official HSPT timing
+export const SECTION_BENCHMARKS_MS: Record<string, number> = {
+  verbal: 16_000, quantitative: 34_000, reading: 24_000, math: 42_000, language: 25_000,
 }
-// Ideal seconds per question — keyed by badge section name (Verbal/Quantitative/Reading/Mathematics/Language)
-export const IDEAL_TIME: Record<string, Record<string, number>> = {
-  Verbal:       { Easy: 10, Medium: 16, Hard: 25 },
-  Quantitative: { Easy: 20, Medium: 34, Hard: 55 },
-  Reading:      { Easy: 18, Medium: 28, Hard: 45 },
-  Mathematics:  { Easy: 25, Medium: 42, Hard: 70 },
-  Language:     { Easy: 15, Medium: 25, Hard: 40 },
-}
+// Max achievable XP per 10-question section attempt (used for leaderboard bar normalization)
+// 2×base at 0ms * 10 questions worst-case upper bound ≈ 2×35×10 = 700; use 500 as practical cap
+export const MAX_SECTION_XP = 500
 // Maps PrepClutch section names → badge section names
 export const SECTION_TO_BADGE: Record<string, string> = {
   verbal: 'Verbal', quantitative: 'Quantitative',
@@ -74,3 +70,6 @@ export const SECTION_TO_BADGE: Record<string, string> = {
 }
 export const DIFF_NAME: Record<number, string> = { 1: 'Easy', 2: 'Medium', 3: 'Hard' }
 export const MAX_BASE_SCORE = 215 // 3×10 + 4×20 + 3×35
+// Max questions recycled from "previously correct" per session before pool is exhausted
+export const MAX_CORRECT_RECYCLED = 1
+export const QUESTIONS_PER_SESSION = 10

@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
-import { SECTION_CONFIG, SECTIONS } from '@/lib/constants'
+import { SECTION_CONFIG, SECTIONS, MAX_SECTION_XP } from '@/lib/constants'
 import Link from 'next/link'
 import Image from 'next/image'
 import Footer from '@/components/ui/Footer'
@@ -24,17 +24,13 @@ const RARITY_STYLE: Record<string, { border: string; bg: string; text: string; g
   Mythic:    { border: '#9333ea99', bg: '#0e0018', text: '#e879f9', glow: '0 0 48px #a855f777' },
 }
 
-export default async function AdminProfilePage({ params }: { params: Promise<{ id: string }> }) {
+export default async function PublicProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // Only admins can view other profiles
-  const { data: viewerProfile } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single()
-  if (!(viewerProfile as Record<string, unknown>)?.is_admin) redirect('/')
-
-  // Redirect to own profile page
+  // Redirect to own profile page which has extra controls
   if (id === user.id) redirect('/profile')
 
   const { data: profile } = await supabase.from('profiles').select('*').eq('id', id).single()
@@ -63,18 +59,17 @@ export default async function AdminProfilePage({ params }: { params: Promise<{ i
     .eq('user_id', id)
     .single()
 
-  const totalXP = attempts?.reduce((s, a) => s + (a.total_xp ?? 0), 0) ?? 0
+  const { data: coverageRaw } = await supabase
+    .rpc('get_section_coverage', { p_user_id: id })
+
+  const coverage = new Map<string, { correct: number; seen: number; total: number }>(
+    (coverageRaw ?? []).map((r: { section: string; correct: number; seen: number; total: number }) =>
+      [r.section, { correct: r.correct ?? r.seen ?? 0, seen: r.seen ?? 0, total: r.total ?? 0 }]
+    )
+  )
+
   const totalAttempts = attempts?.length ?? 0
   const earnedKeys = new Set(userAchievements?.map(a => a.achievement_key) ?? [])
-
-  const sectionBests: Record<Section, number> = {} as Record<Section, number>
-  for (const section of SECTIONS) {
-    const sAttempts = attempts?.filter(a => a.section === section) ?? []
-    sectionBests[section] = sAttempts.length > 0
-      ? Math.max(...sAttempts.map(a => Math.round((a.score / a.total_questions) * 100)))
-      : 0
-  }
-
   const displayAvatarUrl = (profile as Record<string, unknown>).avatar_url as string | null
   const badgeCategories = ['First Completion', 'Perfect Score', 'Speed', 'Combo', 'Milestone']
 
@@ -83,10 +78,7 @@ export default async function AdminProfilePage({ params }: { params: Promise<{ i
       <nav className="border-b border-white/5 sticky top-0 z-50 bg-[#0a0a0f]/80 backdrop-blur-sm">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/" className="text-zinc-400 hover:text-white transition-colors text-sm">← Dashboard</Link>
-          <div className="flex items-center gap-2">
-            <span className="text-xs bg-violet-500/20 border border-violet-500/30 text-violet-400 px-2 py-0.5 rounded-full font-mono">ADMIN VIEW</span>
-            <h1 className="text-lg font-bold text-white">{profile.display_name}</h1>
-          </div>
+          <h1 className="text-lg font-bold text-white">{profile.display_name}</h1>
           <div />
         </div>
       </nav>
@@ -108,16 +100,12 @@ export default async function AdminProfilePage({ params }: { params: Promise<{ i
             <p className="text-zinc-400 mt-1 font-mono text-sm">Class: <span className="text-amber-400 font-bold tracking-widest">{profile.class_code}</span></p>
             <div className="flex flex-wrap gap-3 mt-4 justify-center sm:justify-start">
               <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-2 text-center">
-                <div className="text-2xl font-black text-amber-400">{totalXP}</div>
-                <div className="text-xs text-zinc-400">Total XP</div>
+                <div className="text-2xl font-black text-amber-400">{leaderboardEntry?.aggregate_score ?? 0}</div>
+                <div className="text-xs text-zinc-400">Clutch Points</div>
               </div>
               <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-center">
                 <div className="text-2xl font-black text-white">{totalAttempts}</div>
                 <div className="text-xs text-zinc-400">Quizzes Taken</div>
-              </div>
-              <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-center">
-                <div className="text-2xl font-black text-white">{leaderboardEntry?.aggregate_score ?? 0}%</div>
-                <div className="text-xs text-zinc-400">Overall Score</div>
               </div>
               <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-center">
                 <div className="text-2xl font-black text-white">{earnedKeys.size}</div>
@@ -133,7 +121,8 @@ export default async function AdminProfilePage({ params }: { params: Promise<{ i
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {SECTIONS.map(section => {
               const cfg = SECTION_CONFIG[section]
-              const best = sectionBests[section]
+              const sectionScore = (leaderboardEntry?.[`${section}_score` as keyof typeof leaderboardEntry] as number) ?? 0
+              const cov = coverage.get(section)
               const sectionAttempts = attempts?.filter(a => a.section === section) ?? []
               return (
                 <div key={section} className={`${cfg.bg} border ${cfg.border} rounded-2xl p-5`}>
@@ -141,11 +130,23 @@ export default async function AdminProfilePage({ params }: { params: Promise<{ i
                     <span className="text-xl">{cfg.emoji}</span>
                     <span className={`font-semibold ${cfg.color}`}>{cfg.label}</span>
                   </div>
-                  <div className="text-4xl font-black text-white mb-2">{best}%</div>
+                  <div className="text-4xl font-black text-white mb-1">{sectionScore} <span className="text-sm font-normal text-zinc-500">pts</span></div>
                   <div className="h-2 bg-white/10 rounded-full overflow-hidden mb-2">
-                    <div className="h-full rounded-full" style={{ width: `${best}%`, backgroundColor: getAccentHex(cfg.accent) }} />
+                    <div className="h-full rounded-full" style={{ width: `${Math.min(sectionScore / MAX_SECTION_XP * 100, 100)}%`, backgroundColor: getAccentHex(cfg.accent) }} />
                   </div>
-                  <div className="text-xs text-zinc-400">{sectionAttempts.length} attempt{sectionAttempts.length !== 1 ? 's' : ''}</div>
+                  {cov ? (
+                    <div className="mt-3 pt-3 border-t border-white/5">
+                      <div className="flex items-center justify-between text-xs text-zinc-500 mb-1">
+                        <span>Mastered</span>
+                        <span className="text-zinc-400">{cov.correct}/{cov.total} correct</span>
+                      </div>
+                      <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                        <div className="h-full rounded-full" style={{ width: `${cov.total > 0 ? Math.round(cov.correct / cov.total * 100) : 0}%`, backgroundColor: getAccentHex(cfg.accent), opacity: 0.5 }} />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-xs text-zinc-500">{sectionAttempts.length} attempt{sectionAttempts.length !== 1 ? 's' : ''}</div>
+                  )}
                 </div>
               )
             })}
@@ -208,8 +209,8 @@ export default async function AdminProfilePage({ params }: { params: Promise<{ i
                       <div className="text-xs text-zinc-500">{new Date(attempt.completed_at!).toLocaleDateString()} · {attempt.total_questions} Q</div>
                     </div>
                     <div className="text-right">
-                      <div className={`text-lg font-bold ${pct >= 80 ? 'text-emerald-400' : pct >= 60 ? 'text-amber-400' : 'text-rose-400'}`}>{pct}%</div>
-                      <div className="text-xs text-amber-500">+{attempt.total_xp} XP</div>
+                      <div className={`text-lg font-bold ${pct >= 80 ? 'text-emerald-400' : pct >= 60 ? 'text-amber-400' : 'text-rose-400'}`}>{attempt.score}/{attempt.total_questions}</div>
+                      <div className="text-xs text-amber-500">+{attempt.total_xp} CP</div>
                     </div>
                   </div>
                 )
