@@ -26,6 +26,8 @@ export default function ResultsPage() {
   const [newAchievements, setNewAchievements] = useState<Achievement[]>([])
   const [showBreakdown, setShowBreakdown] = useState(true)
   const [visibleBadge, setVisibleBadge] = useState(0)
+  const [isNewBest, setIsNewBest] = useState(false)
+  const [previousBest, setPreviousBest] = useState<number | null>(null)
   const confettiFired = useRef(false)
 
   function fireConfetti() {
@@ -45,6 +47,22 @@ export default function ResultsPage() {
     const supabase = createClient()
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return
+
+      // Check if this run is a new personal best (only relevant for single sections)
+      if (parsed.section !== 'full') {
+        const { data: bestRows } = await supabase
+          .from('quiz_attempts')
+          .select('total_xp')
+          .eq('user_id', user.id)
+          .eq('section', parsed.section)
+          .order('total_xp', { ascending: false })
+          .limit(1)
+        const dbBest = bestRows?.[0]?.total_xp ?? 0
+        setPreviousBest(dbBest)
+        // Current attempt is already saved; if this run's score equals the DB max it IS the new best
+        setIsNewBest(parsed.total_xp >= dbBest)
+      }
+
       const { data } = await supabase
         .from('user_achievements')
         .select('achievement_key, achievement_definitions(icon_emoji, label, description, rarity, creature, lore)')
@@ -104,10 +122,21 @@ export default function ResultsPage() {
               <div className="text-7xl font-black text-white">{score}<span className="text-3xl text-zinc-500">/{total_questions}</span></div>
               <div className="text-zinc-400 text-sm mt-1">questions correct</div>
             </div>
-            <div className="text-center">
-              <div className="text-5xl font-black text-amber-400">+{total_xp}</div>
-              <div className="text-zinc-400 text-sm mt-1">Clutch Points</div>
-            </div>
+            {/* Only show Clutch Points if this is a single-section run AND it's a new personal best */}
+            {section !== 'full' && isNewBest && (
+              <div className="text-center">
+                <div className="text-5xl font-black text-amber-400">+{total_xp}</div>
+                <div className="text-amber-500/70 text-xs font-semibold mt-1 uppercase tracking-wide">🏆 New Personal Best</div>
+                <div className="text-zinc-500 text-xs mt-0.5">Clutch Points</div>
+              </div>
+            )}
+            {section !== 'full' && !isNewBest && previousBest !== null && (
+              <div className="text-center">
+                <div className="text-3xl font-black text-zinc-600">{total_xp}</div>
+                <div className="text-zinc-600 text-xs mt-1">pts this run</div>
+                <div className="text-zinc-500 text-xs mt-0.5">Best: <span className="text-zinc-400 font-semibold">{previousBest} pts</span></div>
+              </div>
+            )}
           </div>
 
           {/* Score bar */}
