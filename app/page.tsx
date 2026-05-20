@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { SECTION_CONFIG, SECTIONS, MAX_SECTION_XP } from '@/lib/constants'
+import { SECTION_CONFIG, SECTIONS } from '@/lib/constants'
 import Link from 'next/link'
 import Image from 'next/image'
 import Footer from '@/components/ui/Footer'
@@ -53,14 +53,16 @@ export default async function DashboardPage() {
 
   const className = classRow?.name || profile.class_code
 
-  const { data: coverageRaw } = await supabase
-    .rpc('get_section_coverage', { p_user_id: user.id })
+  const { data: masteryRaw } = await supabase
+    .rpc('get_section_mastery', { p_user_id: user.id })
 
-  const coverage = new Map<string, { correct: number; seen: number; total: number }>(
-    (coverageRaw ?? []).map((r: { section: string; correct: number; seen: number; total: number }) =>
-      [r.section, { correct: r.correct ?? r.seen ?? 0, seen: r.seen ?? 0, total: r.total ?? 0 }]
-    )
+  type MasteryRow = { section: string; score: number; max_score: number; correct: number; seen: number; total: number }
+  const mastery = new Map<string, MasteryRow>(
+    (masteryRaw ?? []).map((r: MasteryRow) => [r.section, r])
   )
+
+  // Total possible Clutch Points across all sections (from question bank)
+  const totalMaxScore = Array.from(mastery.values()).reduce((s, r) => s + (r.max_score ?? 0), 0)
 
   const myEntry = leaderboard?.find(e => e.user_id === user.id)
   const myRank = leaderboard?.findIndex(e => e.user_id === user.id) ?? -1
@@ -206,22 +208,23 @@ export default async function DashboardPage() {
                           )}
                           {isMe && <span className="text-xs text-amber-500/70">(you)</span>}
                         </div>
-                        {/* Section mini-bars */}
+                        {/* Section mini-bars — normalized to each section's max possible */}
                         <div className="flex gap-1 mt-2">
                           {SECTIONS.map(section => {
-                            const score = entry[`${section}_score` as keyof typeof entry] as number
-                            const cfg = SECTION_CONFIG[section]
+                            const score    = entry[`${section}_score` as keyof typeof entry] as number
+                            const maxScore = mastery.get(section)?.max_score ?? 1
+                            const cfg      = SECTION_CONFIG[section]
                             return (
                               <div
                                 key={section}
                                 className="flex-1"
-                                title={`${cfg.label}: ${score} pts`}
+                                title={`${cfg.label}: ${score} / ${maxScore} pts`}
                               >
                                 <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
                                   <div
                                     className="h-full rounded-full"
                                     style={{
-                                      width: `${Math.min(score / MAX_SECTION_XP * 100, 100)}%`,
+                                      width: `${Math.min(score / maxScore * 100, 100)}%`,
                                       backgroundColor: score > 0 ? getAccentHex(cfg.accent) : 'transparent',
                                     }}
                                   />
@@ -297,15 +300,16 @@ export default async function DashboardPage() {
                           </div>
                           <div className="flex gap-1 mt-2">
                             {SECTIONS.map(section => {
-                              const score = entry[`${section}_score` as keyof typeof entry] as number
-                              const cfg = SECTION_CONFIG[section]
+                              const score    = entry[`${section}_score` as keyof typeof entry] as number
+                              const maxScore = mastery.get(section)?.max_score ?? 1
+                              const cfg      = SECTION_CONFIG[section]
                               return (
-                                <div key={section} className="flex-1" title={`${cfg.label}: ${score} pts`}>
+                                <div key={section} className="flex-1" title={`${cfg.label}: ${score} / ${maxScore} pts`}>
                                   <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
                                     <div
                                       className="h-full rounded-full"
                                       style={{
-                                        width: `${Math.min(score / MAX_SECTION_XP * 100, 100)}%`,
+                                        width: `${Math.min(score / maxScore * 100, 100)}%`,
                                         backgroundColor: score > 0 ? getAccentHex(cfg.accent) : 'transparent',
                                       }}
                                     />
@@ -336,32 +340,30 @@ export default async function DashboardPage() {
             <h2 className="text-xl font-bold text-white">📊 Your Progress</h2>
             {myEntry ? (
               <>
-                {/* Overall Clutch Points card — no fixed width so large numbers don't clip */}
+                {/* Overall Clutch Points card */}
                 <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs text-zinc-400">Overall Clutch Points</span>
                     <span className="text-2xl font-black text-amber-400 tabular-nums">
                       {myEntry.aggregate_score}
-                      <span className="text-sm font-normal text-zinc-500 ml-1">pts</span>
+                      <span className="text-sm font-normal text-zinc-500 ml-1">/ {totalMaxScore} pts</span>
                     </span>
                   </div>
                   <div className="h-2.5 bg-white/10 rounded-full overflow-hidden">
                     <div
                       className="h-full rounded-full bg-amber-500"
-                      style={{ width: `${Math.min(myEntry.aggregate_score / (MAX_SECTION_XP * SECTIONS.length) * 100, 100)}%` }}
+                      style={{ width: `${totalMaxScore > 0 ? Math.min(myEntry.aggregate_score / totalMaxScore * 100, 100) : 0}%` }}
                     />
                   </div>
                 </div>
 
                 {/* Per-section cards */}
                 {SECTIONS.map(section => {
-                  const score = myEntry[`${section}_score` as keyof typeof myEntry] as number
-                  const cov   = coverage.get(section)
-                  const cfg   = SECTION_CONFIG[section]
-                  const cpPct = Math.min(score / MAX_SECTION_XP * 100, 100)
-                  const masteryPct = cov && cov.total > 0
-                    ? Math.min((cov.correct / cov.total) * 100, 100)
-                    : 0
+                  const score    = myEntry[`${section}_score` as keyof typeof myEntry] as number
+                  const m        = mastery.get(section)
+                  const cfg      = SECTION_CONFIG[section]
+                  const maxScore = m?.max_score ?? 0
+                  const cpPct    = maxScore > 0 ? Math.min(score / maxScore * 100, 100) : 0
 
                   return (
                     <div key={section} className={`${cfg.bg} border ${cfg.border} rounded-2xl p-4`}>
@@ -373,36 +375,24 @@ export default async function DashboardPage() {
                         </div>
                         <span className="text-sm font-black text-white tabular-nums">
                           {score}
-                          <span className="text-xs font-normal text-zinc-500"> / 500 pts</span>
+                          <span className="text-xs font-normal text-zinc-500"> / {maxScore} pts</span>
                         </span>
                       </div>
 
-                      {/* Clutch Points bar — primary */}
+                      {/* Clutch Points bar — fills to section max from question bank */}
                       <div className="h-3 bg-white/10 rounded-full overflow-hidden mb-3">
                         <div
                           className="h-full rounded-full transition-all duration-500"
-                          style={{
-                            width: `${cpPct}%`,
-                            backgroundColor: getAccentHex(cfg.accent),
-                          }}
+                          style={{ width: `${cpPct}%`, backgroundColor: getAccentHex(cfg.accent) }}
                         />
                       </div>
 
-                      {/* Mastery bar — secondary, more subtle */}
-                      <div className="flex justify-between items-center mb-1">
+                      {/* Questions mastered count — subtle secondary */}
+                      <div className="flex justify-between items-center">
                         <span className="text-[10px] text-zinc-600">Questions mastered</span>
                         <span className="text-[10px] text-zinc-600 tabular-nums">
-                          {cov ? `${cov.correct} / ${cov.total}` : '— / —'}
+                          {m ? `${m.correct} / ${m.total}` : '— / —'}
                         </span>
-                      </div>
-                      <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all duration-500"
-                          style={{
-                            width: `${masteryPct}%`,
-                            backgroundColor: getAccentHex(cfg.accent) + '70',
-                          }}
-                        />
                       </div>
                     </div>
                   )

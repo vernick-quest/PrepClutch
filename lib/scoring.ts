@@ -8,36 +8,29 @@ export interface QuestionScore {
 }
 
 /**
- * Score a single question answer using the time-weighted prorated formula.
+ * Score a single question answer.
  *
- * - Incorrect / timeout  → 0
- * - Correct ≤ benchmark  → base + base*(1 - t/benchmark)  [linear, max 2×base at t=0]
- * - Correct > benchmark  → base * 0.2  [floor for slow-but-correct]
+ * Scoring is base-points only — correct answers always earn the full base
+ * regardless of time taken. Speed data is retained for results-page feedback
+ * (time chip, timing flags) but does not affect the score.
+ *
+ * - Incorrect / timeout → 0
+ * - Correct             → base (Easy=10, Medium=20, Hard=35)
+ *
+ * timeTakenMs and section are kept in the signature so call-sites don't need
+ * to change, and so classifyTiming() can still use them for feedback.
  */
 export function scoreQuestion(
   correct:     boolean,
   difficulty:  number,
-  timeTakenMs: number,
-  section:     Section | string,
+  timeTakenMs: number,   // used only for classifyTiming feedback, not scoring
+  section:     Section | string, // same
 ): QuestionScore {
   if (!correct) return { base: 0, speedBonus: 0, total: 0 }
 
-  const diffName  = DIFF_NAME[difficulty] ?? 'Medium'
-  const base      = DIFFICULTY_BASE_POINTS[diffName] ?? 20
-  const benchmark = SECTION_BENCHMARKS_MS[section as Section]
-
-  if (!benchmark) return { base, speedBonus: 0, total: base }
-
-  if (timeTakenMs <= benchmark) {
-    const ratio      = 1 - timeTakenMs / benchmark            // 1 at t=0, 0 at t=benchmark
-    const speedBonus = Math.ceil(base * ratio)
-    const total      = base + speedBonus
-    return { base, speedBonus, total }
-  }
-
-  // Over benchmark — 20% floor
-  const floor = Math.ceil(base * 0.2)
-  return { base: floor, speedBonus: 0, total: floor }
+  const diffName = DIFF_NAME[difficulty] ?? 'Medium'
+  const base     = DIFFICULTY_BASE_POINTS[diffName] ?? 20
+  return { base, speedBonus: 0, total: base }
 }
 
 // ── Post-exam timing flags ────────────────────────────────────────────────────

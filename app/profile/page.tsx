@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { SECTION_CONFIG, SECTIONS, MAX_SECTION_XP } from '@/lib/constants'
+import { SECTION_CONFIG, SECTIONS } from '@/lib/constants'
 import Link from 'next/link'
 import Image from 'next/image'
 import Footer from '@/components/ui/Footer'
@@ -56,13 +56,12 @@ export default async function ProfilePage() {
   const totalAttempts = attempts?.length ?? 0
   const earnedKeys = new Set(userAchievements?.map(a => a.achievement_key) ?? [])
 
-  const { data: coverageRaw } = await supabase
-    .rpc('get_section_coverage', { p_user_id: user.id })
+  const { data: masteryRaw } = await supabase
+    .rpc('get_section_mastery', { p_user_id: user.id })
 
-  const coverage = new Map<string, { correct: number; seen: number; total: number }>(
-    (coverageRaw ?? []).map((r: { section: string; correct: number; seen: number; total: number }) =>
-      [r.section, { correct: r.correct ?? r.seen ?? 0, seen: r.seen ?? 0, total: r.total ?? 0 }]
-    )
+  type MasteryRow = { section: string; score: number; max_score: number; correct: number; seen: number; total: number }
+  const mastery = new Map<string, MasteryRow>(
+    (masteryRaw ?? []).map((r: MasteryRow) => [r.section, r])
   )
 
   const googleAvatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.picture || null
@@ -145,41 +144,30 @@ export default async function ProfilePage() {
           <h3 className="text-xl font-bold text-white mb-4">📊 Performance by Section</h3>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {SECTIONS.map(section => {
-              const cfg = SECTION_CONFIG[section]
-              const sectionScore = (leaderboardEntry?.[`${section}_score` as keyof typeof leaderboardEntry] as number) ?? 0
-              const cov = coverage.get(section)
-              const sectionAttempts = attempts?.filter(a => a.section === section) ?? []
+              const cfg          = SECTION_CONFIG[section]
+              const m            = mastery.get(section)
+              const sectionScore = m?.score ?? 0
+              const maxScore     = m?.max_score ?? 0
+              const cpPct        = maxScore > 0 ? Math.min(sectionScore / maxScore * 100, 100) : 0
               return (
                 <div key={section} className={`${cfg.bg} border ${cfg.border} rounded-2xl p-5`}>
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-xl">{cfg.emoji}</span>
                     <span className={`font-semibold ${cfg.color}`}>{cfg.label}</span>
                   </div>
-                  <div className="text-4xl font-black text-white mb-1">{sectionScore} <span className="text-sm font-normal text-zinc-500">pts</span></div>
-                  <div className="h-2 bg-white/10 rounded-full overflow-hidden mb-2">
-                    <div className="h-full rounded-full" style={{ width: `${Math.min(sectionScore / MAX_SECTION_XP * 100, 100)}%`, backgroundColor: getAccentHex(cfg.accent) }} />
+                  <div className="text-3xl font-black text-white mb-0.5">
+                    {sectionScore}
+                    <span className="text-sm font-normal text-zinc-500"> / {maxScore} pts</span>
                   </div>
-                  {cov ? (
-                    <div className="mt-2 pt-2 border-t border-white/5">
-                      <div className="flex items-center justify-between text-xs text-zinc-500 mb-1">
-                        <span>Mastered</span>
-                        <span>{cov.correct}/{cov.total} correct</span>
-                      </div>
-                      <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-                        <div className="h-full rounded-full" style={{ width: `${cov.total > 0 ? Math.round(cov.correct / cov.total * 100) : 0}%`, backgroundColor: getAccentHex(cfg.accent), opacity: 0.5 }} />
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-zinc-400">{sectionAttempts.length} attempt{sectionAttempts.length !== 1 ? 's' : ''}</span>
-                      <Link href={`/quiz/${section}`} className={`text-xs ${cfg.color} hover:underline`}>Practice →</Link>
-                    </div>
-                  )}
-                  {cov && (
-                    <div className="mt-2 flex justify-end">
-                      <Link href={`/quiz/${section}`} className={`text-xs ${cfg.color} hover:underline`}>Practice →</Link>
-                    </div>
-                  )}
+                  <div className="h-2.5 bg-white/10 rounded-full overflow-hidden mb-3">
+                    <div className="h-full rounded-full transition-all duration-500" style={{ width: `${cpPct}%`, backgroundColor: getAccentHex(cfg.accent) }} />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-zinc-600">
+                      {m ? `${m.correct} / ${m.total} mastered` : 'No attempts yet'}
+                    </span>
+                    <Link href={`/quiz/${section}`} className={`text-xs ${cfg.color} hover:underline`}>Practice →</Link>
+                  </div>
                 </div>
               )
             })}

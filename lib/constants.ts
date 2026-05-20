@@ -60,9 +60,8 @@ export const DIFFICULTY_BASE_POINTS: Record<string, number> = {
 export const SECTION_BENCHMARKS_MS: Record<string, number> = {
   verbal: 16_000, quantitative: 34_000, reading: 24_000, math: 42_000, language: 25_000,
 }
-// Max achievable XP per 10-question section attempt (used for leaderboard bar normalization)
-// 2×base at 0ms * 10 questions worst-case upper bound ≈ 2×35×10 = 700; use 500 as practical cap
-export const MAX_SECTION_XP = 500
+// Clutch Points are now cumulative mastery — max per section is derived from
+// the question bank at runtime via get_section_mastery(). No fixed cap needed.
 // Maps PrepClutch section names → badge section names
 export const SECTION_TO_BADGE: Record<string, string> = {
   verbal: 'Verbal', quantitative: 'Quantitative',
