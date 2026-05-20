@@ -71,6 +71,16 @@ export default async function QuizPage({ params }: Props) {
 }
 
 // ── Smart question selection ──────────────────────────────────────────────────
+//
+// Targets 3 Easy / 4 Medium / 3 Hard per 10-question session.
+// Within each difficulty bucket, priority is: unseen → prev-wrong → mastered.
+// Mastered (previously-correct) questions are avoided unless the pool is
+// exhausted; a global cap (MAX_CORRECT_RECYCLED) limits recycled mastered Qs.
+// If a difficulty has fewer questions than needed, the shortfall is padded
+// from any remaining unselected questions as a last resort.
+
+// Desired difficulty split: difficulty key → question count
+const DIFFICULTY_TARGETS: Record<number, number> = { 1: 3, 2: 4, 3: 3 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function selectSectionQuestions(supabase: any, userId: string, section: string): Promise<Question[]> {
@@ -93,46 +103,75 @@ async function selectSectionQuestions(supabase: any, userId: string, section: st
     )
   )
 
-  const unseen:      Question[] = []
-  const prevWrong:   Question[] = []
-  const prevCorrect: Question[] = []
+  const shuffle = <T,>(arr: T[]): T[] => arr.slice().sort(() => Math.random() - 0.5)
 
-  for (const q of allQuestions) {
+  // Partition every question by difficulty, then by history status
+  const byDiff: Record<number, { unseen: Question[]; wrong: Question[]; correct: Question[] }> = {
+    1: { unseen: [], wrong: [], correct: [] },
+    2: { unseen: [], wrong: [], correct: [] },
+    3: { unseen: [], wrong: [], correct: [] },
+  }
+
+  for (const q of allQuestions as Question[]) {
+    const d = q.difficulty ?? 2
+    const bucket = byDiff[d] ?? byDiff[2]
     const h = historyMap.get(q.id)
     if (!h) {
-      unseen.push(q)
+      bucket.unseen.push(q)
     } else if ((h as { times_wrong: number }).times_wrong > 0) {
-      prevWrong.push(q)
+      bucket.wrong.push(q)
     } else {
-      prevCorrect.push(q)
+      bucket.correct.push(q)
     }
   }
 
-  const shuffle = <T,>(arr: T[]): T[] => arr.slice().sort(() => Math.random() - 0.5)
-
   const selected: Question[] = []
+  let masteredUsed = 0  // global cap on recycled-mastered questions
 
-  const pickUp = (pool: Question[], limit: number) => {
-    const taken = shuffle(pool).slice(0, limit)
-    selected.push(...taken)
+  // Phase 1 & 2: fill each difficulty bucket from unseen then prevWrong
+  const shortfalls: { diff: number; need: number }[] = []
+
+  for (const [diffStr, target] of Object.entries(DIFFICULTY_TARGETS)) {
+    const diff = Number(diffStr)
+    const { unseen, wrong, correct } = byDiff[diff]
+
+    const picked: Question[] = []
+    const pick = (pool: Question[], limit: number) => {
+      const taken = shuffle(pool).slice(0, limit)
+      picked.push(...taken)
+    }
+
+    pick(unseen, target)
+    if (picked.length < target) pick(wrong, target - picked.length)
+
+    selected.push(...picked)
+
+    const remaining = target - picked.length
+    if (remaining > 0) {
+      // Record shortfall: needs mastered Qs or fallback
+      shortfalls.push({ diff, need: remaining })
+      // Stash the correct pool on byDiff so phase 3 can reach it
+      byDiff[diff].correct = shuffle(correct)
+    }
   }
 
-  // Priority 1: unseen
-  pickUp(unseen, QUESTIONS_PER_SESSION)
-
-  // Priority 2: previously wrong
-  if (selected.length < QUESTIONS_PER_SESSION) {
-    pickUp(prevWrong, QUESTIONS_PER_SESSION - selected.length)
+  // Phase 3: fill shortfalls using mastered questions, globally capped
+  for (const { diff, need } of shortfalls) {
+    const correct = byDiff[diff].correct
+    const canUse = Math.min(need, correct.length, MAX_CORRECT_RECYCLED - masteredUsed)
+    if (canUse > 0) {
+      selected.push(...correct.slice(0, canUse))
+      masteredUsed += canUse
+    }
   }
 
-  // Priority 3: previously correct — hard cap at MAX_CORRECT_RECYCLED
-  // unless the entire pool is exhausted (unseen + wrong < session size)
+  // Phase 4: last-resort padding (e.g. section has very few hard questions)
   if (selected.length < QUESTIONS_PER_SESSION) {
-    const poolExhausted = unseen.length + prevWrong.length < QUESTIONS_PER_SESSION
-    const cap = poolExhausted
-      ? QUESTIONS_PER_SESSION - selected.length
-      : Math.min(QUESTIONS_PER_SESSION - selected.length, MAX_CORRECT_RECYCLED)
-    pickUp(prevCorrect, cap)
+    const selectedIds = new Set(selected.map(q => q.id))
+    const remainder = shuffle(
+      (allQuestions as Question[]).filter(q => !selectedIds.has(q.id))
+    )
+    selected.push(...remainder.slice(0, QUESTIONS_PER_SESSION - selected.length))
   }
 
   if (section === 'reading') return batchByPassage(selected)
