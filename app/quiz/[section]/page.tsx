@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import { SECTIONS, QUESTIONS_PER_SESSION, MAX_CORRECT_RECYCLED } from '@/lib/constants'
 import QuizClient from '@/components/quiz/QuizClient'
+import ReadingQuizClient from '@/components/quiz/ReadingQuizClient'
+import { SAMPLE_PASSAGES } from '@/lib/reading-passages'
 import type { Section, Question } from '@/types/database'
 
 export const dynamic = 'force-dynamic'
@@ -26,6 +28,16 @@ export default async function QuizPage({ params }: Props) {
     .single()
 
   if (!profile) redirect('/onboarding')
+
+  // Reading section uses the dedicated passage-based quiz flow
+  if (section === 'reading') {
+    return (
+      <ReadingQuizClient
+        passages={SAMPLE_PASSAGES}
+        userId={user.id}
+      />
+    )
+  }
 
   let questions: Question[]
 
