@@ -75,7 +75,17 @@ export default function ReadingQuizClient({ passages, userId }: Props) {
   const answersRef = useRef<(SavedAnswer | null)[]>(new Array(totalQuestions).fill(null))
 
   // ── Timer ─────────────────────────────────────────────────────────────────
-  const passageTimeMs = (idx: number) => passages[idx].questions.length * 24_000
+  // Passage timer = estimated reading time + question target time.
+  // Reading time: word count ÷ 200 wpm (generous pace for test-takers).
+  // Question target (24s each) is kept separate — it's a benchmark shown in
+  // results feedback only, not the actual countdown limit.
+  const passageTimeMs = (idx: number) => {
+    const passage = passages[idx]
+    const wordCount = passage.body.split(/\s+/).length
+    const readingMs = Math.ceil(wordCount / 200) * 60_000   // 200 wpm
+    const questionMs = passage.questions.length * 24_000     // target benchmark
+    return readingMs + questionMs
+  }
   const [timeRemainingMs, setTimeRemainingMs] = useState(() => passageTimeMs(0))
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const questionStartRef = useRef<number>(Date.now())
