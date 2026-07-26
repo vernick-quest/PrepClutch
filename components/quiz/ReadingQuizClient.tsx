@@ -12,6 +12,7 @@ interface SavedAnswer {
   selectedIndex: number  // -1 = timed out
   timeTakenMs: number
   xpEarned: number
+  targetMs: number       // fair benchmark for this question (see targetMsFor)
 }
 
 interface Props {
@@ -79,13 +80,22 @@ export default function ReadingQuizClient({ passages, userId }: Props) {
   // Reading time: word count ÷ 200 wpm (generous pace for test-takers).
   // Question target (24s each) is kept separate — it's a benchmark shown in
   // results feedback only, not the actual countdown limit.
-  const passageTimeMs = (idx: number) => {
-    const passage = passages[idx]
-    const wordCount = passage.body.split(/\s+/).length
-    const readingMs = Math.ceil(wordCount / 200) * 60_000   // 200 wpm
-    const questionMs = passage.questions.length * 24_000     // target benchmark
-    return readingMs + questionMs
-  }
+  const readingMsFor = useCallback((idx: number) => {
+    const wordCount = passages[idx].body.split(/\s+/).length
+    return Math.ceil(wordCount / 200) * 60_000              // 200 wpm
+  }, [passages])
+
+  const passageTimeMs = useCallback((idx: number) => {
+    const questionMs = passages[idx].questions.length * 24_000  // target benchmark
+    return readingMsFor(idx) + questionMs
+  }, [passages, readingMsFor])
+
+  // The first question of a passage absorbs the entire read, so judging it
+  // against the flat 24s benchmark always marks it red no matter how quickly
+  // the student actually worked. Give it the reading allowance on top.
+  const targetMsFor = useCallback((pIdx: number, qIdx: number) =>
+    qIdx === 0 ? 24_000 + readingMsFor(pIdx) : 24_000
+  , [readingMsFor])
   const [timeRemainingMs, setTimeRemainingMs] = useState(() => passageTimeMs(0))
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const questionStartRef = useRef<number>(Date.now())
@@ -107,6 +117,7 @@ export default function ReadingQuizClient({ passages, userId }: Props) {
       correct_index:  allQuestions[i].correctIndex,
       time_taken_ms:  a?.timeTakenMs ?? 0,
       xp_earned:      a?.xpEarned ?? 0,
+      target_ms:      a?.targetMs ?? 24_000,
       section:        'reading',
     }))
 
@@ -152,6 +163,18 @@ export default function ReadingQuizClient({ passages, userId }: Props) {
       completed_at:    new Date().toISOString(),
     })
 
+    // Record per-question history. get_section_mastery and leaderboard_view
+    // both derive the section total from user_question_history JOIN questions,
+    // so skipping this leaves reading points stranded on the results page and
+    // out of the student's actual score.
+    for (const a of answersForResults) {
+      await supabase.rpc('upsert_question_history', {
+        p_user_id:     userId,
+        p_question_id: a.question_id,
+        p_correct:     a.selected_index === a.correct_index,
+      })
+    }
+
     router.push('/results')
   }, [passages, totalQuestions, userId, router])
 
@@ -165,7 +188,12 @@ export default function ReadingQuizClient({ passages, userId }: Props) {
     passage.questions.forEach((_, i) => {
       const gIdx = base + i
       if (!newAnswers[gIdx]) {
-        newAnswers[gIdx] = { selectedIndex: -1, timeTakenMs: 0, xpEarned: 0 }
+        newAnswers[gIdx] = {
+          selectedIndex: -1,
+          timeTakenMs: 0,
+          xpEarned: 0,
+          targetMs: targetMsFor(pIdx, i),
+        }
       }
     })
     answersRef.current = newAnswers
@@ -182,7 +210,7 @@ export default function ReadingQuizClient({ passages, userId }: Props) {
     } else {
       finishQuiz(newAnswers)
     }
-  }, [passages, finishQuiz])
+  }, [passages, finishQuiz, targetMsFor])
 
   // ── React to timeout signal (avoids stale closure in interval) ───────────
   useEffect(() => {
@@ -262,6 +290,7 @@ export default function ReadingQuizClient({ passages, userId }: Props) {
       selectedIndex: optionIdx,
       timeTakenMs,
       xpEarned: scored.total,
+      targetMs: targetMsFor(pIdx, qIdx),
     }
 
     const newAnswers = [...answersRef.current]
@@ -272,7 +301,7 @@ export default function ReadingQuizClient({ passages, userId }: Props) {
     setLocked(true)
 
     advance(newAnswers)
-  }, [locked, passages, advance])
+  }, [locked, passages, advance, targetMsFor])
 
   // ── Derived display values ────────────────────────────────────────────────
   const currentPassage  = passages[passageIdx]
@@ -367,9 +396,11 @@ export default function ReadingQuizClient({ passages, userId }: Props) {
                 <h2 className="text-base font-bold text-white leading-tight">
                   {currentPassage.title}
                 </h2>
-                <span className="text-xs text-zinc-500 mt-0.5 block">
-                  {TOPIC_LABEL[currentPassage.topic]}
-                </span>
+                {currentPassage.topic && (
+                  <span className="text-xs text-zinc-500 mt-0.5 block">
+                    {TOPIC_LABEL[currentPassage.topic]}
+                  </span>
+                )}
               </div>
               <span className="text-[10px] text-zinc-600 border border-white/10 rounded-full px-2 py-0.5 shrink-0 mt-0.5">
                 {currentPassage.questions.length} questions
@@ -400,9 +431,11 @@ export default function ReadingQuizClient({ passages, userId }: Props) {
               >
                 {DIFF_LABEL[currentQuestion.difficulty]}
               </span>
-              <span className="text-xs text-zinc-600 bg-white/5 border border-white/10 px-2.5 py-1 rounded-full">
-                {TYPE_LABEL[currentQuestion.type]}
-              </span>
+              {currentQuestion.type && (
+                <span className="text-xs text-zinc-600 bg-white/5 border border-white/10 px-2.5 py-1 rounded-full">
+                  {TYPE_LABEL[currentQuestion.type]}
+                </span>
+              )}
             </div>
 
             {/* Question text */}

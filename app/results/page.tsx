@@ -255,7 +255,10 @@ export default function ResultsPage() {
                 const isCorrect    = a?.selected_index === q.correct_index
                 const timedOut     = a?.selected_index === -1
                 const qSection     = (a?.section ?? q.section) as Section
-                const benchmarkMs  = SECTION_BENCHMARKS_MS[qSection] ?? 30000
+                // Reading records a per-question target: the first question of
+                // a passage includes the time to read it, so it is not judged
+                // against the same benchmark as follow-up questions.
+                const benchmarkMs  = a?.target_ms ?? SECTION_BENCHMARKS_MS[qSection] ?? 30000
                 const benchmarkS   = (benchmarkMs / 1000).toFixed(0)
                 const takenMs      = a?.time_taken_ms ?? 0
                 const takenS       = (takenMs / 1000).toFixed(1)

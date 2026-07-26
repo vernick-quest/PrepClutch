@@ -67,6 +67,10 @@ export interface QuizAnswer {
   time_taken_ms: number
   xp_earned: number
   section: string
+  /** Per-question time benchmark. Reading sets this so the first question of a
+   *  passage is judged with its reading time included. Falls back to the flat
+   *  section benchmark when absent (all pre-existing answers). */
+  target_ms?: number
 }
 
 export interface UserQuestionHistory {

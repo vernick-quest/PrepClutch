@@ -3,7 +3,8 @@ import { redirect, notFound } from 'next/navigation'
 import { SECTIONS, QUESTIONS_PER_SESSION, MAX_CORRECT_RECYCLED } from '@/lib/constants'
 import QuizClient from '@/components/quiz/QuizClient'
 import ReadingQuizClient from '@/components/quiz/ReadingQuizClient'
-import { SAMPLE_PASSAGES } from '@/lib/reading-passages'
+import { buildPassagesFromRows, PASSAGES_PER_SESSION } from '@/lib/reading-passages'
+import type { ReadingPassage, ReadingQuestionRow } from '@/lib/reading-passages'
 import type { Section, Question } from '@/types/database'
 
 export const dynamic = 'force-dynamic'
@@ -29,11 +30,17 @@ export default async function QuizPage({ params }: Props) {
 
   if (!profile) redirect('/onboarding')
 
-  // Reading section uses the dedicated passage-based quiz flow
+  // Reading section uses the dedicated passage-based quiz flow.
+  // Questions come from the `questions` table so their real UUIDs can be
+  // recorded in user_question_history — that join is what feeds the section
+  // total. Never serve reading from a hardcoded list. (See migration 008.)
   if (section === 'reading') {
+    const passages = await selectReadingPassages(supabase, user.id)
+    if (passages.length === 0) notFound()
+
     return (
       <ReadingQuizClient
-        passages={SAMPLE_PASSAGES}
+        passages={passages}
         userId={user.id}
       />
     )
@@ -81,6 +88,51 @@ export default async function QuizPage({ params }: Props) {
 
 // Desired difficulty split: difficulty key → question count
 const DIFFICULTY_TARGETS: Record<number, number> = { 1: 3, 2: 4, 3: 3 }
+
+// ── Reading passage selection ────────────────────────────────────────────────
+//
+// Reading is selected a passage at a time (a passage and its questions are
+// inseparable), so the per-difficulty targets used by the other sections do not
+// apply. Instead we prefer passages the student has the most left to master,
+// which keeps sessions fresh without ever repeating a fully-mastered passage
+// while unmastered ones remain.
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function selectReadingPassages(supabase: any, userId: string): Promise<ReadingPassage[]> {
+  const { data: rows } = await supabase
+    .from('questions')
+    .select('id, prompt, passage, passage_id, options, correct_index, difficulty, explanation')
+    .eq('section', 'reading')
+    .not('passage', 'is', null)
+
+  if (!rows || rows.length === 0) return []
+
+  const passages = buildPassagesFromRows(rows as ReadingQuestionRow[])
+
+  const { data: history } = await supabase
+    .from('user_question_history')
+    .select('question_id, times_correct')
+    .eq('user_id', userId)
+    .in('question_id', (rows as ReadingQuestionRow[]).map(r => r.id))
+
+  const mastered = new Set(
+    (history ?? [])
+      .filter((h: { times_correct: number }) => h.times_correct > 0)
+      .map((h: { question_id: string }) => h.question_id)
+  )
+
+  // Rank by unmastered question count (desc), breaking ties randomly so two
+  // sessions with the same mastery profile do not serve identical passages.
+  const ranked = passages
+    .map(p => ({
+      passage:   p,
+      unmastered: p.questions.filter(q => !mastered.has(q.id)).length,
+      tiebreak:  Math.random(),
+    }))
+    .sort((a, b) => b.unmastered - a.unmastered || a.tiebreak - b.tiebreak)
+
+  return ranked.slice(0, PASSAGES_PER_SESSION).map(r => r.passage)
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function selectSectionQuestions(supabase: any, userId: string, section: string): Promise<Question[]> {
