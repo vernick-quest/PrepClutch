@@ -52,7 +52,9 @@ authority; numbers burned on diagnostics leave no file behind.
 | 030 | Real titles for reading passages | migration | ✅ |
 | 031 | Lengthen passages too short for their questions | migration | ✅ |
 
-Next free number: **032**
+| 032 | Reword position-dependent reading questions | migration | ⬜ pending |
+
+Next free number: **033**
 
 ## Rules
 
