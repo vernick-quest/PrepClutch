@@ -1,0 +1,1297 @@
+-- 048 — Rewrite language explanations (250 rows)
+--
+-- Updates ONE column: explanation. Nothing else is assigned — not prompt,
+-- not options, not correct_index, not difficulty — so no student score can
+-- move. This file contains UPDATE statements only: nothing is added,
+-- removed or restructured, and no history table is touched.
+--
+-- ORDER-INDEPENDENT OPTIONS GUARD. Migration 019 shuffled every pre-019
+-- questions options array, so comparing options to a literal array in the
+-- originally authored order matches almost nothing: migration 039 was
+-- applied that way and silently updated only ~71 of its 250 rows. 019 only
+-- PERMUTED the options, so a live rows option SET is unchanged — the same
+-- key 028 relies on. Each WHERE therefore sorts both sides and compares:
+--
+--   (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+--     = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(<literal>) v)
+--
+-- Both sides are sorted by the SAME expression inside the same query, so the
+-- comparison holds under any database collation. The literal is left in its
+-- authored order and never pre-sorted in Python, because Python sorts by code
+-- point while Postgres sorts by collation, and these options differ in case,
+-- punctuation and leading digits — exactly where the two orders diverge.
+--
+-- Prompts are NOT unique in this bank and neither are option sets, so both
+-- are required. Verified against the reconstructed live section: prompt alone
+-- is ambiguous and option set alone is ambiguous, while section + prompt +
+-- sorted option set matches exactly one row for every statement below.
+--
+-- Setting the same text twice is a no-op, so this file is idempotent.
+--
+-- 4 rows have options containing a double-quote character (the dialogue-
+-- punctuation items repaired by 017). A JSON text literal would need the
+-- backslash-quote sequence 017 exists to remove, so those use
+-- JSONB_BUILD_ARRAY, as migration 038 already does. No backslash appears
+-- anywhere in this file.
+
+UPDATE questions SET explanation = 'This tests the compound predicate. One subject, She, does two things, so no comma belongs before and: She went to the store and bought milk. The version with a comma after store would only work if a complete new clause followed, like and she bought milk. Commas after and, or after She went, split pieces that belong together.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses punctuation correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["She went to the store, and bought milk.", "She went to the store and bought milk.", "She went to the store and, bought milk.", "She went, to the store and bought milk."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Proper nouns name one specific thing, so Grand Canyon is capitalized. Seasons are ordinary common nouns, so summer stays lowercase: We visited the Grand Canyon last summer. Capitalizing Summer is the usual trap, since days and months do get capitals. The word the is not part of the canyon''s name, so it stays lowercase too.'
+  WHERE section = 'language' AND prompt = 'Which sentence is correctly capitalized?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["We visited the grand canyon last Summer.", "we visited the Grand Canyon last summer.", "We visited the Grand Canyon last summer.", "We visited The Grand Canyon last summer."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Receive follows the old rhyme: i before e except after c. The c comes right before, so the e leads: R-E-C-E-I-V-E. Recieve is the spelling most people write from habit, and it puts the i first, breaking the after-c part of the rule. The shorter versions drop a vowel the word needs.'
+  WHERE section = 'language' AND prompt = 'Which word is spelled correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Recieve", "Recive", "Receive", "Receeve"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Each is always singular, even when a plural phrase like of the students follows it, so the verb is has completed. The subject is each, not students. Writing each of the students have matches the verb to the nearest noun instead of the real subject. Each of the student fails too, because of the needs a plural noun after it.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Each of the students have completed their project.", "Each of the students has completed their project.", "Each of the students have completed his project.", "Each of the student has completed their project."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'A singular noun shows possession with an apostrophe plus s: the dog''s bone. Nothing belongs to the yard, so yard takes no apostrophe at all. Writing the dogs bone leaves out the possessive mark, and dogs''s stacks an extra s onto a plural that was never needed, since only one dog owns the bone.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses the apostrophe correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The dog''s bone is buried in the yard''s.", "The dogs bone is buried in the yard.", "The dog''s bone is buried in the yard.", "The dogs''s bone is buried in the yard."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'A topic sentence states the main idea the rest of the paragraph will support. Regular exercise offers numerous physical and mental health benefits announces both the subject and the point. Saying many people find exercise boring argues against a paragraph on benefits, and details about shoe styles or athletes'' training hours are supporting facts, far too narrow to lead.'
+  WHERE section = 'language' AND prompt = 'Which sentence best fits as a topic sentence about exercise benefits?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Many people find exercise boring.", "Running shoes come in many styles.", "Regular exercise offers numerous physical and mental health benefits.", "Some athletes train many hours per day."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Between is a preposition, and prepositions are followed by object pronouns: between you and me. Between you and I sounds polished but drops a subject pronoun into an object slot. Test it by removing you and: you would never say between I. Myself is a reflexive pronoun and works only when you are also the subject of the sentence.'
+  WHERE section = 'language' AND prompt = 'Choose the correctly written sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Between you and I, this is a great idea.", "Between you and me, this is a great idea.", "Between you and myself, this is a great idea.", "Between I and you, this is a great idea."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'With neither and nor, the verb agrees with whichever subject sits closest to it. Players is plural and stands nearest, so were ready is the tested answer. Choosing was ready reaches back to the far-off coach and is the classic error this question hunts for. Read the sentence as past tense, matching were, and the pattern is clear.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Neither the coach nor the players was ready.", "Neither the coach nor the players were ready.", "Neither the coach nor the players is ready.", "Neither the coach nor the players are ready."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'A semicolon joins two groups of words that could each stand alone as sentences. She studied hard and she passed with high marks both qualify. Adding but right after a semicolon doubles the join, since a coordinating conjunction takes a comma instead. The other versions put the semicolon in the middle of a phrase that cannot stand alone.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses the semicolon correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["She studied hard; but she failed.", "She studied hard; she passed with high marks.", "She studied; hard and passed.", "She; studied hard and passed."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'A dangling modifier opens with a phrase whose doer never appears as the subject. In Running through the park, the homework was forgotten by Sarah, the homework was not running. Sarah was, so the repair is Running through the park, Sarah forgot her homework. The sentence about the dog chasing the squirrel is fine, because the dog really was running.'
+  WHERE section = 'language' AND prompt = 'Which sentence contains a dangling modifier?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Running through the park, the dog chased the squirrel.", "Running through the park, the homework was forgotten by Sarah.", "Sarah chased the squirrel through the park.", "The squirrel ran as Sarah chased it."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Accommodate is generous with letters: it makes room for two c''s and two m''s. The hook is that it accommodates a pair of each. Acomodate and Acommodate are each short one pair, which happens because the doubled letters make no difference in the way we say the word out loud.'
+  WHERE section = 'language' AND prompt = 'Which word is spelled correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Accomodate", "Acommodate", "Accommodate", "Acomodate"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Embarrass doubles both letters: two r''s and two s''s. A hook that sticks is that when you are embarrassed you turn Really Red and Sweat Slightly, two r''s and two s''s. Embarass with a single r is the most common miss, and the endings with one s look French rather than English.'
+  WHERE section = 'language' AND prompt = 'Which word is spelled correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Embarass", "Embarrass", "Embarras", "Embaras"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Necessary takes one c and two s''s. The classic hook is a shirt: one collar, two sleeves. Neccessary doubles the c that should stand alone, which is the error people make when they hear the hard k sound and reach for extra letters. Necesary drops one of the two s''s the word needs.'
+  WHERE section = 'language' AND prompt = 'Which word is spelled correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Necesary", "Neccesary", "Neccessary", "Necessary"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Separate hides a rat in the middle: sep-A-RAT-e. That hook beats your ear, which pulls you toward Seperate with an e, since the middle vowel is barely pronounced. Only one r is needed, so the double-r spelling overcorrects. Find the rat and the vowel settles itself.'
+  WHERE section = 'language' AND prompt = 'Which word is spelled correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Seperate", "Seprate", "Separate", "Separrate"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Occurrence doubles both the c and the r, and it ends in -ence rather than -ance. The r doubles because the stress lands on that final syllable of occur. Occurance gets the ending wrong, and Occurence remembers the ending but forgets to double the r ahead of it.'
+  WHERE section = 'language' AND prompt = 'Which word is spelled correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Occurance", "Occurence", "Occurrance", "Occurrence"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Exaggerate doubles the g, which is easy to remember because the word exaggerates itself. Only the g doubles, so the pile-up in Exaggerrate adds an r that does not belong. Exagerate with a single g is the usual error, since the sound of the word gives no hint that two are hiding there.'
+  WHERE section = 'language' AND prompt = 'Which word is spelled correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Exagerate", "Exaggerate", "Exaggarate", "Exaggerrate"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Privilege has no d and ends in -lege, from the Latin word for law: a private law. Priviledge sneaks in a d because our mouths make a soft j sound there. Privelege swaps the second i for an e. Break it into privi and lege and both trouble spots disappear.'
+  WHERE section = 'language' AND prompt = 'Which word is spelled correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Privelege", "Priviledge", "Privilege", "Privilige"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Acquaint begins a-c-q, keeping a c that many writers drop. It shares that start with acquire and acquaintance. Aquaint loses the c entirely, and Acquiant flips the a and the i in the middle. Say it to yourself as ack-QUAINT and the hidden c becomes audible.'
+  WHERE section = 'language' AND prompt = 'Which word is spelled correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Aquaint", "Acquaint", "Acqaint", "Acquiant"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Conscientious starts like the word conscience and then finishes with -tious: con-sci-en-tious. Consciencious keeps conscience whole and adds -ious, which is a reasonable guess but not the accepted spelling. Consientious drops the c that forms the sci cluster, the same cluster you see in science.'
+  WHERE section = 'language' AND prompt = 'Which word is spelled correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Conscientous", "Consciencious", "Conscientious", "Consientious"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Liaison carries two i''s, one on each side of the a: l-i-a-i-s-o-n. The hook is that a liaison links two sides, and the two i''s are those two sides. Liason drops the second i, which is the mistake nearly everyone makes, since that letter is barely heard when the word is spoken.'
+  WHERE section = 'language' AND prompt = 'Which word is spelled correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Liason", "Liaison", "Liasson", "Liasion"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Definitely is the word definite plus -ly, and definite contains no a anywhere. Definately is the famous misspelling, and it appears because the unstressed vowel sounds like an a. If you can spell finite, you can spell definite, and then the ending is a plain -ly with no extra letters.'
+  WHERE section = 'language' AND prompt = 'Which word is spelled correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Definately", "Definitly", "Definiteley", "Definitely"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Calendar ends in -ar, not -er, even though your ear expects -er. A hook: a calendar tracks the year, and year-like -ar closes the word. Calender uses the ending that sounds right and is the most common miss. Calandar swaps the middle e for an a as well.'
+  WHERE section = 'language' AND prompt = 'Which word is spelled correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Calender", "Calandar", "Calandr", "Calendar"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Grammar ends in -ar. The hook is that bad grammar will mar your writing, and mar sits right there at the end. Grammer is the spelling your ear suggests, and it is the one teachers see most often. The double m stays in every correct version, so the single-m spellings are short a letter.'
+  WHERE section = 'language' AND prompt = 'Which word is spelled correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Grammer", "Gramer", "Grammir", "Grammar"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Restaurant keeps a u that we barely say: rest-a-u-rant. One hook is that you rest at a restaurant, and the au in the middle matches the au in author. Restuarant has all the right letters but swaps the u and the a, which is why it looks almost right at a glance.'
+  WHERE section = 'language' AND prompt = 'Which word is spelled correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Restarant", "Restuarant", "Restaurant", "Restorant"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Believe follows i before e except after c, and there is no c here, so the i leads: b-e-l-i-e-v-e. The hook is that you should never beLIEve a lie, since the word lie sits in the middle. Beleive flips that pair, which is the most common slip with this word.'
+  WHERE section = 'language' AND prompt = 'Which word is spelled correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Beleive", "Beleve", "Believe", "Belive"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Weird is a well-known exception to i before e: here the e comes first, w-e-i-r-d. The hook is that weird is weird, so it breaks the rule. Wierd is wrong precisely because it obeys the rhyme, which is what makes this word trip up otherwise careful spellers.'
+  WHERE section = 'language' AND prompt = 'Which word is spelled correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Wierd", "Weard", "Weird", "Weerd"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Argument drops the e from argue before adding -ment, so no e appears in the middle. A hook: you lose your e when you lose an argument. Arguement keeps the letter the word gives up, and it shows up in student essays constantly because the base word argue is still visible in your mind.'
+  WHERE section = 'language' AND prompt = 'Which word is spelled correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Arguement", "Arugment", "Arguemnt", "Argument"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Noticeable keeps the e from notice, and that e is doing real work: it holds the c soft, so the word sounds like notice-able rather than notick-able. Noticable removes the e and the soft c along with it. Manageable and changeable keep their letters for exactly the same reason.'
+  WHERE section = 'language' AND prompt = 'Which word is spelled correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Noticable", "Noticeable", "Notiseable", "Noticeble"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Write ends in a silent e, and you drop that e before an ending that begins with a vowel, so write plus -ing gives writing. Writting doubles the t, which happens only after a short vowel sound, as in sitting. Writeing keeps the e that the rule tells you to drop.'
+  WHERE section = 'language' AND prompt = 'Which word is spelled correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Writting", "Writing", "Writeing", "Writen"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Begin doubles its final n before -ing because the word ends in one vowel plus one consonant and the stress falls on that last syllable: be-GIN, beginning. Begining skips the doubling entirely. The g never doubles, so Beggining and Begginning add a letter the word does not have.'
+  WHERE section = 'language' AND prompt = 'Which word is spelled correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Begining", "Begginning", "Beggining", "Beginning"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'February hides an r that most people never pronounce: Feb-RU-ary. The hook is that it is the month with the extra r, tucked in right after Feb. Febuary spells the word the way it usually sounds out loud, which is exactly why it is the most common miss on any spelling list.'
+  WHERE section = 'language' AND prompt = 'Which word is spelled correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Febuary", "Feburary", "February", "Febrary"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Surprise has two r''s, one in sur- and one in -prise, and it ends with an s, not a z. A hook: a surprise is a prize you did not expect. Suprise drops the first r, matching casual speech, and Surprize borrows a z from words like prize, which does not belong here.'
+  WHERE section = 'language' AND prompt = 'Which word is spelled correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Suprise", "Surprize", "Surprisse", "Surprise"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Neighbor is another e-before-i word: n-e-i-g-h-b-o-r. The hook is that your neighbor lives on Eighth Street, and eight has that same eigh. Nieghbor puts the i first, following the rhyme instead of the exception. Nieghbour adds the British -our ending on top of the flipped vowels.'
+  WHERE section = 'language' AND prompt = 'Which word is spelled correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Nieghbor", "Neighbor", "Naighbor", "Nieghbour"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Knowledge is know plus ledge: if you know something, you have knowledge of it. Both parts stay whole, so the d belongs and the final e stays. Knowlege loses the d, and Knowlegde has the d and the g in the wrong order, which is an easy slip when typing quickly.'
+  WHERE section = 'language' AND prompt = 'Which word is spelled correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Knowlege", "Knowlegde", "Knowledg", "Knowledge"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Succeed doubles both the c and the e: s-u-c-c-e-e-d. It is one of only three English words ending in -ceed, along with proceed and exceed. Suceed drops a c, and Sucseed spells the second c sound with an s, a letter this word never uses in that spot.'
+  WHERE section = 'language' AND prompt = 'Which word is spelled correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Succedd", "Sucseed", "Succeed", "Suceed"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Misspell is the prefix mis- plus the whole word spell, so the two s''s simply meet in the middle. Mispell is the irony of every spelling list: misspelling the word misspell. Once you can see the seam between mis and spell, the double s stops looking like a typo.'
+  WHERE section = 'language' AND prompt = 'Which word is spelled correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Mispell", "Misspell", "Misspel", "Missppell"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Until ends with a single l, even though the related word till has two. A hook: until is one word doing one job, so it gets one l. Untill doubles the l by analogy with till and full, which is the natural guess and still not the accepted spelling.'
+  WHERE section = 'language' AND prompt = 'Which word is spelled correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Untill", "Unttil", "Untl", "Until"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Environment contains the word iron: env-IRON-ment. That hook rescues the letter people leave out. Enviroment drops the n before -ment, matching the way many of us actually say the word, and Enviornment swaps the r and the o so the hidden iron disappears.'
+  WHERE section = 'language' AND prompt = 'Which word is spelled correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Enviroment", "Enviornment", "Environement", "Environment"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Miniature is mini plus ature, so both i''s stay: m-i-n-i-a-t-u-r-e. The hook is that a miniature is a mini version of something, so start from the whole word mini. Minature loses the second i because most people say the word in three syllables instead of four.'
+  WHERE section = 'language' AND prompt = 'Which word is spelled correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Minature", "Miniature", "Minuature", "Miniuture"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Millennium doubles both the l and the n. It comes from mille, meaning thousand, plus annum, meaning year: a thousand years, and each root brings its own pair. Milennium halves the l pair, and Millenium keeps the l''s but drops an n, which is the most common version of this error.'
+  WHERE section = 'language' AND prompt = 'Which word is spelled correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Millenium", "Milennium", "Millennium", "Milenneum"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'School subjects are common nouns and stay lowercase: My favorite subject is math. Only subjects named after a place or people, like English or Spanish, get capitals. Capitalizing Math treats it like a proper name. Capitalizing every important word, as in My Favorite Subject, is title style and does not belong in a plain sentence.'
+  WHERE section = 'language' AND prompt = 'Which sentence is correctly capitalized?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["My favorite subject is Math.", "My favorite subject is math.", "my favorite subject is Math.", "My Favorite Subject is math."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'The full name of a specific river is a proper noun, so both words are capitalized: Mississippi River. Leaving river lowercase is the trap, but here river is part of the name rather than a description. You would lowercase it only in something like we crossed the river. Capitalizing every word is title style, not sentence style.'
+  WHERE section = 'language' AND prompt = 'Which sentence is correctly capitalized?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["We drove across the mississippi river.", "We drove across the Mississippi River.", "We drove across the Mississippi river.", "We Drove Across The Mississippi River."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Seasons are common nouns, so spring, summer, fall, and winter all stay lowercase: She loves spring and summer. Capitalizing Summer feels right because days and months do take capitals, but a season is not a specific named thing. Capitalizing every word in the sentence is title style and never belongs in ordinary writing.'
+  WHERE section = 'language' AND prompt = 'Which sentence is correctly capitalized?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["She loves spring and Summer.", "She loves Spring and summer.", "She loves spring and summer.", "She Loves Spring And Summer."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'A title used with a name is part of that name, so both parts are capitalized: I read a book by Dr. Seuss. Writing dr. Seuss capitalizes the name but demotes the title, and Dr. seuss does the reverse. Lowercase doctor only when it stands alone, as in she visited a doctor.'
+  WHERE section = 'language' AND prompt = 'Which sentence is correctly capitalized?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["I read a book by dr. seuss.", "I read a book by Dr. Seuss.", "I read a book by dr. Seuss.", "I read a book by Dr. seuss."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'France and Paris name specific places, so both take capitals, while capital is an ordinary common noun and stays lowercase: The capital of France is Paris. Capitalizing Capital is the trap, since the word feels important, but importance is not the test. The test is whether the word names one specific thing.'
+  WHERE section = 'language' AND prompt = 'Which sentence is correctly capitalized?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The capital of France is paris.", "The capital of france is Paris.", "The Capital of France is Paris.", "The capital of France is Paris."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Brand names and days of the week are both proper nouns, so Walmart and Friday are capitalized. Days take capitals even though seasons do not. Leaving friday lowercase is the tempting half-right answer, and lowercasing walmart treats a specific company name as though it were an ordinary noun like store.'
+  WHERE section = 'language' AND prompt = 'Which sentence is correctly capitalized?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["She shops at walmart every friday.", "She shops at Walmart every Friday.", "She shops at Walmart every friday.", "She shops at walmart every Friday."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'A family word used as a title right in front of a name is capitalized: Aunt Maria. Days of the week are capitalized too, so Tuesday takes a capital as well. Writing aunt Maria treats the title as a plain noun, which would be correct only with a possessive ahead of it, as in my aunt Maria.'
+  WHERE section = 'language' AND prompt = 'Which sentence is correctly capitalized?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["I visited aunt Maria last tuesday.", "I visited Aunt Maria last Tuesday.", "I visited aunt Maria last Tuesday.", "I visited Aunt maria last Tuesday."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'West is capitalized when it names a region of the country rather than a compass direction, and moving to the West points to a place. Lowercase west when you mean a direction, as in drive west for an hour. Capitalizing every word, as in Moved To The West, is title style and is wrong inside a sentence.'
+  WHERE section = 'language' AND prompt = 'Which sentence is correctly capitalized?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["He moved to the west to find work.", "He moved to the West to find work.", "He Moved To The West To Find Work.", "He moved to the west To find work."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'In a title, capitalize the first word, the last word, and every important word, but leave short words like of, and, and the lowercase in the middle: The Call of the Wild. Capitalizing Of and the interior The overcorrects. Leaving the whole title lowercase ignores that a title is treated as a name.'
+  WHERE section = 'language' AND prompt = 'Which sentence is correctly capitalized?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The book is called the call of the wild.", "The book is called The Call of the Wild.", "The book is called The Call Of The Wild.", "The book is called the Call of the Wild."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'A courtesy title attached to a name is capitalized along with the name: Mr. Johnson. Writing mr. Johnson capitalizes only half of what is really one unit. Lowercasing the surname is worse, since Johnson is a proper noun no matter what sits in front of it. Treat title and name as a package.'
+  WHERE section = 'language' AND prompt = 'Which sentence is correctly capitalized?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["My teacher is named mr. johnson.", "My teacher is named mr. Johnson.", "My teacher is named Mr. Johnson.", "My teacher is named Mr. johnson."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Commas mark the breaks between items in a list, and every break needs one: I need eggs, milk, and butter. The version with no comma after eggs runs the first two items together. Putting the comma after and instead of before it, or right after need, marks spots that are not item boundaries at all.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses commas correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["I need eggs milk, and butter.", "I need eggs, milk and, butter.", "I need eggs, milk, and butter.", "I need, eggs, milk, and butter."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'An introductory phrase that sets the time or place is followed by a comma: After the game, we went home. The comma shows the reader where the introduction stops and the main sentence starts. Placing the comma after After strands the very word that opens the phrase, and a comma inside we went splits a subject from its verb.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses the comma correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["After the game we went home.", "After the game, we went home.", "After, the game we went home.", "After the game we, went home."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'A nonessential clause, one you could delete without losing track of who is meant, takes commas on both sides: My brother, who lives in Denver, loves skiing. A comma placed only after Denver, or only before who, opens the fence without closing it. When commas surround extra information, they work in pairs.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses commas correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["My brother, who lives in Denver loves skiing.", "My brother who lives in Denver, loves skiing.", "My brother, who lives in Denver, loves skiing.", "My brother who lives, in Denver loves skiing."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Here or joins two verbs sharing one subject, so no comma belongs: We can leave early or stay for the whole show. You would put a comma before or only if a complete sentence followed it, such as or we can stay. A comma after or, or inside leave early, cuts the sentence at seams that do not exist.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses the comma correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["We can leave early, or stay for the whole show.", "We can leave early or, stay for the whole show.", "We can leave, early or stay for the whole show.", "We can leave early or stay for the whole show."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'An introductory word like yes, no, or well is followed by a comma: Yes, I agree with your decision. Leaving it out runs the response straight into the statement. Adding a second comma before with your decision would be wrong, since a prepositional phrase attached to a verb is not set off that way.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses commas correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Yes I agree with your decision.", "Yes, I agree with your decision.", "Yes I agree, with your decision.", "Yes, I agree, with your decision."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'An appositive renames the noun just before it and gets commas on both sides: Maria, my best friend, moved away last year. Opening the fence without closing it, as in Maria, my best friend moved away, leaves the reader unsure where the interruption ends. With no commas at all the phrase reads as part of her name.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses the comma correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Maria my best friend moved away last year.", "Maria, my best friend, moved away last year.", "Maria, my best friend moved away last year.", "Maria my best, friend moved away last year."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Coordinate adjectives, ones that describe the same noun equally, are separated by commas: The tall, dark, mysterious stranger walked in. Test them by inserting and between each pair; if it still sounds right, commas belong. Dropping every comma piles the adjectives up, and a comma after The separates an article from the noun it introduces.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses commas correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The tall, dark, mysterious stranger walked in.", "The tall dark mysterious stranger walked in.", "The, tall dark mysterious stranger walked in.", "The tall, dark mysterious stranger walked in."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'In a month-day-year date, a comma goes between the day and the year: He was born on March 15, 2010. Putting the comma after March would separate the month from its own day. Leaving the comma out entirely makes 15 and 2010 run together as though they were one long number.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses the comma correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["He was born on March, 15 2010.", "He was born on March 15, 2010.", "He was born on March 15 2010.", "He was born, on March 15, 2010."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'A place name with two levels takes a comma between the parts and another after the whole thing: We visited Paris, France, on our trip. That closing comma after France is the one most writers forget. With no commas at all, Paris France reads like a single, unfamiliar place name.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses commas correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["We visited Paris France on our trip.", "We visited Paris, France, on our trip.", "We visited Paris France, on our trip.", "We visited, Paris France on our trip."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'A dependent clause that opens a sentence, one starting with a word like although, because, or when, is followed by a comma: Although she was tired, she kept studying. Skipping that comma runs tired she together. Putting the comma right after Although cuts the clause off from the word that introduces it.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses the comma correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Although she was tired she kept studying.", "Although she was tired, she kept studying.", "Although, she was tired she kept studying.", "Although she was tired she kept, studying."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Commas separate the items in a series, and each break between items needs one: I bought apples, oranges, and grapes at the market. Placing a comma after and marks a spot that is not a break. Leaving all commas out blurs three items into one, and a comma after bought splits the verb from what it acts on.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses commas correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["I bought apples oranges and grapes at the market.", "I bought apples, oranges, and grapes at the market.", "I bought apples, oranges and, grapes at the market.", "I bought, apples, oranges, and grapes at the market."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'When you speak to someone by name, that name is set off with a comma. This is called direct address: James, please close the door. Without the comma, the sentence reads as though James were part of the instruction. Commas after please, or before the door, break up the request instead of marking the person addressed.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses the comma correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["James please close the door.", "James please, close the door.", "James, please close the door.", "James please close, the door."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'When a coordinating conjunction joins two complete sentences, the comma goes before it: She finished her homework, and then she watched TV. Each half has its own subject and verb. Putting the comma after and instead, or on both sides of it, separates the conjunction from the clause it is introducing.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses commas correctly with a compound sentence?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["She finished her homework and then she watched TV.", "She finished her homework, and then she watched TV.", "She finished her homework and, then she watched TV.", "She finished her homework, and, then she watched TV."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'An opening participial phrase takes a comma, and the person doing that action has to be the subject: Running down the hall, the student heard the bell. The version ending the bell rang loudly dangles, since a bell cannot run. Leaving the comma out runs the phrase straight into the subject with no pause.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses the comma correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Running down the hall, the bell rang loudly.", "Running down the hall the student heard the bell.", "Running down the hall, the student heard the bell.", "Running down the hall the, student heard the bell."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'However used inside a sentence is an interrupter and takes commas on both sides: The results were, however, not what we expected. One comma alone leaves the interruption open at one end. With no commas, however sits quietly in the sentence without signaling the shift in direction it exists to mark.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses commas correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The results were however not what we expected.", "The results were, however not what we expected.", "The results were, however, not what we expected.", "The results were however, not what we expected."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'A colon introduces a list, and the words before it must form a complete sentence: She has three dogs: a golden retriever, a poodle, and a beagle. Commas then separate the three dogs. The version with commas but no colon leaves three dogs and the first breed running together with no signal that a list has started.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses the comma correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["She has three dogs a golden retriever a poodle and a beagle.", "She has three dogs: a golden retriever, a poodle, and a beagle.", "She has three dogs a golden retriever, a poodle, and a beagle.", "She has, three dogs a golden retriever a poodle and a beagle."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Coordinate adjectives, both describing the noun equally, are separated by a comma: The long, boring lecture finally ended. The and test confirms it, since long and boring lecture still sounds natural. Putting the comma after boring separates an adjective from its noun, and a comma after lecture cuts the subject away from its verb.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses the comma correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The long, boring lecture finally ended.", "The long boring, lecture finally ended.", "The, long boring lecture finally ended.", "The long boring lecture, finally ended."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'When a dependent clause comes first, close it with a comma: When it rains, I like to read indoors. The comma tells the reader where the condition ends and the main idea begins. Placing it after read turns indoors into an afterthought, and a comma right after When strands the word that opens the clause.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses the comma correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["When it rains, I like to read indoors.", "When it rains I like to read, indoors.", "When, it rains I like to read indoors.", "When it rains I like, to read indoors."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'A parenthetical remark such as I believe interrupts the sentence and takes commas on both sides: He is, I believe, a talented musician. Using only one comma leaves the interruption unfinished. With no commas at all, the aside blends into the statement and loses the hedging tone the speaker intends.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses the comma correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["He is, I believe a talented musician.", "He is I believe, a talented musician.", "He is, I believe, a talented musician.", "He is I believe a talented musician."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Buddy and the golden retriever each rename my dog, and appositives are fenced with commas: That is my dog, Buddy, the golden retriever. Closing the fence after Buddy is the step people skip. The version that stops fencing after dog crams two renamings together with no break between them.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses the comma correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["That is my dog Buddy the golden retriever.", "That is my dog, Buddy, the golden retriever.", "That is my dog Buddy the golden, retriever.", "That is my dog, Buddy the golden retriever."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'An indirect quotation introduced by that takes no comma: The teacher said that we should study every night. A comma after said would be right only ahead of a direct quotation with quotation marks around the speaker''s exact words. The other versions cut between a subject and its verb, or between should and the verb it helps.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses the comma correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The teacher said that we should study every night.", "The teacher said, that we should study every night.", "The teacher, said that we should study every night.", "The teacher said that we should, study every night."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'A restrictive clause tells you which ones you mean, and it takes no commas: Students who study regularly tend to earn better grades. The clause narrows students down to a specific group, so deleting it would change the meaning. Adding commas around it would claim the sentence is about all students, which is not what it says.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses the comma correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Students who study regularly tend to earn better grades.", "Students, who study regularly, tend to earn better grades.", "Students who, study regularly tend to earn better grades.", "Students who study, regularly tend to earn better grades."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'A series of three or more actions is separated by commas the same way a list of nouns is: She walked into the room, sat down, and opened her book. With no commas the three actions run together. Putting a comma after walked splits the verb from the phrase that completes it.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses commas correctly in a series of actions?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["She walked into the room sat down and opened her book.", "She walked into the room, sat down, and opened her book.", "She walked, into the room, sat down and opened her book.", "She walked into the room sat, down, and opened her book."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'An introductory no, yes, or well is followed by a comma: No, I do not think that is a good idea. The comma marks the pause you hear when you say it aloud. A comma after No I, or before that is a good idea, interrupts words that need to stay together.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses the comma correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["No I do not think that is a good idea.", "No, I do not think that is a good idea.", "No I, do not think that is a good idea.", "No I do not think, that is a good idea."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'A state name following a city is fenced by commas on both sides: We drove through Dallas, Texas, and then headed north. The second comma, the one after Texas, is the piece most often left out. With no commas at all, Dallas Texas reads as a single place name rather than a city inside a state.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses the comma correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["We drove through Dallas Texas and then headed north.", "We drove through Dallas, Texas, and then headed north.", "We drove through Dallas Texas, and then headed north.", "We drove through Dallas, Texas and then headed north."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'It''s with an apostrophe always means it is or it has, and the sentence means it is time to leave, so It''s time to leave for school is correct. Its with no apostrophe is the possessive, as in the dog wagged its tail. Its with the apostrophe after the s is not a word in English.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses the apostrophe correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Its time to leave for school.", "It''s time to leave for school.", "Its'' time to leave for school.", "It''ss time to leave for school."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'A plural noun that already ends in s shows possession with an apostrophe after that s: the boys'' bikes, meaning bikes belonging to more than one boy. Writing the two boy''s bikes says one boy, which contradicts two. Moving the apostrophe onto bikes would suggest something belonging to the bikes themselves.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses the apostrophe correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The two boy''s bikes were stolen.", "The two boys bike''s were stolen.", "The two boys'' bikes were stolen.", "The two boys bikes'' were stolen."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'A colon needs a complete sentence in front of it. She needed three things can stand alone, so She needed three things: eggs, milk, and flour works. She needed by itself is not complete, because the verb still has no object. A colon dropped into the middle of a list replaces a comma with the wrong mark.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses the colon correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["She needed: eggs, milk, and flour.", "She needed eggs, milk: and flour.", "She needed eggs: milk and flour.", "She needed three things: eggs, milk, and flour."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Children is already plural and does not end in s, so it forms the possessive the regular way, with an apostrophe plus s: the children''s playground. The version with the apostrophe after childrens assumes a plural that does not exist, since childrens is not a word. Leaving the apostrophe out drops the possession entirely.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses the apostrophe correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The childrens'' playground was closed.", "The children''s playground was closed.", "The childrens playground was closed.", "The childrens''s playground was closed."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'A semicolon joins two complete sentences, and it is the mark you want before a conjunctive adverb like however: I enjoy hiking; however, I avoid muddy trails. Notice the comma after however. A semicolon before but is wrong, because a coordinating conjunction takes a comma instead of a semicolon.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses the semicolon correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["I enjoy hiking; but not in the rain.", "I enjoy hiking; however, I avoid muddy trails.", "I enjoy; hiking in the mountains.", "I enjoy hiking, however; I avoid muddy trails."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'The words before a colon must form a complete sentence. I have three favorite sports stands alone, so I have three favorite sports: soccer, basketball, and tennis is correct. Putting the colon after are stops the sentence before its complement arrives, and a colon between list items replaces a comma with a mark that does not fit.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses the colon correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["I have three favorite sports: soccer, basketball, and tennis.", "My three favorite sports: are soccer, basketball, and tennis.", "My three favorite sports are soccer, basketball: and tennis.", "My three favorite sports are soccer: basketball, and tennis."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Possessive pronouns never take apostrophes. Hers, his, its, ours, theirs, and yours are already possessive on their own, so That car is hers is correct. Writing her''s treats hers like a noun needing an apostrophe added, and putting the apostrophe after the s copies the plural possessive rule, which does not apply to pronouns.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses the apostrophe correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["That car is her''s.", "That car is hers''.", "That car is hers.", "That car is her''s''."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'A semicolon links two complete, closely related sentences, and it belongs before a transition like in fact: Marcus loves to cook; in fact, he bakes his own bread. A semicolon before and is wrong, since a coordinating conjunction takes a comma. The versions breaking after loves cut a verb away from what completes it.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses the semicolon correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Marcus loves to cook; and he often bakes bread.", "Marcus loves to cook; in fact, he bakes his own bread.", "Marcus loves; to cook and bake bread.", "Marcus loves to; cook and bake bread."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'An apostrophe marks the letters left out of a contraction, so can''t stands for cannot and I''m stands for I am. Both need one. Writing Im with no apostrophe leaves a nonword, and Cant without one spells a different word entirely, an adjective meaning insincere talk.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses the apostrophe correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Can''t you see I''m busy?", "Cant you see Im busy?", "Can''t you see Im busy?", "Cant you see I''m busy?"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'A colon can introduce an explanation, as long as a complete sentence comes first. The coach gave one piece of advice stands alone, so the colon before practice daily works. Placing the colon after gave leaves the verb without its object, and a colon before daily interrupts a phrase instead of introducing anything.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses the colon correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The coach gave one piece of advice: practice daily.", "The coach gave: one piece of advice practice daily.", "The coach gave one piece of advice practice: daily.", "The coach: gave one piece of advice practice daily."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'We''re is the contraction of we are, and the apostrophe stands in for the missing a: We''re going to the movies tonight. Without it, Were is a past-tense verb, which leaves the sentence ungrammatical. Only one set of letters is missing, so a second apostrophe after the e would have nothing to replace.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses the apostrophe correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["We''re going to the movies tonight.", "Were going to the movies tonight.", "We''r going to the movies tonight.", "We''re'' going to the movies tonight."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'For a singular noun ending in s, the standard form adds an apostrophe plus s: the boss''s office. The bosses office gives a plural with no possessive mark at all, and bosses''s piles a possessive onto a plural that was never needed here, since the sentence describes the office of one boss.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses the apostrophe correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The boss''s office is on the third floor.", "The boss'' office is on the third floor.", "The bosses office is on the third floor.", "The bosses''s office is on the third floor."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'A semicolon must have a complete sentence on each side. The storm hit last night and the damage was widespread both stand alone, so the semicolon fits. Causing widespread damage is a phrase, not a sentence, so it needs a comma instead. The other versions cut between a subject and its verb.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses the semicolon correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The storm hit last night; causing widespread damage.", "The storm hit last night; the damage was widespread.", "The storm; hit last night causing widespread damage.", "The storm hit; last night causing widespread damage."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'A colon following a complete sentence introduces the explanation that comes next: The reason is clear: she forgot to study. The words ahead of the colon stand on their own. Placing the colon after is stops the sentence in the middle of its verb, and a colon after she separates a subject from what it does.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses the colon correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The reason is clear: she forgot to study.", "The reason: is clear she forgot to study.", "The reason is: clear she forgot to study.", "The reason is clear she: forgot to study."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Your is the possessive form, and the shoes belong to you, so Your shoes are untied is correct. You''re means you are, which would give you are shoes are untied. Expanding the contraction is the fastest test. Youre with no apostrophe is not a word in either sense.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses the apostrophe correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["You''re shoes are untied.", "Your shoes are untied.", "Youre shoes are untied.", "Your'' shoes are untied."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'In American English a collective noun like team counts as singular, so both the verb and the pronoun stay singular: The team is playing its best game. Pairing is with their starts singular and switches midway, which is the tempting half-right answer. Keeping is and its together holds the sentence consistent.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The team are playing their best game.", "The team is playing its best game.", "The team is playing their best game.", "The team are playing its best game."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'In the present tense a third-person singular subject takes does, so the negative is doesn''t and the verb after it stays in base form: He doesn''t know the answer. He don''t know borrows the plural form of do. He doesn''t knows doubles the ending, putting the s on both words at once.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["He don''t know the answer.", "He doesn''t knows the answer.", "He doesn''t know the answer.", "He do not knows the answer."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Fast forms its comparative by adding -er: faster. More is reserved for longer words, so more faster compares twice in a row. Fastest is the superlative and belongs with three or more, which clashes with than her brother. Choose one method of comparing, never both at the same time.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["She runs more faster than her brother.", "She runs fastest than her brother.", "She runs more fast than her brother.", "She runs faster than her brother."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Hardly is already a negative word, so pairing it with can''t makes a double negative. The fix is I can hardly wait for the concert, which means you are barely able to wait. Can''t hardly wait literally says the opposite of what the speaker means, and moving hardly after wait does not remove the doubled negative.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["I can''t hardly wait for the concert.", "I can''t wait hardly for the concert.", "I can hardly wait for the concert.", "I can''t hardly wait hardly for the concert."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Data is the plural of datum, so formal writing pairs it with a plural verb: The data show that the experiment failed. Everyday usage often treats data as a single mass and writes data shows, which is why that version is tempting, but the plural is the rule being tested. Has show mixes a helping verb with a base verb.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The data shows that the experiment failed.", "The data show that the experiment failed.", "The data is showing that the experiment failed.", "The data has show that the experiment failed."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Lie means to recline and takes no object; lay means to place something and always needs one. Nobody is being placed here, so Lie down and rest for a while is right. Lay down would need an object, as in lay the book down. Laid is a past-tense form and clashes with a command.'
+  WHERE section = 'language' AND prompt = 'Choose the correctly written sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Lay down and rest for a while.", "Lie down and rest for a while.", "Laid down and rest for a while.", "Lays down and rest for a while."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Everyone is grammatically singular, so it takes has: Everyone has submitted their forms. Singular their is widely accepted when the person''s gender is unspecified. Everyone have matches the verb to the crowd the word suggests rather than to its actual singular form, and that instinct is exactly the trap this question sets.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Everyone have submitted their forms.", "Everyone has submitted their forms.", "Everyone have submitted his form.", "Everyone has submitted they forms."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'After a linking verb like feel, use an adjective describing the subject, not an adverb: I feel bad about missing the party. I feel badly technically describes your sense of touch, as though your fingers had stopped working. Bad also forms its comparative as worse, so more bad and badder are not standard forms.'
+  WHERE section = 'language' AND prompt = 'Choose the correctly written sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["I feel badly about missing the party.", "I feel bad about missing the party.", "I feel more bad about missing the party.", "I feel badder about missing the party."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'A subject pronoun is required for the subject of a sentence: He and his friend went to the mall. Test it by dropping and his friend, since you would say He went, never Him went. Adding a second person does not change the pronoun''s case, even though the wrong form sounds ordinary in conversation.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Him and his friend went to the mall.", "He and his friend went to the mall.", "Him and his friend goed to the mall.", "He and his friend go to the mall yesterday."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'The number is singular and takes a singular verb, while a number of means many and takes a plural verb. So The number of students is increasing is correct. A number of students is signing up flips the rule and needs are instead. The phrase of students never controls the verb in either sentence.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The number of students are increasing.", "A number of students is signing up.", "The number of students is increasing.", "A number of students are is signing up."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Smarter already carries the comparison, so more smarter compares twice, and most smartest doubles the superlative. Use one form only. The other half of this question is the word else: without it, smarter than anyone in class compares her with herself, since she is in the class. Smarter than anyone else in class fixes both problems.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["She is more smarter than anyone in class.", "She is smarter than anyone else in class.", "She is the more smart than anyone in class.", "She is the most smartest in class."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Whoever or whomever is chosen by the job it does inside its own clause, not by the preposition sitting in front of it. Here the word is the subject of answers the door, so whoever is right. Whomever answers puts an object form in a subject slot. Plain who loses the sense of any person who.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Please give the package to whoever answers the door.", "Please give the package to whomever answers the door.", "Please give the package to who answers the door.", "Please give the package to whom answers the door."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Well is the adverb, and adverbs describe verbs, so They played well in the finals tells how they played. Good is an adjective and describes nouns, which is why played good is nonstandard even though people say it constantly. Goodly is archaic, and more good replaces the real comparative form, better.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["They played good in the finals.", "They played goodly in the finals.", "They played well in the finals.", "They played more good in the finals."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'After a linking verb such as was, use the subject form of the pronoun: It was she who called last night. The pronoun renames the subject It rather than receiving any action. It was her sounds natural in conversation but uses the object form. Whom called also fails, since the pronoun is the subject of called.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["It was her who called last night.", "It was she who called last night.", "It was she whom called last night.", "It was her whom called last night."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Committee is a collective noun and counts as singular in American English, so the verb and the pronoun both stay singular: The committee has reached its decision. The version pairing has with their begins singular and switches partway through, which is the tempting half-right answer. Keep the whole sentence in agreement.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The committee have reached their decision.", "The committee has reached their decision.", "The committee has reached its decision.", "The committee have reached its decision."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Neither used as the subject is singular, so it takes is, even when a plural phrase like of the answers comes between: Neither of the answers is correct. The verb follows neither, not answers. Neither placed directly before a noun also needs a singular noun, so neither answers breaks down before you reach the verb.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Neither of the answers are correct.", "Neither of the answers is correct.", "Neither answers are correct.", "Neither answers is correct."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Used to, with the d, is the form for a past habit: I used to wake up early every morning. That d vanishes in speech, which is why use to looks acceptable, but it is not standard writing. After used to the verb stays in base form, so used to waking and used to waked both break the pattern.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["I use to wake up early every morning.", "I used to wake up early every morning.", "I use to waked up early every morning.", "I used to waking up early every morning."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Fewer goes with things you can count one by one, and students can be counted, so Fewer students attended today than yesterday is correct. Less belongs with amounts you measure instead, like less water. The version pairing fewer with attends also breaks agreement, since a plural subject needs the plural verb form.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Less students attended today than yesterday.", "Fewer students attends today than yesterday.", "Fewer students attended today than yesterday.", "Less students attend today than yesterday."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'When exactly two things are compared, use the comparative -er form: She is the taller of the two sisters. The superlative -est is reserved for three or more, so tallest of the two mismatches the form with the number. More taller compares twice, and tallest between the two repeats that same mismatch.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["She is the tallest of the two sisters.", "She is the taller of the two sisters.", "She is more taller of the two sisters.", "She is tallest between the two sisters."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'After a preposition like to, use the object pronoun: The coach talked to Maria and me after practice. Test it by removing Maria and, since you would say talked to me and never talked to I. Myself is reflexive and works only when you are also the subject, as in I talked to myself.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The coach talked to Maria and I after practice.", "The coach talked to Maria and me after practice.", "The coach talked to Maria and myself after practice.", "The coach talked to I and Maria after practice."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'When you mean the hair on someone''s head as a whole, hair is uncountable and takes no plural s: She looked at the mirror and combed her hair. Hairs would mean individual strands you could count one at a time. The versions with looked to and looked the break the pairing this verb normally keeps with at or in.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["She looked at the mirror and combed her hairs.", "She looked at the mirror and combed her hair.", "She looked to the mirror and combed her hair.", "She looked the mirror and combed her hair."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'You lend something to someone, and you borrow something from someone. The person handing over the pencil is lending, so Can you lend me your pencil is right. Can you borrow me your pencil reverses the direction, casting the owner as the taker. Think of lend as giving out and borrow as taking in.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Can you borrow me your pencil?", "Can you lend me your pencil?", "Can I lend your pencil?", "Can you borrow your pencil to me?"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Than makes comparisons; then marks time or sequence. Height is being compared here, so I am taller than my father is correct. The two words differ by a single letter and sound nearly identical, which is why taller then slips into so much writing. More tall and most taller also misuse the comparative form.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["I am taller then my father.", "I am more tall than my father.", "I am taller than my father.", "I am most taller than my father."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Two negatives inside one clause cancel each other in standard English. Doesn''t never pairs a negative helping verb with a negative adverb, so the clean repair is She never misses practice, with one negative and a verb agreeing with the singular subject. Don''t never stacks a subject-verb error on top of the double negative.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["She don''t never miss practice.", "She doesn''t never miss practice.", "She never misses practice.", "She don''t miss never practice."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'It''s with an apostrophe means it is, and the sentence means it is a beautiful morning, so It''s a beautiful morning outside is correct. Its with no apostrophe is the possessive, as in its color. The form with an apostrophe after the s does not exist in English in any use.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Its'' a beautiful morning outside.", "It''s a beautiful morning outside.", "It is'' a beautiful morning outside.", "Its a beautiful morning outside."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'The head of a school is the principal; a principle is a rule or belief. A hook that helps: the principal is your pal. The sentence also needs past tense, so The principal of the school made an announcement is right. Pairing the singular principal with make leaves the subject and verb out of agreement.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The principle of the school made an announcement.", "The principal of the school make an announcement.", "The principal of the school made an announcement.", "The principle of the school make an announcement."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Lying is the -ing form of lie, meaning to recline, and nothing is being placed here, so She was lying on the couch all afternoon is correct. Laying is the -ing form of lay and requires an object, as in laying a blanket down. Lied belongs to a different verb entirely, the one about telling untruths.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["She was laying on the couch all afternoon.", "She was lying on the couch all afternoon.", "She was lain on the couch all afternoon.", "She was lied on the couch all afternoon."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Effect is normally the noun meaning result, and the sentence needs a noun after The: The effect of the medicine was immediate. Affect is normally the verb meaning to influence. The subject effect is singular, so were immediate breaks agreement as well. A hook: Affect is the Action, Effect is the End result.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The affect of the medicine was immediate.", "The effect of the medicine was immediate.", "The effect of the medicine were immediate.", "The affect of the medicine were immediate."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'The helping verb is have: He could have won if he had practiced. In speech could have squeezes down to could''ve, which sounds exactly like could of, and that is where the error comes from. Of is a preposition and can never follow could, would, or should. Could''ve of makes the same mistake twice.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["He could of won if he had practiced.", "He could have won if he had practiced.", "He could of win if he had practiced.", "He could''ve of won if he had practiced."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Quickly is an adverb, and longer adverbs form the comparative with more: She types more quickly than anyone on the team. More quicker compares twice, since quicker already carries the comparison. Quicklier is not a word, and more quick uses an adjective where the sentence needs an adverb describing how she types.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["She types more quicker than anyone on the team.", "She types quicklier than anyone on the team.", "She types more quickly than anyone on the team.", "She types more quick than anyone on the team."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Use between for exactly two things and among for three or more, so three options call for among. With three or more, the superlative fits as well: Among the three options, I like the first best. Better compares only two, so pairing it with three options mixes the two forms together.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Between the three options, I like the first best.", "Among the three options, I like the first best.", "Among the three options, I like the first better.", "Between the three options, I like the first better."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'A concluding sentence restates the paragraph''s main point and signals that the discussion is closing. Clearly, recycling plays a vital role in protecting our planet for future generations does both, and the word clearly signals the wrap-up. Facts about glass being recyclable many times, or people not recycling at work, add new information instead of closing.'
+  WHERE section = 'language' AND prompt = 'Which sentence best serves as a concluding sentence for a paragraph about recycling?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Plastics are a major source of pollution.", "Clearly, recycling plays a vital role in protecting our planet for future generations.", "Many people do not recycle at their workplaces.", "Glass can be recycled many times without losing quality."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Combining sentences well means showing how the ideas relate, not stacking them. Although the movie was long, it was interesting uses a subordinating conjunction to signal contrast: long is the drawback, interesting is the payoff. The movie was long it was interesting is a run-on, and the movie was long, interesting drops the contrast entirely.'
+  WHERE section = 'language' AND prompt = 'Which version best combines these two sentences: ''The movie was long. The movie was interesting.''?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The movie was long, interesting.", "Although the movie was long, it was interesting.", "The movie was long and interesting both.", "The movie was long it was interesting."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'A run-on, also called a fused sentence, jams two complete sentences together with no punctuation and no conjunction. The sun set the stars appeared does exactly that. The version using a semicolon and the version using a comma plus and are both correct joins, and After the sun set turns the first half into a dependent clause.'
+  WHERE section = 'language' AND prompt = 'Which sentence is a run-on?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The sun set; the stars appeared.", "The sun set, and the stars appeared.", "The sun set the stars appeared.", "After the sun set, the stars appeared."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Concise writing cuts words that carry no meaning. Due to the fact that is a five-word way of saying because, and decided to postpone says no more than postponed. Because it was raining, we postponed the game keeps every idea in eight words. Adding at that time pads the sentence, and the version without a comma still needs one after its opening clause.'
+  WHERE section = 'language' AND prompt = 'Which sentence is the most concise revision of ''Due to the fact that it was raining, we decided to postpone the game''?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Because it was raining we decided to postpone the game.", "Because it was raining, we postponed the game.", "It was raining, so we decided we would postpone the game at that time.", "We postponed the game, and the reason is that it was raining outside."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Who refers back to students, the plural noun right in front of it, not to one, so the verb inside the clause is have excelled. Turn the clause around to test it: of the students who have excelled, she is one. Whom is the object form, and nothing in this clause needs an object, so has excelled and whom are both out.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["She is one of the students who has excelled.", "She is one of the students who have excelled.", "She is one of the students whom has excelled.", "She is one of the students whom have excelled."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Whoever is the subject of the verb arrives, so the subject form is required. The object form whomever would need something acting on it, and nothing here does. Should signs in adds an ending the helping verb should never allows. Plain who cannot open this kind of clause on its own the way whoever can.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Whomever arrives first should sign in.", "Whoever arrives first should sign in.", "Whomever arrives first should signs in.", "Who arrives first should sign in."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'That introduces an essential clause about a thing, so the proposal that it deemed most worthy is correct. What is not a relative pronoun in this position, and whom is only for people. The version with which they deemed also switches to a plural pronoun, but a collective noun like committee takes the singular it.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The committee approved the proposal that it deemed most worthy.", "The committee approved the proposal what it deemed most worthy.", "The committee approved the proposal which they deemed most worthy.", "The committee approved the proposal whom it deemed most worthy."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'A participial phrase like Having finished the exam must describe whatever subject follows it. Questions cannot finish an exam, so the version ending the questions seemed easy dangles. Tucking the phrase between commas after the questions keeps the same problem. The students did the finishing, so the students must come right after the comma.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Having finished the exam, the questions seemed easy.", "Having finished the exam, the students thought the questions were easy.", "The questions, having finished the exam, seemed easy.", "Having finished the exam and the questions seemed easy."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'With neither and nor, the verb agrees with whichever subject sits closer to it. In neither the students nor the teacher, teacher is singular, so was prepared is right. Were prepared would reach past it to students. The versions beginning neither the teacher nor the students end with a plural subject, so was and is do not fit them.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Neither the teacher nor the students was prepared.", "Neither the students nor the teacher was prepared.", "Neither the students nor the teacher were prepared.", "Neither the teacher nor the students is prepared."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Whom is the object of the preposition to, and moving to in front of it makes that plain: the man to whom I spoke. The man whom I spoke drops the preposition entirely, leaving the clause unfinished, and which cannot refer to a person. The man who I spoke to is common in speech, but formal tests want whom after a preposition.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The man who I spoke to was very helpful.", "The man to whom I spoke was very helpful.", "The man whom I spoke was very helpful.", "The man which I spoke to was very helpful."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Walking along the pier has to describe the subject that follows it. A sunset does not walk, so the version ending the sunset was breathtaking dangles the phrase. Setting it off inside the sentence, after the sunset, keeps the same error. We were the ones walking, so we belongs right after the comma.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Walking along the pier, the sunset was breathtaking.", "Walking along the pier, we found the sunset breathtaking.", "The sunset, walking along the pier, was breathtaking.", "The sunset was found breathtaking, walking along the pier."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'After an expression of importance such as it is important that, English uses the subjunctive: the base form attend, with no -s. He attends sounds natural because attends usually follows he, but this clause drops the ending. He to attend and he attending are not complete verbs, so neither can fill the slot.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["It is important that he attends the meeting.", "It is important that he attend the meeting.", "It is important that he to attend the meeting.", "It is important that he attending the meeting."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'For a condition that is contrary to fact, use the subjunctive were: if I were you. Was seems right because I normally takes was, but this if-clause is imaginary, not a report about the past. If I am you states the impossible as fact and clashes with would, and if I be you is not standard English.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["If I was you, I would apologize immediately.", "If I were you, I would apologize immediately.", "If I am you, I would apologize immediately.", "If I be you, I would apologize immediately."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Reason already means cause, so the reason is because says it twice. The clean pairing is the reason she succeeded is that she practiced. Is due to needs a noun after it, not a whole clause, and is for she practiced is not English. Another good fix is to drop the opener: she succeeded because she practiced.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The reason she succeeded is because she practiced.", "The reason she succeeded is that she practiced.", "The reason she succeeded is due to she practiced.", "The reason she succeeded is for she practiced."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Scarcely pairs with when, not with than; than belongs to comparisons like sooner or taller. Begun is also the past participle that follows had, while began is the plain past, so had the game began is the wrong verb form. Joining the two clauses with and throws away the just-barely meaning that scarcely sets up.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Scarcely had the game begun when it started to rain.", "Scarcely had the game begun than it started to rain.", "Scarcely had the game begun and it started to rain.", "Scarcely had the game began when it started to rain."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'A linking verb like were does not take an object; it points back to the subject, so the pronouns stay in subject form: the winners were he and she. Him and her are object forms, which is why they sound natural but are not standard here. Winners is plural, so was is wrong in either version that uses it.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The winners were him and her.", "The winners were he and she.", "The winners was him and her.", "The winners was he and she."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'The subject she is singular, so the present-tense verb needs its -s: she wants. She want is missing that ending. After wants, the infinitive is to complete with the plain verb, so to completes doubles the ending. Wants completing is not an English pattern, because want takes an infinitive rather than an -ing form.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["She want to complete the form quickly and accurately.", "She wants to complete the form quickly and accurately.", "She wants completing the form quickly and accurately.", "She wants to completes the form quickly and accurately."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'After wish, a regret about the past takes the past perfect: I wish I had studied. Would have studied belongs in the result half of an if-sentence, not after wish. I wish I studied would describe a habit now rather than a past regret, and I was studied is passive, as though someone studied the speaker.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["I wish I would have studied harder for the test.", "I wish I had studied harder for the test.", "I wish I studied harder for the test.", "I wish I was studied harder for the test."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Stating the verb, than I am, makes the comparison complete and correct. More taller doubles the comparison, since taller already carries the -er ending. Then marks time while than marks comparison, so taller then is a word mix-up. Myself is reflexive and needs an earlier I in the same clause to point back to.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["She is more taller than I am by three inches.", "She is taller then I am by three inches.", "She is taller than myself by three inches.", "She is taller than I am by three inches."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Some nouns end in -s but name a single thing: news, mathematics, physics, civics. The news is disturbing is correct because news is one body of information. Mathematics are difficult and physics are taught here treat a school subject as plural, but each names one field, so each takes is.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The news are disturbing.", "Mathematics are difficult.", "The news is disturbing.", "Physics are taught here."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Standard English uses one negative per idea. Hardly, scarcely, and barely already count as negatives, so hardly no one and barely nobody double up. Scarcely anyone came says it once. Almost no one didn''t come stacks negatives too, and it ends up meaning the opposite: that nearly everybody showed up.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Hardly no one came to the event.", "Scarcely anyone came to the event.", "Barely nobody came to the event.", "Almost no one didn''t come to the event."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Keep the same relative pronoun in both halves: who works hard and who gets results. Switching to that partway through breaks the parallel. Which is also wrong for a person, so the student which works hard fails on two counts, and pairing that with which mismatches the halves as well.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["He is the kind of student who works hard and that gets results.", "He is the kind of student who works hard and who gets results.", "He is the kind of student which works hard and that gets results.", "He is the kind of student that works hard and which gets results."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Not only and but also must join two parts with matching shapes. Cleaned her room and organized her closet are both past-tense verbs with objects, so they balance. But organized also her closet misplaces also and scrambles the phrase. Not only she cleaned never finishes the pattern, and adding a comma plus she makes the two halves uneven.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["She not only cleaned her room but also organized her closet.", "She not only cleaned her room but organized also her closet.", "She not only cleaned her room, but also she organized her closet.", "Not only she cleaned her room but also organized her closet."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'An interrupting phrase such as along with her students does not change the subject''s number. The subject is still professor, so the verb is is presenting. Are presenting reaches into the phrase to match students. Removing the commas changes nothing either, because along with is not the same as and, so the subject stays singular.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The professor, along with her students, are presenting today.", "The professor, along with her students, is presenting today.", "The professor along with her students is presenting today.", "The professor along with her students are presenting today."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Before a gerund, an -ing form working as a noun, English uses the possessive: I resent his leaving. What is resented is the leaving itself, not the person. Him leaving is common in speech but not the tested form. His leave and him leave use a noun or a bare verb, neither of which fits after resent here.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["I resent him leaving without saying goodbye.", "I resent him leave without saying goodbye.", "I resent his leaving without saying goodbye.", "I resent his leave without saying goodbye."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Neither always pairs with nor, so any version using neither and or is wrong before you even reach the verb. With neither and nor, the verb agrees with the nearer subject, and dedication is singular, so has gone is right. Have gone would need a plural subject, but talent and dedication are being considered one at a time.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Neither her talent nor her dedication have gone unnoticed.", "Neither her talent nor her dedication has gone unnoticed.", "Neither her talent or her dedication has gone unnoticed.", "Neither her talent or her dedication have gone unnoticed."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'An opening infinitive phrase like to finish the project on time must describe the subject that follows it. Only the team can finish a project, so the team worked extra shifts is correct. Extra shifts were worked hides the doer in a passive verb, so the phrase dangles, and the other arrangements sprinkle commas without ever attaching the phrase to a doer.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["To finish the project on time, extra shifts were worked by the team.", "To finish the project on time, the team worked extra shifts.", "The project, to finish on time, the team worked extra shifts.", "Extra shifts were worked to finish, the project on time, by the team."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Adverbs modify verbs. Speaks and writes are verbs, so they need fluently and well, not the adjectives fluent and good. Good describes nouns, as in a good writer, while well describes how something is done. Any version that mixes one adverb with one adjective still leaves half the sentence wrong.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["He speaks English fluent and writes it good.", "He speaks English fluently and writes it well.", "He speaks English fluently and writes it good.", "He speaks English fluent and writes it well."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'When that introduces a relative clause, the noun it stands for is not repeated inside the clause. About already has its object, so adding it creates a second one: told about it. The same repetition spoils the version with which, and about which I was told it repeats the object as well. The book that I was told about is complete.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The book that I was told about it is excellent.", "The book that I was told about is excellent.", "The book which I was told about it is excellent.", "The book about which I was told it is excellent."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Irregardless is nonstandard, because the ir- and the -less both mean without, so the word cancels itself out. The accepted word is regardless. It also needs of before its object, since regardless of means without considering, which is why regardless the outcome is still incomplete even with the right word.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Irregardless of the outcome, we should try our best.", "Regardless of the outcome, we should try our best.", "Irregardless the outcome, we should try our best.", "Regardless the outcome, we should try our best."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Fewer counts separate items; less measures amounts you cannot count, like water or time. Groceries are countable, so she bought fewer groceries. Less groceries is the common slip. The singular grocery is also wrong, since she bought more than one item, so fewer grocery and less grocery both misuse the noun.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["She bought less groceries than planned.", "She bought fewer groceries than planned.", "She bought less grocery than planned.", "She bought fewer grocery than planned."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'As if and as though are both conjunctions that introduce a clause, so either would work here. After could, use the base form use, not used. You looks does not agree with the subject you. Like as if stacks two connectors that do the same job, which is one connector too many.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["You look as if you could use a rest.", "You look as if you could used a rest.", "You looks as though you could use a rest.", "You look like as if you could use a rest."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Lie means to recline, and its past participle is lain, so he had lain in bed. Laid is the past of lay, which means to place something and needs an object. Lied means told an untruth. Had lay puts a helping verb in front of the plain form, which never happens after had.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The suspect insisted that he had laid in bed all morning.", "The suspect insisted that he had lain in bed all morning.", "The suspect insisted that he had lied in bed all morning.", "The suspect insisted that he had lay in bed all morning."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Eager means looking forward to something, which fits a new job. Anxious carries worry, so it changes the meaning, and it also needs to before the verb rather than an -ing form. Eager starting has that same missing to. Eagerly is an adverb, and the linking verb am needs an adjective to describe I.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["I am eagerly to start the new job next week.", "I am eager to start the new job next week.", "I am eager starting the new job next week.", "I am anxious starting the new job next week."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'A collective noun names one group, so in American English jury takes a singular verb and a singular pronoun: the jury has reached its verdict. Have and their treat the group as many separate people. Mixing the two, as in the jury have reached its verdict, is inconsistent no matter which half you keep.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The jury have reached their verdict.", "The jury has reached its verdict.", "The jury have reached its verdict.", "The jury has reached their verdict."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'When you compare more than two things, use the superlative: the smartest of all her siblings. Smarter compares exactly two, so it cannot cover all her siblings. Most smart adds a comparing word to an adjective that already takes -est, and more smarter piles a comparing word onto a comparative ending.'
+  WHERE section = 'language' AND prompt = 'Choose the grammatically correct sentence.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["She is the smartest of all her siblings.", "She is the most smart of all her siblings.", "She is the smarter of all her siblings.", "She is more smarter than all her siblings."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'A dash can introduce an explanation or a renaming at the end of a sentence, and to become a doctor renames the dream. Dropping the dash right after had or right after only cuts the sentence in the middle of a phrase. Two dashes around dream would set that single word off as an interruption, leaving the thought unfinished.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses the dash correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["She had only one dream — to become a doctor.", "She had — only one dream to become a doctor.", "She had only — one dream to become a doctor.", "She had only one — dream — to become a doctor."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'A colon needs a complete sentence in front of it. The instructions were simple stands alone, so it can introduce the list that explains it. Putting and after the colon does not work, since a colon already does the joining. The instructions: were simple splits a subject from its verb, and starting with the list leaves nothing complete before the colon.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses the colon correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["He arrived late: and missed the opening act.", "The instructions were simple: read, write, and submit.", "The instructions: were simple to read write and submit.", "Read write and submit: were the simple instructions."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'When the items in a list already contain commas, separate the items with semicolons: Austin, Texas; Miami, Florida; and Portland, Oregon. Using commas throughout makes six items look like three, which is why that version confuses a reader. Dropping the commas between city and state, as in Austin Texas, removes punctuation the pair needs.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses semicolons correctly in a complex list?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The guests were from Austin, Texas; Miami, Florida; and Portland, Oregon.", "The guests were from Austin Texas, Miami Florida, and Portland Oregon.", "The guests were from Austin, Texas, Miami, Florida, and Portland, Oregon.", "The guests were from Austin Texas; Miami Florida; Portland Oregon."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'The question belongs to the quoted speech, so the question mark goes inside the closing quotation mark. Placing it after the closing mark would mean the whole sentence is a question, which it is not. The tag she asked continues the same sentence, so it stays lowercase; a capital She would begin a sentence with no ending of its own.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses punctuation correctly with dialogue?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(JSONB_BUILD_ARRAY('"Where are you going?" she asked.', '"Where are you going"? she asked.', '"Where are you going?" She asked.', '"Where are you going"? She asked.')) v);
+
+UPDATE questions SET explanation = 'Hyphenate a compound modifier when it comes before the noun: a well-known scientist. Without the hyphen, well seems to modify known on its own, so a well known scientist reads loosely. Do not hyphenate the noun itself, which is why well-known-scientist has one hyphen too many, and well known-scientist joins the wrong pair of words.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses the hyphen correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["She is a well known scientist.", "She is a well-known scientist.", "She is a well-known-scientist.", "She is a well known-scientist."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'In American usage the period goes inside the closing quotation mark, so the mark comes after noon and the period sits in front of it. Putting the period outside is British style. A comma is needed after said to introduce a direct quotation, so leaving it out is also an error, and single marks are saved for a quotation inside another quotation.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses punctuation correctly with a quotation?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(JSONB_BUILD_ARRAY('He said, "I will be there by noon".', 'He said, "I will be there by noon."', 'He said "I will be there by noon."', 'He said, ''I will be there by noon.''')) v);
+
+UPDATE questions SET explanation = 'Parentheses hold information the sentence could survive without, and announced in January is exactly that. No comma belongs immediately before or immediately after the parentheses, so the versions that add one are punctuated wrong. Putting immediately, in January inside parentheses buries the main point of the sentence instead of adding a side note.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses parentheses correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The president (who was elected in 2020), announced a new policy.", "The policy (announced in January) took effect immediately.", "The policy, (announced in January) took effect immediately.", "The policy took effect (immediately, in January)."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'An ellipsis is three dots in a row, no more and no fewer, and it can mark a pause in speech. Two dots and four dots are not standard punctuation marks. Spacing the dots unevenly is wrong as well, since the three dots stay together and work as a single mark.'
+  WHERE section = 'language' AND prompt = 'Which sentence uses the ellipsis correctly to show a pause?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(JSONB_BUILD_ARRAY('She paused and said, "I... I don''t know what to say."', 'She paused and said, "I . . I don''t know what to say."', 'She paused and said, "I..I don''t know what to say."', 'She paused and said, "I .... I don''t know what to say."')) v);
+
+UPDATE questions SET explanation = 'Although makes the clause it opens dependent, so that clause cannot stand alone. Attaching it to a complete sentence fixes the fragment: although the team practiced hard, it lost the championship. Adding every day makes the fragment longer but no more complete. Moving although to the end, or setting it off with a comma, leaves the contrast pointing at nothing.'
+  WHERE section = 'language' AND prompt = 'Which sentence best revises this fragment: ''Although the team practiced hard''?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Although the team practiced hard every day.", "Although the team practiced hard, it lost the championship.", "The team practiced hard, although.", "Although, the team practiced hard and lost."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Items in a series must share one grammatical form. Reading and writing are gerunds, so to paint breaks the pattern; painting would repair it. A list of three infinitives, to read, to write, and to paint, is parallel, and so is the longer list of gerunds with objects. Only the mixed list is faulty.'
+  WHERE section = 'language' AND prompt = 'Which sentence has faulty parallel structure?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["She enjoys reading, writing, and to paint.", "She enjoys reading, writing, and painting.", "She enjoys to read, to write, and to paint.", "She enjoys reading books, writing stories, and painting portraits."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'The three things asked for should share one form. Arrive early and work efficiently are base verbs following to, so being professional breaks the pattern; be professional matches. The list of adjectives, early, efficient, and professional, is parallel too, and so is the version listing three commands after a colon.'
+  WHERE section = 'language' AND prompt = 'Which sentence has faulty parallel structure?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The manager told us to arrive early, work efficiently, and being professional.", "The manager told us to arrive early, work efficiently, and be professional.", "The manager told us to be early, efficient, and professional.", "The manager told us: arrive early, work efficiently, be professional."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Studying all night led to passing, so the transition must signal cause and effect: consequently. However and nevertheless both signal a surprise or a contrast, which would suggest the studying worked against her. Meanwhile marks two things happening at once, but the passing came after the studying, not alongside it.'
+  WHERE section = 'language' AND prompt = 'Which transition word best fills the blank? ''She studied all night; _____, she passed the exam.'''
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["however", "consequently", "meanwhile", "nevertheless"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Two complete sentences jammed together make a run-on. A semicolon joins closely related independent clauses without a conjunction, so the game; it was sold out is correct. However is a conjunctive adverb, so a comma in front of it leaves a comma splice. Scattering extra commas inside the clauses does not fix the join at all.'
+  WHERE section = 'language' AND prompt = 'Which sentence best corrects this run-on: ''I wanted to go to the game it was sold out''?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["I wanted to go to the game, however it was sold out.", "I wanted to go to the game; it was sold out.", "I wanted to go, to the game, it was sold out.", "I wanted to go to the game and it was, sold out."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'The reason why repeats itself, and due to the fact that is a long way of saying because. He left early because he was feeling sick keeps every idea and drops the padding. The version that keeps the reason and because still states the cause twice, and due to the fact of his sickness trades one wordy phrase for another.'
+  WHERE section = 'language' AND prompt = 'Which revision of the following sentence is most concise? ''The reason why he left early was due to the fact that he was feeling sick.'''
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The reason he left early was because he felt sick.", "He left early because he was feeling sick.", "He left early due to the fact of his sickness.", "The reason why he left was that he was sick."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Only should sit directly in front of the words it limits. She only eats vegetables on Mondays literally says that eating is the one thing she does to vegetables. Moving it, as in she eats only vegetables, limits the food, and only on Mondays limits the day. Those versions each say something clear; the misplaced one does not.'
+  WHERE section = 'language' AND prompt = 'Which sentence contains a misplaced modifier?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["She only eats vegetables on Mondays.", "She eats only vegetables on Mondays.", "Only on Mondays does she eat vegetables.", "On Mondays, she eats only vegetables."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'A topic sentence makes a specific claim the rest of the paragraph can support. The sentence about unchecked use posing risks to adolescent mental health does that. Millions of teenagers use social media and companies making money from advertising are facts with no argument attached, and the remark about vacation photos is one narrow detail.'
+  WHERE section = 'language' AND prompt = 'Which sentence best serves as a topic sentence for a paragraph about the dangers of social media?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Millions of teenagers use social media every day.", "Some people post vacation photos online.", "While social media connects people, its unchecked use poses significant risks to adolescent mental health.", "Social media companies make a lot of money from advertising."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'At this point in time means now, and it is absolutely necessary that students make a decision means students must decide. Now, all students must decide on a career keeps the meaning with none of the padding. The other versions hold onto at this time or at this point, keep make a decision, or add a passive verb, so each stays longer than it needs to be.'
+  WHERE section = 'language' AND prompt = 'Which sentence best revises this wordy passage: ''At this point in time, it is absolutely necessary that all students make a decision about their future career plans''?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["At this time, it is necessary for students to make a decision about careers.", "Now, all students must decide on a career.", "Students are required to make necessary decisions about careers at this point.", "It is now absolutely necessary that all students decide on a future career plan."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'A comma splice is two complete sentences joined by only a comma, and she ran the race, she won is exactly that. Adding and after the comma makes a proper compound sentence. A semicolon can join the clauses by itself, and the dash with and is acceptable too, so those versions are not splices.'
+  WHERE section = 'language' AND prompt = 'Which sentence contains a comma splice?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["She ran the race, and she won.", "She ran the race; she won.", "She ran the race, she won.", "She ran the race — and she won."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Due to the fact that is four words doing one word''s work. Because she was ill states the cause directly. Chopping the phrase up with commas does not remove a single word. Flipping it to the front of the sentence keeps all the padding, and due to her illness, which she had, adds a clause that repeats what illness already tells us.'
+  WHERE section = 'language' AND prompt = 'Which revision best improves this sentence? "She was absent due to the fact that she was ill."'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["She was absent, due to the fact that, she was ill.", "She was absent because she was ill.", "Due to the fact that she was ill, she was absent.", "She was absent, due to her illness, which she had."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'At this point in time says now three different ways. Currently carries the whole meaning by itself. Adding now to the end of the phrase makes it longer, not shorter. Breaking it up with commas removes nothing, and turning the ending into a decision cannot be made by us piles a passive verb on top of the padding.'
+  WHERE section = 'language' AND prompt = 'Which revision best improves this sentence? "At this point in time, we are unable to make a decision."'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["At this point in time now, we are unable to decide.", "Currently, we are unable to make a decision.", "At this point, in time, we cannot make a decision.", "At this point in time, a decision cannot be made by us."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'In spite of the fact that is a long way of saying although, so although it rained, the game continued packs the concession into one word. Despite must be followed by a noun or an -ing phrase rather than a clause, so despite it rained is ungrammatical. Went on continuing repeats itself, and the rain fact is not an English phrase.'
+  WHERE section = 'language' AND prompt = 'Which revision best improves this sentence? "In spite of the fact that it rained, the game continued."'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["In spite of the fact that it rained, the game went on continuing.", "Despite it rained, the game continued.", "Although it rained, the game continued.", "In spite of the rain fact, the game continued."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'The reason is because states the cause twice, and adding why makes three. She failed because she did not study says it once. Changing because to that fixes only half the problem, since the reason why remains. Due to the fact that is another wordy stand-in for because, and she failed is because is not a grammatical sentence.'
+  WHERE section = 'language' AND prompt = 'Which revision best improves this sentence? "The reason why she failed is because she did not study."'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The reason why she failed is that she did not study.", "She failed is because she did not study.", "She failed because she did not study.", "The reason she failed is due to the fact that she did not study."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Each already means every single one, so each and every doubles up; each alone is enough. Note that placing carefully inside to review makes a split infinitive, which is not an error. Every each is not English, the passive version adds words instead of cutting them, and with care and attention repeats what carefully already says.'
+  WHERE section = 'language' AND prompt = 'Which revision best improves this sentence? "We need to review each and every application carefully."'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["We need to review every each application carefully.", "We need to carefully review each application.", "Each and every application must be reviewed by us carefully.", "We need to review each and every application with care and attention."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Put the steps in the order the work happens. Gathering the wood, nails, and hammer has to come first, since every later step uses them. The walls go up next, the roof is attached after that, and the word Finally marks hanging the birdhouse as the last step. Any order that raises the roof or hangs the house before the walls exist puts results ahead of causes.'
+  WHERE section = 'language' AND prompt = 'Sentences 1–4 appear in scrambled order. Which arrangement makes the most logical paragraph? 1. Attach the roof pieces at an angle so rainwater runs off. 2. Gather your wood, nails, and a hammer before you begin. 3. Finally, hang the finished birdhouse from a tree branch at least six feet off the ground. 4. Nail the four walls together, making sure the front piece has a small round entrance hole.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["1, 2, 3, 4", "2, 4, 1, 3", "3, 1, 4, 2", "4, 2, 1, 3"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'The sentence defining tides belongs first, because it names the topic. The near-side bulge must follow, since the phrase this gravitational pull points back to the Moon''s gravity. At the same time signals that the far-side bulge comes next. Opening with the bulge sentence, or with the two high tides and two low tides result, leaves those pointer words with nothing to refer to.'
+  WHERE section = 'language' AND prompt = 'Sentences 1–4 appear in scrambled order. Which arrangement makes the most logical paragraph? 1. This gravitational pull causes water on the side of Earth nearest the Moon to bulge outward. 2. Because of Earth''s rotation, most coastal locations experience two high tides and two low tides each day. 3. Tides are the periodic rise and fall of sea levels caused mainly by the Moon''s gravity. 4. At the same time, the opposite side of Earth bulges outward due to inertia, creating a second high tide.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["1, 3, 4, 2", "3, 4, 1, 2", "3, 1, 4, 2", "2, 3, 1, 4"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'The first step to saving money announces itself as the opening. Next, identify expenses follows, and once you have cut costs cannot come before those cuts are described. With consistent effort, even small savings add up looks back over the whole routine, so it lands at the end. Any order starting with next or with the summary ignores those signal words.'
+  WHERE section = 'language' AND prompt = 'Sentences 1–4 appear in scrambled order. Which arrangement makes the most logical paragraph? 1. Next, identify expenses you can reduce, such as dining out or subscription services. 2. With consistent effort, even small savings add up to a significant amount over time. 3. The first step to saving money is tracking exactly how much you spend each month. 4. Once you have cut costs, deposit the extra money into a dedicated savings account each payday.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["1, 3, 2, 4", "3, 2, 1, 4", "2, 4, 3, 1", "3, 1, 4, 2"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Begin with why the wall was built, since that is the topic. Over centuries, it was extended follows naturally from that original construction. However, historians now believe corrects a belief about the wall just described, and despite its fame closes with a limit on how well it worked. Opening with the correction or with the extension leaves those signal words pointing at nothing.'
+  WHERE section = 'language' AND prompt = 'Sentences 1–4 appear in scrambled order. Which arrangement makes the most logical paragraph? 1. Over centuries, it was extended and reinforced by successive dynasties, eventually stretching thousands of miles. 2. However, historians now believe it was never a single continuous wall but a series of connected fortifications. 3. The Great Wall of China was originally constructed to defend Chinese territory against northern invasions. 4. Despite its fame, the wall was not always effective — raiders frequently found ways around or through it.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["3, 1, 2, 4", "1, 3, 4, 2", "3, 2, 4, 1", "2, 3, 1, 4"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'The cycle starts with evaporation from sun-heated water. As warm, moist air rises must come next, since clouds need that vapor, and rain, snow, or sleet can only fall once clouds have formed. The sentence naming evaporation, condensation, and precipitation together sums up all three stages, so an order that puts it first, or that opens with the falling rain, gets the sequence backward.'
+  WHERE section = 'language' AND prompt = 'Sentences 1–4 appear in scrambled order. Which arrangement makes the most logical paragraph? 1. As warm, moist air rises, it cools, causing water vapor to condense into clouds. 2. Water on Earth''s surface evaporates when heated by the sun, turning from liquid into vapor. 3. This cycle of evaporation, condensation, and precipitation keeps Earth''s water supply constantly moving. 4. When enough water collects in clouds, it falls back to Earth as rain, snow, or sleet.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["1, 4, 2, 3", "2, 1, 4, 3", "3, 2, 1, 4", "4, 1, 2, 3"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'The paragraph is about how a honeybee colony is organized: its size, the workers'' jobs, and the queen laying eggs. The sentence about wasps not producing honey and stinging repeatedly jumps to a different insect, so it breaks the unity. The others all describe bees, which is why none of them can be the one that does not fit.'
+  WHERE section = 'language' AND prompt = 'Read the following paragraph. Which sentence does NOT belong? (1) Honeybees live in highly organized colonies that can contain up to 60,000 workers. (2) Each worker bee has a specific role — some gather nectar, others protect the hive, and some feed the young. (3) Wasps, unlike bees, do not produce honey and can sting multiple times. (4) The queen bee''s sole function is to lay eggs, sometimes thousands per day.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Sentence 1", "Sentence 2", "Sentence 3", "Sentence 4"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Every other sentence is about Edison: his patents, his phonograph, and his light bulb and power systems. The sentence about Alexander Graham Bell inventing the telephone brings in a different inventor, so it does not belong, even though the two men were contemporaries. Relevance, not truth, decides whether a sentence fits a paragraph.'
+  WHERE section = 'language' AND prompt = 'Read the following paragraph. Which sentence does NOT belong? (1) Thomas Edison held over a thousand patents, making him one of the most prolific inventors in history. (2) His invention of the phonograph allowed recorded sound to be played back for the first time. (3) Alexander Graham Bell, Edison''s contemporary, invented the telephone in 1876. (4) Edison also developed a practical electric light bulb and systems to distribute electricity to homes.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Sentence 1", "Sentence 2", "Sentence 3", "Sentence 4"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'The paragraph explains photosynthesis: what plants convert into glucose, what the glucose does for them, and the oxygen released as a byproduct. The sentence about well-drained soil and neutral pH is true and is about plants, but it never touches photosynthesis, so it wanders. Being on the general subject is not the same as supporting the point.'
+  WHERE section = 'language' AND prompt = 'Read the following paragraph. Which sentence does NOT belong? (1) Photosynthesis is the process by which plants use sunlight to convert carbon dioxide and water into glucose. (2) This glucose provides plants with the energy they need to grow, flower, and reproduce. (3) Most plants grow better in well-drained soil with a neutral pH level. (4) As a byproduct of photosynthesis, plants release oxygen, which animals and humans need to breathe.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Sentence 1", "Sentence 2", "Sentence 3", "Sentence 4"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'The main idea is the Amazon''s biodiversity and the deforestation threatening it. The sentence about the Congo Basin being the second-largest rainforest moves to another continent and never comes back. The opening about size and biodiversity, the one-in-ten-species estimate, and the warning about acres lost each year all build that same idea.'
+  WHERE section = 'language' AND prompt = 'Read the following paragraph. Which sentence does NOT belong? (1) The Amazon rainforest covers over 5.5 million square kilometers and is home to extraordinary biodiversity. (2) Scientists estimate that one in ten known species on Earth lives in the Amazon. (3) The Congo Basin in Africa is the world''s second-largest tropical rainforest. (4) Deforestation threatens this biodiversity, as thousands of acres of Amazon forest are lost each year.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Sentence 1", "Sentence 2", "Sentence 3", "Sentence 4"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Each sentence that belongs describes the immune system: what it defends against, how white blood cells attack invaders, and how it remembers them afterward. None of those three can be dropped without losing part of that explanation. The sentence about the digestive system processing food into nutrients names a different body system, and being accurate does not keep a sentence on topic.'
+  WHERE section = 'language' AND prompt = 'Read the following paragraph. Which sentence does NOT belong? (1) The immune system is the body''s defense network against viruses, bacteria, and other harmful invaders. (2) White blood cells identify foreign substances and launch attacks to neutralize them. (3) The digestive system processes food into nutrients the body can absorb. (4) After an infection, the immune system retains a memory of the invader, making future responses faster.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Sentence 1", "Sentence 2", "Sentence 3", "Sentence 4"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Months of training caused the qualification, so the transition must signal a result: consequently. However and nevertheless set up a contrast, which would suggest she qualified in spite of the training. In contrast points to a difference between two things, but only one situation is described here.'
+  WHERE section = 'language' AND prompt = 'Which transition word or phrase best completes this sentence? "Mia trained for months; _____, she qualified for the state championship."'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["however", "nevertheless", "consequently", "in contrast"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'The flawed data is the reason the team collected new samples, so consequently, which marks a result, is the fit. However would set up a contrast, as though the new samples worked against the flaw. In addition would make the new samples an unrelated second fact, and meanwhile would place the two events side by side in time instead of in sequence.'
+  WHERE section = 'language' AND prompt = 'Which transition word or phrase best completes this sentence? "The original data appeared flawed; _____, the team collected new samples before publishing."'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["consequently", "however", "in addition", "meanwhile"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'The two halves pull against each other: strong qualifications, but thin experience managing people. However marks that contrast. Therefore would claim the qualifications caused the limited experience, which makes no sense. Furthermore and in addition would treat never managing more than five people as one more point in her favor.'
+  WHERE section = 'language' AND prompt = 'Which transition word or phrase best completes this sentence? "The candidate had strong qualifications; _____, she had never managed a team of more than five people."'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["therefore", "furthermore", "however", "in addition"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Both clauses name benefits of exercise, so the transition should add: moreover. Nevertheless and although signal concession or contrast, which would suggest the second benefit somehow works against the first. Consequently would claim that better heart health causes the lower diabetes risk, but the sentence presents them as two separate benefits.'
+  WHERE section = 'language' AND prompt = 'Which transition word or phrase best completes this sentence? "Regular exercise improves cardiovascular health; _____, it reduces the risk of type 2 diabetes."'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["nevertheless", "moreover", "although", "consequently"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'The group packed rain gear even though the forecast was clear, so the opener must signal a concession: although. Therefore and as a result would say the clear forecast caused them to pack rain gear, which reverses the logic. Furthermore would treat the forecast as one more reason to pack, when it is really a reason not to.'
+  WHERE section = 'language' AND prompt = 'Which transition word or phrase best completes this sentence? "_____ the weather forecast predicted clear skies, the hiking group packed rain gear just in case."'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Therefore", "Furthermore", "Although", "As a result"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'The subject is boxes, which is plural, so the verb must be are covered. In the attic is a prepositional phrase, and a noun inside one of those never controls the verb. The other two sentences are fine: my brother and I is a compound subject taking walked, and each is singular, so each of the students has a locker is correct.'
+  WHERE section = 'language' AND prompt = 'Which sentence contains an error?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The boxes in the attic is covered with dust.", "My brother and I walked to the library.", "Each of the students has a locker.", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'This is a comma splice: the movie was long and we enjoyed it anyway are both complete sentences, joined by only a comma. Use a semicolon, or a comma plus but. The other two are correct, since because opens a dependent clause that needs no extra punctuation, and after dinner is an introductory phrase properly followed by a comma.'
+  WHERE section = 'language' AND prompt = 'Which sentence contains a mistake?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["We stayed inside because it was raining.", "The movie was long, we enjoyed it anyway.", "After dinner, we washed the dishes.", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Days of the week are proper nouns and always take a capital: Saturday. North stays lowercase in that same sentence because it names a direction rather than a region, so it is not the error. The other sentences are correct too: the Statue of Liberty is a specific monument, July is a month, and Spanish comes from a country name.'
+  WHERE section = 'language' AND prompt = 'Choose the sentence that contains an error.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Our class visited the Statue of Liberty in July.", "We drove north on saturday morning.", "Mrs. Alvarez teaches Spanish at our school.", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'It''s with an apostrophe always means it is. The possessive form of it takes no apostrophe at all: the dog wagged its tail. The other two sentences are correct. Girls'' team puts the apostrophe after the s of a plural owner, and Marcus''s bicycle adds an apostrophe plus s to a singular name that already ends in s.'
+  WHERE section = 'language' AND prompt = 'Identify the sentence that contains an error.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The dog wagged it''s tail.", "The girls'' team won the championship.", "That is Marcus''s bicycle.", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'All three sentences are correct, so No mistakes is the answer. Who lives in Denver adds extra information about one particular cousin, so the pair of commas is right. Sandwiches, apples, and water is a properly punctuated series. And whether is the careful choice for reporting a yes-or-no question after asked.'
+  WHERE section = 'language' AND prompt = 'Select the sentence that contains an error.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["My cousin, who lives in Denver, is visiting us next week.", "We packed sandwiches, apples, and water for the hike.", "Dr. Reyes asked whether I had finished the assignment.", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Elena and I receives the practice time, so the pronoun is an object and must be me: gave Elena and me. Drop the other name to hear it, since gave I extra practice time is clearly wrong. She and I studied is a subject, so I fits there, and between you and me follows a preposition, which always takes the object form.'
+  WHERE section = 'language' AND prompt = 'Find the sentence that contains an error.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The coach gave Elena and I extra practice time.", "She and I studied together for the test.", "Between you and me, the test was easy.", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Didn''t already makes the sentence negative, so adding nobody creates a double negative that cancels itself. Standard English says I didn''t see anybody in the hallway. There wasn''t anything is that same idea done correctly, with one negative and anything. And hardly ever is a standard way to say almost never, not a double negative.'
+  WHERE section = 'language' AND prompt = 'Which of the following sentences contains an error?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["I didn''t see nobody in the hallway.", "There wasn''t anything left in the refrigerator.", "We hardly ever go downtown.", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'This is a run-on, sometimes called a fused sentence: the bell rang and the students hurried to class are both complete, with nothing at all joining them. A comma plus and repairs it, and so would a semicolon. Making the first clause dependent with when works too, which is why the other two sentences are correct.'
+  WHERE section = 'language' AND prompt = 'Which of these sentences contains a mistake?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The bell rang the students hurried to class.", "The bell rang, and the students hurried to class.", "When the bell rang, the students hurried to class.", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'A title becomes part of the name when it sits directly in front of it, so Professor Kim takes a capital P. The other sentences are correct: Langston Hughes and Lake Tahoe are names, and English keeps its capital because it comes from a country name, while a subject such as math would stay lowercase.'
+  WHERE section = 'language' AND prompt = 'One of these sentences contains an error. Which one?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["We read a poem by Langston Hughes in English class.", "My family drives to Lake Tahoe every winter.", "I asked professor Kim about the homework.", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Has is a helping verb, and it must be followed by the past participle gone, not the simple past went: he has gone to the dentist. The other sentences are fine. Brought is the correct past form of bring, and were sitting is a past progressive that correctly shows an action already under way.'
+  WHERE section = 'language' AND prompt = 'Which sentence below contains an error?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Yesterday she brought her lunch from home.", "He has went to the dentist twice this year.", "They were sitting on the porch when we arrived.", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Do you know what time the bus leaves is a direct question put to the listener, so it needs a question mark rather than a period. The other two are punctuated correctly: where did you put my calculator ends with a question mark, and the exclamation point suits the outburst about an incredible finish.'
+  WHERE section = 'language' AND prompt = 'Which sentence is written incorrectly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Where did you put my calculator?", "What an incredible finish that was!", "Do you know what time the bus leaves.", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'However is a conjunctive adverb, not a coordinating conjunction like but, so it cannot hold two complete sentences together with commas alone; that leaves a comma splice. The fix is a semicolon before it and a comma after, which is exactly what the version with nevertheless does. Opening with although also works, since that makes the first clause dependent.'
+  WHERE section = 'language' AND prompt = 'Which sentence needs to be corrected?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The team practiced all week, however, it lost the game.", "The team practiced all week; nevertheless, it lost the game.", "Although the team practiced all week, it lost the game.", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Running down the street has to describe the subject that follows it, and that subject is my backpack, which cannot run. That makes it a dangling modifier. The other two sentences name the runner: as I ran gives the phrase its own subject, and while I was running does the same job at the end of the sentence.'
+  WHERE section = 'language' AND prompt = 'Which sentence contains a writing error?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Running down the street, my backpack slipped off my shoulder.", "As I ran down the street, my backpack slipped off my shoulder.", "My backpack slipped off my shoulder while I was running.", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'All three are correct, so No mistakes is right. With neither and nor the verb matches the nearer subject, and players is plural, so were fits. Along with two teachers is an interrupting phrase, so the subject stays the singular principal with is. And everyone is singular, which is why his or her agrees with it.'
+  WHERE section = 'language' AND prompt = 'Which sentence contains a mechanical error?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Neither the coach nor the players were satisfied with the result.", "The principal, along with two teachers, is attending the conference.", "Everyone brought his or her own lunch.", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Every store is singular, so the pronoun pointing back to it must be singular too: must display its prices. Their treats one store as many. The other sentences agree correctly: each of the boys is singular and takes his, and the collective noun team takes the singular its victory.'
+  WHERE section = 'language' AND prompt = 'Which sentence has an error in it?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Each of the boys brought his own glove.", "Every store on the block must display their prices in the window.", "The team celebrated its victory.", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'A semicolon joins two complete sentences. To make the honor roll is a phrase, not a clause, so a colon belongs there instead; a colon may introduce an explanation as long as a full sentence comes first. The other two are right: we left early and the traffic was terrible are both complete, and the list of items follows a complete clause.'
+  WHERE section = 'language' AND prompt = 'Which sentence contains an error in punctuation, capitalization, or usage?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["I have one goal this year; to make the honor roll.", "We left early; the traffic was terrible.", "Bring the following items: a pen, a notebook, and a calculator.", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'A that clause is essential, since it tells us which book, so it must not be fenced off with commas. Take them out and the sentence is correct. Commas do belong around a nonessential clause such as who lives in Chicago, because the sister is already identified as the oldest. Essential means no commas; extra information takes commas.'
+  WHERE section = 'language' AND prompt = 'Which sentence is NOT written correctly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The book, that I borrowed from Jenna, is overdue.", "The book that I borrowed from Jenna is overdue.", "My oldest sister, who lives in Chicago, is a nurse.", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Items in a series must share one form. Hiking and swimming are -ing words, so to ride his bike breaks the pattern; riding his bike would fix it. Three -ing words in a row are parallel, and so are three infinitives, to hike, to swim, and to bike. Only the mixed list is faulty.'
+  WHERE section = 'language' AND prompt = 'Point out the sentence that contains an error.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Marcus likes hiking, swimming, and to ride his bike.", "Marcus likes hiking, swimming, and biking.", "Marcus likes to hike, to swim, and to bike.", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Sisters here is a plain plural, meaning more than one sister, so it takes no apostrophe: both of my sisters are in college. An apostrophe would signal possession, and nothing is owned. The Wilsons is a plural family name, also apostrophe-free, and children''s is the correct possessive of an irregular plural.'
+  WHERE section = 'language' AND prompt = 'Which one of these sentences is incorrect?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The Wilsons are hosting the party.", "Both of my sister''s are in college.", "The children''s coats are in the closet.", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Their is the possessive that shows ownership, so the runners left their water bottles. There points to a place. The other sentences use the right forms: they''re is the contraction for they are, and there are three reasons uses there to introduce a sentence, which is its other correct job.'
+  WHERE section = 'language' AND prompt = 'Which sentence should be revised because it contains an error?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["They''re going to meet us at the theater.", "The runners left there water bottles on the bench.", "There are three reasons I disagree.", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Seasons are common nouns, so autumn stays lowercase unless it begins a sentence. The other two are correct, and they show the contrast this item is testing: the South is capitalized because it names a region of the country, while west in turn west at the light names a direction, and directions stay lowercase.'
+  WHERE section = 'language' AND prompt = 'Which sentence in this group contains an error?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["We moved to the South when I was six.", "My favorite season is Autumn.", "Turn west at the second traffic light.", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'In American usage a period goes inside the closing quotation mark, so the sentence about opening your books puts its period inside rather than after. The other two are correct. The comma before said Dana sits inside the closing mark for the same reason, and the question mark falls outside the marks around The Necklace because the title itself is not a question.'
+  WHERE section = 'language' AND prompt = 'Which sentence contains an error in standard written English?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(JSONB_BUILD_ARRAY('"I''ll be there at six," said Dana.', 'Mr. Ruiz said, "Please open your books".', 'Have you read "The Necklace"?', 'No mistakes')) v);
+
+UPDATE questions SET explanation = 'All three are correct, so No mistakes is the answer. Because the road was closed is an introductory dependent clause, properly followed by a comma. Flour, sugar, and two eggs is a correctly punctuated series, and the comma before and is optional either way. Neither is singular, which is why seems carries its -s.'
+  WHERE section = 'language' AND prompt = 'Read the sentences. Which one contains an error?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Because the road was closed, we took a detour through town.", "The recipe calls for flour, sugar, and two eggs.", "Neither answer seems correct to me.", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Lie means to recline; lay means to place something and needs an object. A cat reclines, so it likes to lie in the sunshine. The other sentences are right: I laid the book uses lay with the object book, and has lain is the past participle of lie, which is the form that follows has.'
+  WHERE section = 'language' AND prompt = 'Which sentence contains an error that must be fixed?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["I laid the book on the table last night.", "The cat likes to lay in the sunshine.", "She has lain down for a nap.", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'All three are correct, so No mistakes is the answer. Use the comparative for exactly two, which is why of the two routes, the shorter one is right. Use the superlative for three or more, so the oldest of three cousins fits, and most unusual measures one painting against everything else in the gallery.'
+  WHERE section = 'language' AND prompt = 'Which of the sentences below is incorrect?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Of the two routes, the shorter one goes past the park.", "This is the most unusual painting in the gallery.", "Of my three cousins, Rosa is the oldest.", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Because the storm knocked out the power is a fragment: because makes the clause dependent, and no main clause ever arrives to finish the thought. The other two are complete. The storm knocked out the power for six hours stands on its own, and when the power returned is a dependent clause properly attached to we cheered.'
+  WHERE section = 'language' AND prompt = 'Which sentence contains a grammar or punctuation error?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Because the storm knocked out the power.", "The storm knocked out the power for six hours.", "When the power returned, we cheered.", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'All three are correct, so No mistakes fits. The number names one total, so it takes has increased. A number means several, so it takes have withdrawn. And statistics as the name of a school subject is singular, like mathematics, so is my brother''s favorite subject is right; it would be plural only if it meant individual figures.'
+  WHERE section = 'language' AND prompt = 'Which sentence is incorrect as written?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The number of applicants has increased.", "A number of applicants have withdrawn.", "Statistics is my brother''s favorite subject.", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Whoever is the subject of the verb answers, so the subject form is needed even after the preposition to. The whole clause, not the single word, is what to takes as its object. The other sentences are right: whoever finished first is a subject as well, and in I know whom they selected, whom is the object of selected.'
+  WHERE section = 'language' AND prompt = 'Which sentence, as written, contains an error?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The award went to whoever finished first.", "Give the message to whomever answers the phone.", "I know whom they selected.", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'After finishing the exam must describe the subject that follows it, and the answer sheets did not take an exam, so the phrase dangles. Naming the students fixes it. When the students finished the exam gives the clause its own subject, and having finished the exam works because the students come next as the subject.'
+  WHERE section = 'language' AND prompt = 'Which sentence in the group is incorrect?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["After finishing the exam, the answer sheets were collected by the proctor.", "After the students finished the exam, the proctor collected the answer sheets.", "Having finished the exam, the students handed in their answer sheets.", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'This compares a climate to a state, which are not the same kind of thing. Adding that of makes it climate against climate. Arizona is drier than Oregon is fine, because it lines up two states directly. In any comparison, measure a thing against something of the same type.'
+  WHERE section = 'language' AND prompt = 'Which sentence contains an error in its wording or punctuation?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The climate of Arizona is drier than Oregon.", "The climate of Arizona is drier than that of Oregon.", "Arizona is drier than Oregon.", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'When the items in a series already contain commas, semicolons must separate the items: Austin, Texas; Tulsa, Oklahoma; and Topeka, Kansas. With commas alone a reader sees six items instead of three. The Rome and Lyon travel list and the panel list of people with their jobs both use semicolons correctly, so neither of those is the error.'
+  WHERE section = 'language' AND prompt = 'Which sentence contains an error a careful proofreader would catch?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["We visited Rome, Italy; Lyon, France; and Bern, Switzerland.", "The panel included Dr. Lee, a chemist; Ms. Ortiz, an engineer; and Mr. Hall, a teacher.", "Our stops were Austin, Texas, Tulsa, Oklahoma, and Topeka, Kansas.", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'If I was you states an impossible condition as though it were fact. A contrary-to-fact condition takes the subjunctive were: if I were you. If I were taller uses that same form correctly. She asked that he be on time is subjunctive too, using the base form be after a verb of requesting, so both of those are right.'
+  WHERE section = 'language' AND prompt = 'Which sentence fails to follow standard writing rules?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["If I was you, I would apologize.", "If I were taller, I would play center.", "She asked that he be on time.", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'All three are correct, so No mistakes is the answer. Hyphenate a compound modifier when it comes before its noun: well-written speech, part-time coach. When the same words follow the verb, no hyphen is needed, which is why the speech was well written is right as it stands. Position, not the words themselves, decides the hyphen.'
+  WHERE section = 'language' AND prompt = 'Which sentence contains an error that should be corrected?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["She gave a well-written speech.", "The speech was well written.", "We hired a part-time coach for the season.", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'He could mean Jordan or Alex, so a reader cannot tell who carried the backpack. A pronoun needs one clear antecedent. Both other sentences remove the doubt: naming Jordan as the subject before he appears makes the reference clear, and repeating Alex settles it outright, even though repeating a name reads less smoothly.'
+  WHERE section = 'language' AND prompt = 'Which sentence would an editor mark as incorrect?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["When Jordan met Alex, he was carrying a heavy backpack.", "Jordan was carrying a heavy backpack when he met Alex.", "When Jordan met Alex, Alex was carrying a heavy backpack.", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'All three are correct, so No mistakes is right. Not only and but also are properly paired, with matching verb phrases on either side. The collective noun committee takes the singular has reached and its. And having studied all weekend correctly describes Marisol, the subject that follows it, so that phrase does not dangle.'
+  WHERE section = 'language' AND prompt = 'Look closely at each sentence. Which one contains an error?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Not only did the storm flood the streets, but it also toppled several trees.", "The committee has reached its decision, and it will announce the results tomorrow.", "Having studied all weekend, Marisol felt confident about the exam.", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'A colon needs a complete sentence in front of it. The ingredients we need are stops mid-thought, so the colon splits the verb are from what it points to; the colon should be dropped. We need three ingredients is complete, so a colon can follow it, and her reasoning was simple is complete as well.'
+  WHERE section = 'language' AND prompt = 'Which sentence contains an error in the use of punctuation?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The ingredients we need are: eggs, milk, and butter.", "We need three ingredients: eggs, milk, and butter.", "Her reasoning was simple: practice makes perfect.", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'The correct spelling is definitely. It grows out of the word finite, so the middle is f-i-n-i-t, and there is no a anywhere in it. That is the hook: nothing about an a is definite here. Separate and calendar are both spelled correctly, so the misspelled word is the one written definately.'
+  WHERE section = 'language' AND prompt = 'Which word is spelled incorrectly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["definately", "separate", "calendar", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'The correct spelling is receive. The old rhyme is i before e except after c, and the c in receive puts the e first. Believe follows the other half of the rule, keeping i before e. Weight is one of the familiar exceptions, spelled e-i because of its long a sound, so both of those are fine.'
+  WHERE section = 'language' AND prompt = 'Which word is misspelled?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["believe", "recieve", "weight", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'The correct spelling is tomorrow, with one m and two r''s. A hook: tomorrow morning has a single m in each word, and the r''s double up at the end of tomorrow. Friend and because are both spelled correctly, so the misspelling is the one written with a single r.'
+  WHERE section = 'language' AND prompt = 'Choose the word that is spelled incorrectly.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["friend", "because", "tomorow", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'All three are spelled correctly, so No mistakes is the answer. Necessary has one c and two s''s, like one collar and two sleeves on a shirt. Occurrence doubles both the c and the r before its -ence ending. Embarrassment doubles both the r and the s, which suits how flustered the word sounds.'
+  WHERE section = 'language' AND prompt = 'Identify the misspelled word.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["necessary", "occurrence", "embarrassment", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'The correct spelling is privilege, and there is no d in it. The word comes from a term meaning private law, and those two roots, priv and leg, give you the letters in order. Conscience and rhythm are both spelled correctly, though rhythm hides its vowel sound inside the y.'
+  WHERE section = 'language' AND prompt = 'Which of these words is misspelled?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["priviledge", "conscience", "rhythm", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'The correct spelling is independent, ending in -ent rather than -ant. A hook: there is a dent in the middle of independent, and dent carries the e. Maintenance and perseverance are both spelled correctly, and both end in -ance, which is exactly what makes the -ent ending easy to mix up.'
+  WHERE section = 'language' AND prompt = 'Select the word that is misspelled.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["maintenance", "perseverance", "independant", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'All three are spelled correctly, so No mistakes fits. Accommodate is generous enough to accommodate two c''s and two m''s. Conscientious keeps the sci that also shows up in science and conscience. And liaison really does have the i-a-i pattern in the middle, which looks odd but is correct as written.'
+  WHERE section = 'language' AND prompt = 'Which word below is spelled incorrectly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["accommodate", "conscientious", "liaison", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'The correct spelling is harass, with one r and two s''s. A hook: one r is annoying enough. Questionnaire is spelled correctly with its two n''s, and millennium correctly carries two l''s and two n''s from the roots meaning thousand and year, so the doubled letters in those two words are real.'
+  WHERE section = 'language' AND prompt = 'Find the misspelled word.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["questionnaire", "harrass", "millennium", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'The correct spelling is occasionally, which has two c''s but only one s. A hook: the two c''s cause one s. Acquaintance is spelled correctly, keeping the c after the a, and bureaucracy correctly holds on to the eau it inherits from bureau.'
+  WHERE section = 'language' AND prompt = 'One of these words is misspelled. Which one?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["acquaintance", "occassionally", "bureaucracy", "No mistakes"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'The second idea works against the first: she practiced every day, yet she missed the shot. But is the conjunction that signals contrast. So and therefore both claim the practice caused the miss, and for means because, which would make the missed shot her reason for practicing. Each of those reverses the relationship.'
+  WHERE section = 'language' AND prompt = 'Choose the best way to join these two ideas: ''Ella practiced every day.'' and ''She still missed the final shot.'''
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Ella practiced every day, but she still missed the final shot.", "Ella practiced every day, so she still missed the final shot.", "Ella practiced every day, for she still missed the final shot.", "Ella practiced every day, and therefore she still missed the final shot."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'A topic sentence names the subject and states the point the paragraph will prove. The sentence about eight to ten hours helping students think clearly, stay healthy, and do better in school does both. Sleep is something everyone does and the remark about scientists studying the body are too vague, and going to bed around ten is one personal detail.'
+  WHERE section = 'language' AND prompt = 'Which sentence is the best topic sentence for a paragraph about why students should get enough sleep?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Sleep is something everyone does.", "Getting eight to ten hours of sleep helps students think clearly, stay healthy, and do better in school.", "I usually go to bed around ten o''clock.", "Scientists have studied many things about the human body."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Every sentence in a paragraph has to support the main idea, which here is that recycling saves natural resources. The aluminum-can sentence and the paper sentence each give an example of that saving. An uncle''s red pickup truck has nothing to do with recycling, so that is the sentence to cut.'
+  WHERE section = 'language' AND prompt = 'Which sentence does not belong in this paragraph? ''Recycling saves natural resources. Making new aluminum cans from recycled metal uses far less energy than making them from ore. Recycling paper spares thousands of trees each year. My uncle drives a red pickup truck.'''
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Recycling saves natural resources.", "Making new aluminum cans from recycled metal uses far less energy than making them from ore.", "Recycling paper spares thousands of trees each year.", "My uncle drives a red pickup truck."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'The clearest version names a doer and gives it an active verb: the officials canceled the game. Being that and due to the fact that are wordy stand-ins for because. Was canceled by the officials and was given a cancellation hide the doer behind a passive verb and turn a strong verb into a noun.'
+  WHERE section = 'language' AND prompt = 'Which sentence expresses the idea most clearly?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Being that the weather was bad, the game was canceled by the officials.", "Due to the fact that the weather was bad, a cancellation of the game was made.", "Because of bad weather, the officials canceled the game.", "The game, on account of bad weather, was given a cancellation by officials."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'A steep, rocky trail should have slowed the hikers, yet they arrived early anyway, so the transition must mark that surprise. Nevertheless does. Therefore would say the difficulty caused the fast time. Similarly compares two like things, and for example would make reaching the summit an illustration of steepness rather than an unexpected result.'
+  WHERE section = 'language' AND prompt = 'Which word best completes the sentence? ''The trail was steep and rocky; ______, we reached the summit before noon.'''
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["therefore", "nevertheless", "similarly", "for example"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'The paragraph makes a point about why bees matter and what is happening to them: pollination, crops failing without them, and shrinking colonies. How honey tastes on warm biscuits is about eating honey, not about the bees'' importance, so it breaks the unity. A sentence can be perfectly true and still not belong.'
+  WHERE section = 'language' AND prompt = 'Read the paragraph. Which sentence should be removed? ''Bees pollinate a third of the food we eat. Without them, many crops would fail. Beekeepers report that colonies have been shrinking for years. Honey tastes delicious on warm biscuits.'''
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Bees pollinate a third of the food we eat.", "Without them, many crops would fail.", "Beekeepers report that colonies have been shrinking for years.", "Honey tastes delicious on warm biscuits."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'A concluding sentence carries the argument back to its claim, and saying a later start would give students the rest they need to learn well does that. Some schools start at 7:30 is a bare fact, teenagers falling asleep later is a supporting detail from the middle of the paragraph, and sleep mattering for adults widens the topic instead of closing it.'
+  WHERE section = 'language' AND prompt = 'Which sentence would best conclude a paragraph arguing that schools should start later in the morning?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Some schools start at 7:30 a.m.", "Teenagers naturally fall asleep later at night.", "A later start time would give students the rest they need to learn well.", "Sleep is important for everyone, including adults."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'Putting the less important fact inside a which clause keeps the main idea in the main clause: the museum, which opened in 1908, houses the collection. Joining the two sentences with only a comma makes a comma splice. Because invents a cause the sentences never claimed. And opening in 1908 attached to the collection dangles, since a collection did not open.'
+  WHERE section = 'language' AND prompt = 'Which sentence best combines these two sentences? ''The museum opened in 1908.'' and ''It houses the largest collection of fossils in the state.'''
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The museum opened in 1908, it houses the largest collection of fossils in the state.", "The museum, which opened in 1908, houses the largest collection of fossils in the state.", "The museum opened in 1908 because it houses the largest collection of fossils in the state.", "Opening in 1908, the largest collection of fossils in the state is housed by the museum."]'::JSONB) v);
+
+UPDATE questions SET explanation = 'The word That has to point back to something already stated, and the problem appears in the sentences about the park being hard to reach and families driving nearly two miles around. The footbridge sentence must also come before Now children walk there, which reports the result. Only one position satisfies both requirements.'
+  WHERE section = 'language' AND prompt = 'Where does this sentence best fit? ''That changed when the city built a footbridge over the creek.'' Paragraph: (1) For years the park was hard to reach. (2) Families on the north side had to drive nearly two miles around. (3) Now children walk there in ten minutes. (4) Attendance has tripled.'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["Before sentence 1", "Between sentences 1 and 2", "Between sentences 2 and 3", "After sentence 4"]'::JSONB) v);
+
+UPDATE questions SET explanation = 'The strongest version states the cause once, with a clear subject and verb: the experiment failed because the sample was contaminated. The reason why and was because of the fact that state the cause three times over. The other two bury the action in nouns, as in the failure was caused by contamination, which adds weight without adding meaning.'
+  WHERE section = 'language' AND prompt = 'Which revision states the idea most effectively?'
+    AND (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(options) v)
+      = (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text('["The reason why the experiment failed was because of the fact that the sample was contaminated.", "The experiment failed because the sample was contaminated.", "The experiment''s failure was caused by contamination that was present in the sample.", "Contamination of the sample is what caused the experiment to have failed."]'::JSONB) v);
+
+-- Verification: how many rows in this section carry a long (rewritten)
+-- explanation, against the whole section. A partial apply shows up here as
+-- a long_explanations count below the expectation.
+SELECT
+  'language' AS section,
+  COUNT(*) AS total_rows,
+  300 AS expected_total_rows,
+  COUNT(*) FILTER (WHERE LENGTH(explanation) > 150) AS long_explanations,
+  300 AS expected_long_explanations
+FROM questions
+WHERE section = 'language';
