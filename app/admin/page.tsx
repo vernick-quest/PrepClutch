@@ -18,12 +18,20 @@ export default async function AdminPage() {
     .select('id, display_name, class_code')
     .order('display_name')
 
+  // Emails live in auth.users, which the browser client cannot read. The RPC is
+  // SECURITY DEFINER and re-checks is_admin server-side, so a failure here is a
+  // missing migration rather than a permission bug worth surfacing to the page.
+  const { data: directory } = await supabase.rpc('get_admin_user_directory')
+  const emailById = new Map<string, string>(
+    (directory ?? []).map((d: { user_id: string; email: string }) => [d.user_id, d.email])
+  )
+
   const { data: allClasses } = await supabase
     .from('classes')
     .select('code, name, created_at')
     .order('created_at')
 
-  const profiles = allProfiles ?? []
+  const profiles = (allProfiles ?? []).map(p => ({ ...p, email: emailById.get(p.id) ?? null }))
   const classes = allClasses ?? []
 
   // Count members per class code

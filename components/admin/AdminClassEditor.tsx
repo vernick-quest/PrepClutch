@@ -14,6 +14,10 @@ interface StudentRow {
   id: string
   display_name: string
   class_code: string
+  /** Admin-only, from get_admin_user_directory. Display names are not unique —
+   *  two accounts were both "not baron" — so the email is what identifies a
+   *  student. Absent if the directory RPC is unavailable. */
+  email?: string | null
 }
 
 interface Props {
@@ -123,6 +127,9 @@ export default function AdminClassEditor({ classes, students }: Props) {
             <div key={student.id} className="bg-white/3 border border-white/5 rounded-xl p-3 flex items-center gap-3">
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium text-white truncate">{student.display_name}</div>
+                {student.email && (
+                  <div className="text-xs text-zinc-400 truncate font-mono">{student.email}</div>
+                )}
                 <div className="text-xs text-zinc-500">
                   Class: <span className="font-mono text-zinc-400">{student.class_code}</span>
                 </div>

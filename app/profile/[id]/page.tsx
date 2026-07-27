@@ -4,7 +4,8 @@ import { SECTION_CONFIG, SECTIONS } from '@/lib/constants'
 import Link from 'next/link'
 import Image from 'next/image'
 import Footer from '@/components/ui/Footer'
-import type { Section } from '@/types/database'
+import AttemptReview from '@/components/quiz/AttemptReview'
+import type { Section, QuizAnswer } from '@/types/database'
 
 export const dynamic = 'force-dynamic'
 
@@ -35,6 +36,20 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
 
   const { data: profile } = await supabase.from('profiles').select('*').eq('id', id).single()
   if (!profile) notFound()
+
+  // Admins get the full picture: this student's email (display names are not
+  // unique) and their expandable answer review. Everyone else keeps seeing
+  // scores only — classmates must not be able to read each other's answers.
+  const { data: viewerProfile } = await supabase
+    .from('profiles').select('is_admin').eq('id', user.id).single()
+  const viewerIsAdmin = !!(viewerProfile as Record<string, unknown>)?.is_admin
+
+  let studentEmail: string | null = null
+  if (viewerIsAdmin) {
+    const { data: directory } = await supabase.rpc('get_admin_user_directory')
+    studentEmail = (directory ?? [])
+      .find((d: { user_id: string }) => d.user_id === id)?.email ?? null
+  }
 
   const { data: attempts } = await supabase
     .from('quiz_attempts')
@@ -97,6 +112,12 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
           <div className="flex-1 text-center sm:text-left">
             <h2 className="text-3xl font-black text-white">{profile.display_name}</h2>
             <p className="text-zinc-400 mt-1 font-mono text-sm">Class: <span className="text-amber-400 font-bold tracking-widest">{profile.class_code}</span></p>
+            {studentEmail && (
+              <p className="mt-1 font-mono text-xs text-zinc-500">
+                {studentEmail}
+                <span className="ml-2 text-[10px] bg-violet-500/20 border border-violet-500/30 text-violet-400 px-1.5 py-0.5 rounded-full not-italic">ADMIN VIEW</span>
+              </p>
+            )}
             <div className="flex flex-wrap gap-3 mt-4 justify-center sm:justify-start">
               <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-2 text-center">
                 <div className="text-2xl font-black text-amber-400">{leaderboardEntry?.aggregate_score ?? 0}</div>
@@ -195,16 +216,23 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
                 const isSection = SECTIONS.includes(attempt.section as Section)
                 const cfg = isSection ? SECTION_CONFIG[attempt.section as Section] : null
                 return (
-                  <div key={attempt.id} className="bg-white/3 border border-white/5 rounded-xl p-4 flex items-center gap-4">
-                    <span className="text-xl">{cfg?.emoji ?? '🎯'}</span>
-                    <div className="flex-1">
-                      <div className="text-sm font-medium text-white">{cfg?.label ?? 'Full Practice Test'}</div>
-                      <div className="text-xs text-zinc-500">{new Date(attempt.completed_at!).toLocaleDateString()} · {attempt.total_questions} Q</div>
+                  <div key={attempt.id} className="bg-white/3 border border-white/5 rounded-xl p-4">
+                    <div className="flex items-center gap-4">
+                      <span className="text-xl">{cfg?.emoji ?? '🎯'}</span>
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-white">{cfg?.label ?? 'Full Practice Test'}</div>
+                        <div className="text-xs text-zinc-500">{new Date(attempt.completed_at!).toLocaleDateString()} · {attempt.total_questions} Q</div>
+                      </div>
+                      <div className="text-right">
+                        <div className={`text-lg font-bold ${pct >= 80 ? 'text-emerald-400' : pct >= 60 ? 'text-amber-400' : 'text-rose-400'}`}>{attempt.score}/{attempt.total_questions}</div>
+                        <div className="text-xs text-amber-500">+{attempt.total_xp} CP</div>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <div className={`text-lg font-bold ${pct >= 80 ? 'text-emerald-400' : pct >= 60 ? 'text-amber-400' : 'text-rose-400'}`}>{attempt.score}/{attempt.total_questions}</div>
-                      <div className="text-xs text-amber-500">+{attempt.total_xp} CP</div>
-                    </div>
+                    {/* Admins only — a classmate must not be able to read this
+                        student's questions and answers. */}
+                    {viewerIsAdmin && attempt.answers && (
+                      <AttemptReview answers={attempt.answers as QuizAnswer[]} />
+                    )}
                   </div>
                 )
               })}
