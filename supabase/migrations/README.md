@@ -54,7 +54,19 @@ authority; numbers burned on diagnostics leave no file behind.
 
 | 032 | Reword position-dependent reading questions | migration | ⬜ pending |
 
-Next free number: **033**
+| 033 | Deepen 25 reading passages to full HSPT length | migration | ⬜ pending |
+| 034 | Add 50 reading questions for the deepened passages | migration | ⬜ pending |
+| 035 | Add 50 verbal questions | migration | ⬜ pending |
+| 036 | Add 50 quantitative questions | migration | ⬜ pending |
+| 037 | Add 50 math questions | migration | ⬜ pending |
+| 038 | Add 50 language questions | migration | ⬜ pending |
+
+**Apply 032 → 033 → 034 in that order.** 032 unpins four question stems from
+sentence position; 033 appends paragraphs that would otherwise break them. 034's
+rows carry the deepened passage text, so running it before 033 would split each
+passage into two in the quiz UI. 035-038 are independent of the others.
+
+Next free number: **039**
 
 ## Rules
 
