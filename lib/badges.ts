@@ -54,3 +54,81 @@ export function evaluateBadges(stats: BadgeStats): string[] {
     .filter(([key, fn]) => !stats.earnedBadgeIds.includes(key) && fn(stats))
     .map(([key]) => key)
 }
+
+// ── Section Mastery (the growing bicep) ──────────────────────────────────────
+//
+// These badges are NOT derived from a single quiz attempt like everything
+// above — they track cumulative mastery (questions with times_correct > 0)
+// per section, read from the get_section_mastery() RPC. Each section holds
+// 250 questions, so tier 5 is a genuine "section complete".
+
+export const SECTION_MASTERY_CATEGORY = 'Section Mastery'
+
+/** Correct-question thresholds, tier 1 → tier 5. */
+export const SECTION_MASTERY_TIERS = [50, 100, 150, 200, 250] as const
+
+export const SECTION_MASTERY_SECTIONS = [
+  'verbal', 'quantitative', 'reading', 'math', 'language',
+] as const
+
+export function sectionMasteryKey(section: string, threshold: number): string {
+  return `mastery_${section}_${threshold}`
+}
+
+/** Shape of one get_section_mastery() row (only the fields we need). */
+export interface SectionMasteryRow {
+  section: string
+  correct: number
+}
+
+/**
+ * Returns keys of section-mastery badges newly crossed. Cumulative, so a
+ * student who jumps several thresholds at once earns every tier they passed.
+ */
+export function evaluateSectionMasteryBadges(
+  rows: SectionMasteryRow[],
+  earnedBadgeIds: string[],
+): string[] {
+  const earned = new Set(earnedBadgeIds)
+  const newly: string[] = []
+  for (const row of rows) {
+    if (!(SECTION_MASTERY_SECTIONS as readonly string[]).includes(row.section)) continue
+    for (const threshold of SECTION_MASTERY_TIERS) {
+      const key = sectionMasteryKey(row.section, threshold)
+      if ((row.correct ?? 0) >= threshold && !earned.has(key)) newly.push(key)
+    }
+  }
+  return newly
+}
+
+/** 1–5 for a section-mastery badge key, 0 for anything else. */
+export function sectionMasteryTier(key: string): number {
+  const match = /^mastery_[a-z]+_(\d+)$/.exec(key)
+  if (!match) return 0
+  const idx = (SECTION_MASTERY_TIERS as readonly number[]).indexOf(Number(match[1]))
+  return idx < 0 ? 0 : idx + 1
+}
+
+/** Multiplier applied to the base emoji size so the bicep visibly grows. */
+const BICEP_SCALE = [1, 1.35, 1.8, 2.4, 3.2]
+
+/**
+ * Emoji rendering for a badge. Ordinary badges get the grid's base size and
+ * whatever glow the caller passes; section-mastery badges get an escalating
+ * size + glow so the same 💪 balloons across the five tiers.
+ */
+export function badgeEmojiStyle(
+  key: string,
+  baseFontSize: number,
+  glowColor: string,
+): { fontSize: number; filter: string; lineHeight: number } {
+  const tier = sectionMasteryTier(key)
+  if (tier === 0) {
+    return { fontSize: baseFontSize, filter: `drop-shadow(0 0 8px ${glowColor}55)`, lineHeight: 1 }
+  }
+  return {
+    fontSize: Math.round(baseFontSize * BICEP_SCALE[tier - 1]),
+    filter: `drop-shadow(0 0 ${4 + tier * 6}px ${glowColor}${tier >= 4 ? 'cc' : '77'})`,
+    lineHeight: 1,
+  }
+}

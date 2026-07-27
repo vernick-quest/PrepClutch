@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import Footer from '@/components/ui/Footer'
 import AttemptReview from '@/components/quiz/AttemptReview'
+import { SECTION_MASTERY_CATEGORY, badgeEmojiStyle, sectionMasteryTier } from '@/lib/badges'
 import type { Section, QuizAnswer } from '@/types/database'
 
 export const dynamic = 'force-dynamic'
@@ -85,7 +86,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
   const totalAttempts = attempts?.length ?? 0
   const earnedKeys = new Set(userAchievements?.map(a => a.achievement_key) ?? [])
   const displayAvatarUrl = (profile as Record<string, unknown>).avatar_url as string | null
-  const badgeCategories = ['First Completion', 'Perfect Score', 'Speed', 'Combo', 'Milestone']
+  const badgeCategories = ['First Completion', 'Perfect Score', 'Speed', 'Combo', 'Milestone', SECTION_MASTERY_CATEGORY]
 
   return (
     <div className="min-h-screen bg-[#0a0a0f]">
@@ -193,7 +194,11 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
                         opacity: earned ? 1 : 0.25,
                         filter: earned ? 'none' : 'grayscale(1)',
                       }}>
-                        <div className="text-2xl">{earned ? badge.icon_emoji : '❓'}</div>
+                        <div style={earned && sectionMasteryTier(badge.key) > 0
+                          ? badgeEmojiStyle(badge.key, 24, r.text)
+                          : { fontSize: 24, lineHeight: 1 }}>
+                          {earned ? badge.icon_emoji : '❓'}
+                        </div>
                         <div className="text-[10px] font-bold" style={{ color: earned ? r.text : '#1f2937' }}>
                           {earned ? badge.label : '???'}
                         </div>

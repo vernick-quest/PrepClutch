@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { SECTION_CONFIG, SECTIONS } from '@/lib/constants'
 import { classifyTiming, FLAG_LABELS } from '@/lib/scoring'
+import { badgeEmojiStyle, sectionMasteryTier } from '@/lib/badges'
 import QuestionReviewCard from '@/components/quiz/QuestionReviewCard'
 import type { Section, Question, QuizAnswer } from '@/types/database'
 import { createClient } from '@/lib/supabase/client'
@@ -25,7 +26,7 @@ interface StoredResult {
   questions: Question[]
 }
 
-type Achievement = { icon_emoji: string; label: string; description: string; rarity?: string; creature?: string; lore?: string }
+type Achievement = { key?: string; icon_emoji: string; label: string; description: string; rarity?: string; creature?: string; lore?: string }
 
 export default function ResultsPage() {
   const router = useRouter()
@@ -61,7 +62,10 @@ export default function ResultsPage() {
 
       if (data && data.length > 0) {
         const earned = data
-          .map((a: { achievement_definitions: unknown }) => a.achievement_definitions)
+          .map((a: { achievement_key: string; achievement_definitions: unknown }) =>
+            a.achievement_definitions
+              ? { ...(a.achievement_definitions as Achievement), key: a.achievement_key }
+              : null)
           .filter(Boolean) as Achievement[]
         setNewAchievements(earned)
         if (!confettiFired.current) {
@@ -176,8 +180,14 @@ export default function ResultsPage() {
                 }}
               >
                 <div
-                  className="text-7xl"
-                  style={{ filter: 'drop-shadow(0 0 20px #a855f788)', animation: 'badgeFloat 3s ease-in-out infinite' }}
+                  style={{
+                    // Section-mastery badges pop at their tier size — the
+                    // bicep is visibly bigger every 50 questions.
+                    ...(sectionMasteryTier(ach.key ?? '') > 0
+                      ? badgeEmojiStyle(ach.key ?? '', 72, '#a855f7')
+                      : { fontSize: 72, lineHeight: 1, filter: 'drop-shadow(0 0 20px #a855f788)' }),
+                    animation: 'badgeFloat 3s ease-in-out infinite',
+                  }}
                 >
                   {ach.icon_emoji}
                 </div>

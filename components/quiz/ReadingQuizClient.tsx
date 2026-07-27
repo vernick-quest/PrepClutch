@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { scoreQuestion } from '@/lib/scoring'
+import { awardSectionMasteryBadges } from '@/lib/section-mastery'
 import type { ReadingPassage } from '@/lib/reading-passages'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -186,6 +187,10 @@ export default function ReadingQuizClient({ passages, userId, masteredIds = [] }
         p_correct:     a.selected_index === a.correct_index,
       })
     }
+
+    // Cumulative section-mastery badges — must run after the history upserts
+    // above so the milestone crossed by the last question is counted.
+    await awardSectionMasteryBadges(supabase, userId)
 
     router.push('/results')
   }, [passages, totalQuestions, userId, router, masteredIds])

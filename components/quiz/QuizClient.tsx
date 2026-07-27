@@ -7,6 +7,7 @@ import { SECTION_CONFIG, QUESTION_TIME_LIMIT_S, DIFFICULTY_BASE_POINTS, SECTION_
 import { scoreQuestion } from '@/lib/scoring'
 import { evaluateBadges } from '@/lib/badges'
 import type { BadgeStats } from '@/lib/badges'
+import { awardSectionMasteryBadges } from '@/lib/section-mastery'
 import type { Section, Question, QuizAnswer } from '@/types/database'
 import Link from 'next/link'
 
@@ -110,6 +111,10 @@ export default function QuizClient({ section, questions, userId, masteredIds = [
     }
 
     await checkAchievements(supabase, userId, finalAnswers, score, totalQuestions, section === 'full' ? 'full' : section, questions)
+
+    // Cumulative section-mastery badges — evaluated only after the history
+    // upserts above, so the milestone crossed by the last question counts.
+    await awardSectionMasteryBadges(supabase, userId)
 
     // Split the session total: only newly mastered questions raise the
     // section score, so report review points separately rather than implying

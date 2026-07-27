@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { SECTION_MASTERY_CATEGORY, badgeEmojiStyle } from '@/lib/badges'
 
 export interface DbBadge {
   key: string
@@ -23,7 +24,7 @@ const RARITY: Record<string, { bg: string; border: string; text: string; glow: s
   Mythic:    { bg: '#0e0018', border: '#9333ea99', text: '#e879f9', glow: '0 0 56px #a855f777', stars: 6 },
 }
 
-const CATEGORY_ORDER = ['First Completion', 'Perfect Score', 'Speed', 'Combo', 'Milestone']
+const CATEGORY_ORDER = ['First Completion', 'Perfect Score', 'Speed', 'Combo', 'Milestone', SECTION_MASTERY_CATEGORY]
 
 function Stars({ count, color }: { count: number; color: string }) {
   return (
@@ -42,6 +43,7 @@ function Stars({ count, color }: { count: number; color: string }) {
 function BadgeCard({ badge, earned }: { badge: DbBadge; earned: boolean }) {
   const [open, setOpen] = useState(false)
   const r = RARITY[badge.rarity] ?? RARITY.Common
+  const emoji = badgeEmojiStyle(badge.key, 36, r.text)
   return (
     <div
       onClick={() => earned && setOpen(o => !o)}
@@ -56,7 +58,14 @@ function BadgeCard({ badge, earned }: { badge: DbBadge; earned: boolean }) {
       }}
     >
       <Stars count={r.stars} color={r.text} />
-      <div style={{ fontSize: 36, lineHeight: 1, filter: earned ? `drop-shadow(0 0 8px ${r.text}55)` : 'blur(8px)' }}>
+      <div style={{
+        ...emoji,
+        // Section-mastery badges grow tier by tier; a locked card keeps the
+        // base size so the grid does not telegraph how big the bicep gets.
+        fontSize: earned ? emoji.fontSize : 36,
+        filter: earned ? emoji.filter : 'blur(8px)',
+        transition: 'font-size 0.25s',
+      }}>
         {earned ? badge.icon_emoji : '❓'}
       </div>
       <div style={{ fontSize: 12, fontWeight: 800, color: earned ? r.text : '#1f2937', textAlign: 'center', lineHeight: 1.3, fontStyle: 'italic' }}>
