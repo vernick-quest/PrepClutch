@@ -1,4 +1,4 @@
--- 015 — Strip double-escaped quotes from question options
+-- 017 — Strip double-escaped quotes from question options
 --
 -- Three Language questions about dialogue punctuation were seeded with their
 -- quotation marks escaped twice, so the stored option text literally contains
