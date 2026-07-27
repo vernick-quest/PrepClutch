@@ -3,7 +3,7 @@ import { redirect, notFound } from 'next/navigation'
 import { SECTIONS, QUESTIONS_PER_SESSION, MAX_CORRECT_RECYCLED } from '@/lib/constants'
 import QuizClient from '@/components/quiz/QuizClient'
 import ReadingQuizClient from '@/components/quiz/ReadingQuizClient'
-import { buildPassagesFromRows, PASSAGES_PER_SESSION } from '@/lib/reading-passages'
+import { buildPassagesFromRows, PASSAGES_PER_SESSION, MAX_QUESTIONS_PER_PASSAGE, VOCAB_PER_SESSION } from '@/lib/reading-passages'
 import type { ReadingPassage, ReadingQuestionRow } from '@/lib/reading-passages'
 import type { Section, Question } from '@/types/database'
 
@@ -133,17 +133,18 @@ async function selectReadingPassages(supabase: any, userId: string): Promise<Rea
     .from('questions')
     .select('id, prompt, passage, passage_id, options, correct_index, difficulty, explanation')
     .eq('section', 'reading')
-    .not('passage', 'is', null)
 
   if (!rows || rows.length === 0) return []
 
-  const passages = buildPassagesFromRows(rows as ReadingQuestionRow[])
+  const all = rows as ReadingQuestionRow[]
+  const passages = buildPassagesFromRows(all.filter(r => r.passage))
+  const vocabPool = all.filter(r => !r.passage)
 
   const { data: history } = await supabase
     .from('user_question_history')
     .select('question_id, times_correct')
     .eq('user_id', userId)
-    .in('question_id', (rows as ReadingQuestionRow[]).map(r => r.id))
+    .in('question_id', all.map(r => r.id))
 
   const mastered = new Set(
     (history ?? [])
@@ -151,17 +152,64 @@ async function selectReadingPassages(supabase: any, userId: string): Promise<Rea
       .map((h: { question_id: string }) => h.question_id)
   )
 
-  // Rank by unmastered question count (desc), breaking ties randomly so two
-  // sessions with the same mastery profile do not serve identical passages.
+  const shuffle = <T,>(arr: T[]): T[] => {
+    const out = arr.slice()
+    for (let i = out.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[out[i], out[j]] = [out[j], out[i]]
+    }
+    return out
+  }
+
+  // Rank by the SHARE of a passage still unmastered, not the raw count.
+  // Ranking on the count alone made bigger passages win every time — the
+  // 7-question printing-press passage outranked everything and was served
+  // to every student, every session.
   const ranked = passages
     .map(p => ({
-      passage:   p,
-      unmastered: p.questions.filter(q => !mastered.has(q.id)).length,
-      tiebreak:  Math.random(),
+      passage:  p,
+      progress: p.questions.filter(q => !mastered.has(q.id)).length / p.questions.length,
+      tiebreak: Math.random(),
     }))
-    .sort((a, b) => b.unmastered - a.unmastered || a.tiebreak - b.tiebreak)
+    .filter(r => r.progress > 0)
+    .sort((a, b) => b.progress - a.progress || a.tiebreak - b.tiebreak)
 
-  return ranked.slice(0, PASSAGES_PER_SESSION).map(r => r.passage)
+  // Fall back to fully-mastered passages only once nothing fresh is left.
+  const pool = ranked.length >= PASSAGES_PER_SESSION
+    ? ranked
+    : [...ranked, ...shuffle(passages.filter(p => !ranked.some(r => r.passage.id === p.id))).map(p => ({ passage: p, progress: 0, tiebreak: 0 }))]
+
+  const chosen: ReadingPassage[] = pool.slice(0, PASSAGES_PER_SESSION).map(r => {
+    // Unmastered questions first, then mastered as filler, capped so session
+    // length does not swing with passage size.
+    const unseen = shuffle(r.passage.questions.filter(q => !mastered.has(q.id)))
+    const seen   = shuffle(r.passage.questions.filter(q =>  mastered.has(q.id)))
+    return { ...r.passage, questions: [...unseen, ...seen].slice(0, MAX_QUESTIONS_PER_PASSAGE) }
+  })
+
+  // Standalone vocabulary, unmastered first, carried as a body-less passage so
+  // the client renders it without a passage panel.
+  const vocabUnseen = shuffle(vocabPool.filter(r => !mastered.has(r.id)))
+  const vocabSeen   = shuffle(vocabPool.filter(r =>  mastered.has(r.id)))
+  const vocab = [...vocabUnseen, ...vocabSeen].slice(0, VOCAB_PER_SESSION)
+
+  if (vocab.length > 0) {
+    chosen.push({
+      id:    'vocabulary',
+      title: 'Vocabulary',
+      body:  '',
+      questions: vocab.map(r => ({
+        id:           r.id,
+        text:         r.prompt,
+        options:      r.options,
+        correctIndex: r.correct_index,
+        difficulty:   (r.difficulty as 1 | 2 | 3) ?? 2,
+        explanation:  r.explanation ?? '',
+      })),
+    })
+  }
+
+  return chosen
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

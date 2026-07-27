@@ -48,6 +48,18 @@ export interface ReadingPassage {
 // the number of passages a student must read per session compared to 3.
 export const PASSAGES_PER_SESSION = 2
 
+// Cap how many of a passage's questions are surfaced at once. Passage sizes in
+// the bank are uneven (one carries 7 questions on 54 words), and without a cap
+// a session's length swings with whichever passages get picked — a student
+// reported getting 11 questions, 7 of them on the same passage. Capping also
+// means a revisit serves a DIFFERENT subset rather than an identical rerun.
+export const MAX_QUESTIONS_PER_PASSAGE = 3
+
+// Standalone vocabulary questions shown after the passages. The real HSPT
+// reading section is 40 comprehension + 22 vocabulary; 6 + 4 keeps that ratio
+// roughly intact while holding the session at a predictable 10 questions.
+export const VOCAB_PER_SESSION = 4
+
 // ── DB row → passage grouping ────────────────────────────────────────────────
 
 export interface ReadingQuestionRow {

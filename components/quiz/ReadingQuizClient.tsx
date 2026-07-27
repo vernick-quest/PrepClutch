@@ -403,9 +403,12 @@ export default function ReadingQuizClient({ passages, userId, masteredIds = [] }
 
       {/* ── Main content ──────────────────────────────────────────────────── */}
       <div className="flex-1 max-w-6xl mx-auto w-full px-4 py-6">
-        <div className="grid lg:grid-cols-[1fr_420px] gap-6 items-start">
+        <div className={currentPassage.body
+          ? 'grid lg:grid-cols-[1fr_420px] gap-6 items-start'
+          : 'max-w-2xl mx-auto'}>
 
-          {/* ── LEFT: Passage panel ──────────────────────────────────────── */}
+          {/* ── LEFT: Passage panel — omitted for standalone vocabulary ──── */}
+          {currentPassage.body && (
           <div className="lg:sticky lg:top-[73px] bg-white/3 border border-white/8 rounded-2xl overflow-hidden">
             {/* Passage header */}
             <div className="px-5 py-4 border-b border-white/8 flex items-start justify-between gap-3">
@@ -433,6 +436,7 @@ export default function ReadingQuizClient({ passages, userId, masteredIds = [] }
               ))}
             </div>
           </div>
+          )}
 
           {/* ── RIGHT: Question panel ─────────────────────────────────────── */}
           <div className="space-y-4">
