@@ -38,10 +38,17 @@ export default async function QuizPage({ params }: Props) {
     const passages = await selectReadingPassages(supabase, user.id)
     if (passages.length === 0) notFound()
 
+    const masteredIds = await fetchMasteredIds(
+      supabase,
+      user.id,
+      passages.flatMap(p => p.questions.map(q => q.id)),
+    )
+
     return (
       <ReadingQuizClient
         passages={passages}
         userId={user.id}
+        masteredIds={masteredIds}
       />
     )
   }
@@ -68,11 +75,14 @@ export default async function QuizPage({ params }: Props) {
     )
   }
 
+  const masteredIds = await fetchMasteredIds(supabase, user.id, questions.map(q => q.id))
+
   return (
     <QuizClient
       section={section as Section | 'full'}
       questions={questions}
       userId={user.id}
+      masteredIds={masteredIds}
     />
   )
 }
@@ -88,6 +98,26 @@ export default async function QuizPage({ params }: Props) {
 
 // Desired difficulty split: difficulty key → question count
 const DIFFICULTY_TARGETS: Record<number, number> = { 1: 3, 2: 4, 3: 3 }
+
+// Questions the student had ALREADY mastered before this session started.
+// Re-answering one of these is free review: it scores points for the session
+// but adds nothing to the section total, which is only ever raised by newly
+// mastered questions. The clients use this to report the two figures
+// separately instead of implying every point earned is a point gained.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function fetchMasteredIds(supabase: any, userId: string, questionIds: string[]): Promise<string[]> {
+  if (questionIds.length === 0) return []
+
+  const { data } = await supabase
+    .from('user_question_history')
+    .select('question_id, times_correct')
+    .eq('user_id', userId)
+    .in('question_id', questionIds)
+
+  return (data ?? [])
+    .filter((h: { times_correct: number }) => h.times_correct > 0)
+    .map((h: { question_id: string }) => h.question_id)
+}
 
 // ── Reading passage selection ────────────────────────────────────────────────
 //

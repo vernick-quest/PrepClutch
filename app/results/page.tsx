@@ -13,6 +13,12 @@ interface StoredResult {
   section: Section | 'full'
   answers: QuizAnswer[]
   total_xp: number
+  /** Points from questions mastered for the FIRST time — the only part that
+   *  raises the section total. Absent on results stored before this split. */
+  new_xp?: number
+  /** Points re-earned on questions already mastered. Free review: scored for
+   *  the session, but the section total does not move. */
+  review_xp?: number
   score: number
   total_questions: number
   questions: Question[]
@@ -71,7 +77,7 @@ export default function ResultsPage() {
     </div>
   )
 
-  const { section, answers, total_xp, score, total_questions, questions } = result
+  const { section, answers, total_xp, new_xp, review_xp, score, total_questions, questions } = result
   const pct = Math.round((score / total_questions) * 100)
   const cfg = section === 'full'
     ? { label: 'Full Practice Test', emoji: '🎯', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/30' }
@@ -105,11 +111,21 @@ export default function ResultsPage() {
               <div className="text-7xl font-black text-white">{score}<span className="text-3xl text-zinc-500">/{total_questions}</span></div>
               <div className="text-zinc-400 text-sm mt-1">questions correct</div>
             </div>
-            {/* Clutch Points earned this run — shown for single sections only */}
+            {/* Clutch Points earned this run — shown for single sections only.
+                Only newly mastered questions raise the section total, so when
+                part of the run was review we show the split rather than let a
+                big number imply a big gain. */}
             {section !== 'full' && (
               <div className="text-center">
-                <div className="text-5xl font-black text-amber-400">+{total_xp}</div>
+                <div className="text-5xl font-black text-amber-400">
+                  +{review_xp ? new_xp : total_xp}
+                </div>
                 <div className="text-zinc-400 text-sm mt-1">Clutch Points</div>
+                {!!review_xp && (
+                  <div className="text-zinc-500 text-xs mt-1.5">
+                    +{review_xp} reviewed <span className="text-zinc-600">· already mastered</span>
+                  </div>
+                )}
               </div>
             )}
           </div>

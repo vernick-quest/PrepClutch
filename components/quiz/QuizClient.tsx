@@ -14,6 +14,9 @@ interface Props {
   section: Section | 'full'
   questions: Question[]
   userId: string
+  /** Questions already mastered before this session — re-answering them scores
+   *  session points but does not raise the section total. */
+  masteredIds?: string[]
 }
 
 function getAccentHex(accent: string): string {
@@ -23,7 +26,7 @@ function getAccentHex(accent: string): string {
   return map[accent] ?? '#ffffff'
 }
 
-export default function QuizClient({ section, questions, userId }: Props) {
+export default function QuizClient({ section, questions, userId, masteredIds = [] }: Props) {
   const router = useRouter()
   const [currentIdx, setCurrentIdx] = useState(0)
   const [timeLeft, setTimeLeft] = useState(QUESTION_TIME_LIMIT_S)
@@ -108,18 +111,28 @@ export default function QuizClient({ section, questions, userId }: Props) {
 
     await checkAchievements(supabase, userId, finalAnswers, score, totalQuestions, section === 'full' ? 'full' : section, questions)
 
+    // Split the session total: only newly mastered questions raise the
+    // section score, so report review points separately rather than implying
+    // every point earned is a point gained.
+    const alreadyMastered = new Set(masteredIds)
+    const reviewXP = finalAnswers
+      .filter(a => alreadyMastered.has(a.question_id))
+      .reduce((s, a) => s + a.xp_earned, 0)
+
     sessionStorage.setItem('quiz_result', JSON.stringify({
       attempt_id:      attempt?.id,
       section,
       answers:         finalAnswers,
       total_xp:        totalXP,
+      new_xp:          totalXP - reviewXP,
+      review_xp:       reviewXP,
       score,
       total_questions: totalQuestions,
       questions,
     }))
 
     router.push('/results')
-  }, [userId, section, totalQuestions, questions, router])
+  }, [userId, section, totalQuestions, questions, router, masteredIds])
 
   // ─── Handle answer ────────────────────────────────────────────────────────
   const handleAnswer = useCallback((index: number) => {

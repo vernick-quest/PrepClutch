@@ -18,6 +18,9 @@ interface SavedAnswer {
 interface Props {
   passages: ReadingPassage[]
   userId: string
+  /** Questions already mastered before this session — re-answering them scores
+   *  session points but does not raise the section total. */
+  masteredIds?: string[]
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -54,7 +57,7 @@ function globalIdx(passages: ReadingPassage[], pIdx: number, qIdx: number): numb
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function ReadingQuizClient({ passages, userId }: Props) {
+export default function ReadingQuizClient({ passages, userId, masteredIds = [] }: Props) {
   const router = useRouter()
 
   const totalQuestions = passages.reduce((s, p) => s + p.questions.length, 0)
@@ -142,10 +145,19 @@ export default function ReadingQuizClient({ passages, userId }: Props) {
       }))
     )
 
+    // Only newly mastered questions raise the section total; report the
+    // review portion separately rather than implying it all counted.
+    const alreadyMastered = new Set(masteredIds)
+    const reviewXP = answersForResults
+      .filter(a => alreadyMastered.has(a.question_id))
+      .reduce((s, a) => s + a.xp_earned, 0)
+
     sessionStorage.setItem('quiz_result', JSON.stringify({
       section:         'reading',
       answers:         answersForResults,
       total_xp:        totalXP,
+      new_xp:          totalXP - reviewXP,
+      review_xp:       reviewXP,
       score,
       total_questions: totalQuestions,
       questions:       questionsForResults,
@@ -176,7 +188,7 @@ export default function ReadingQuizClient({ passages, userId }: Props) {
     }
 
     router.push('/results')
-  }, [passages, totalQuestions, userId, router])
+  }, [passages, totalQuestions, userId, router, masteredIds])
 
   // ── Handle passage timeout ────────────────────────────────────────────────
   const handlePassageTimeout = useCallback(() => {
