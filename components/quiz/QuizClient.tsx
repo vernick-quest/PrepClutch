@@ -136,7 +136,10 @@ export default function QuizClient({ section, questions, userId, masteredIds = [
       questions,
     }))
 
-    router.push('/results')
+    // replace, not push: the quiz is finished and already recorded, so it must
+    // not stay in history. With push, Back landed the student on a live quiz
+    // page they could answer all over again.
+    router.replace('/results')
   }, [userId, section, totalQuestions, questions, router, masteredIds])
 
   // ─── Handle answer ────────────────────────────────────────────────────────

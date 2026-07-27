@@ -192,7 +192,10 @@ export default function ReadingQuizClient({ passages, userId, masteredIds = [] }
     // above so the milestone crossed by the last question is counted.
     await awardSectionMasteryBadges(supabase, userId)
 
-    router.push('/results')
+    // replace, not push: the quiz is finished and already recorded, so it must
+    // not stay in history. With push, Back landed the student on a live quiz
+    // page they could answer all over again.
+    router.replace('/results')
   }, [passages, totalQuestions, userId, router, masteredIds])
 
   // ── Handle passage timeout ────────────────────────────────────────────────

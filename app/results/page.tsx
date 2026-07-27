@@ -45,7 +45,7 @@ export default function ResultsPage() {
 
   useEffect(() => {
     const raw = sessionStorage.getItem('quiz_result')
-    if (!raw) { router.push('/'); return }
+    if (!raw) { router.replace('/'); return }
 
     const parsed: StoredResult = JSON.parse(raw)
     setResult(parsed)
@@ -95,12 +95,26 @@ export default function ResultsPage() {
     : 0
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] py-8 px-4">
-      <div className="max-w-2xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="text-center">
-          <p className="text-zinc-500 text-sm mb-1">{cfg.emoji} {cfg.label}</p>
+    <div className="min-h-screen bg-[#0a0a0f]">
+      {/* Always-reachable nav. The action buttons at the foot of this page sit
+          below the full answer review, so on a 10-question result they are a
+          long scroll away and students could not find their way home. */}
+      <nav className="border-b border-white/5 sticky top-0 z-50 bg-[#0a0a0f]/90 backdrop-blur-sm">
+        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+          <Link href="/" className="text-zinc-400 hover:text-white transition-colors text-sm">
+            ← Dashboard
+          </Link>
+          <span className="text-xs text-zinc-500">{cfg.emoji} {cfg.label}</span>
+          <Link
+            href={`/quiz/${section}`}
+            className="text-xs bg-white/5 border border-white/10 hover:border-white/25 text-zinc-300 px-3 py-1.5 rounded-full transition-colors"
+          >
+            Practice again
+          </Link>
         </div>
+      </nav>
+
+      <div className="max-w-2xl mx-auto space-y-6 py-8 px-4">
 
         {/* Score card */}
         <div className="bg-white/5 border border-white/10 rounded-3xl p-8">
