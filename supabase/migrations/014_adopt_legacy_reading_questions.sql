@@ -1,4 +1,4 @@
--- 010 — Adopt legacy reading questions + credit past attempts (retry)
+-- 014 — Adopt legacy reading questions + credit past attempts
 
 -- ── 1. Adopt the 10 questions from the retired hardcoded reading flow ────────
 WITH p(pkey, body) AS (VALUES
