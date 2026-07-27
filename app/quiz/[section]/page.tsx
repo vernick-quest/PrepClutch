@@ -131,7 +131,7 @@ async function fetchMasteredIds(supabase: any, userId: string, questionIds: stri
 async function selectReadingPassages(supabase: any, userId: string): Promise<ReadingPassage[]> {
   const { data: rows } = await supabase
     .from('questions')
-    .select('id, prompt, passage, passage_id, options, correct_index, difficulty, explanation')
+    .select('id, prompt, passage, passage_id, passage_title, options, correct_index, difficulty, explanation')
     .eq('section', 'reading')
 
   if (!rows || rows.length === 0) return []

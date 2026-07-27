@@ -67,14 +67,16 @@ export interface ReadingQuestionRow {
   prompt: string
   passage: string | null
   passage_id: string | null
+  passage_title?: string | null
   options: string[]
   correct_index: number
   difficulty: number
   explanation: string | null
 }
 
-// The question bank has no passage titles, so derive one from the opening
-// sentence. Keeps the passage header meaningful without inventing content.
+// Fallback only. Every passage in the bank was given a real `passage_title` by
+// migration 030; this derives a header from the opening sentence for any row
+// that predates the column or was added without one.
 function deriveTitle(body: string): string {
   const firstSentence = body.trim().split(/(?<=[.!?])\s/)[0] ?? body
   const words = firstSentence.split(/\s+/)
@@ -97,7 +99,7 @@ export function buildPassagesFromRows(rows: ReadingQuestionRow[]): ReadingPassag
     if (!passage) {
       passage = {
         id:        key,
-        title:     deriveTitle(row.passage),
+        title:     row.passage_title?.trim() || deriveTitle(row.passage),
         body:      row.passage,
         questions: [],
       }
