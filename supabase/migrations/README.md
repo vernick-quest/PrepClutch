@@ -43,9 +43,10 @@ authority; numbers burned on diagnostics leave no file behind.
 
 | 025 | Spot-check 018 landed | diagnostic | ✅ read-only |
 
-| 026 | Admin email lookup (get_admin_user_directory) | migration | ⬜ pending |
+| 026 | Admin email lookup (get_admin_user_directory) | migration | ✅ |
+| 027 | Check 026 function exists | diagnostic | ✅ read-only |
 
-Next free number: **027**
+Next free number: **028**
 
 ## Rules
 
