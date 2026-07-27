@@ -49,7 +49,10 @@ authority; numbers burned on diagnostics leave no file behind.
 | 028 | Restore answer text in historical attempts | migration | ✅ |
 | 029 | Section mastery badges (growing bicep) | migration | ✅ |
 
-Next free number: **030**
+| 030 | Real titles for reading passages | migration | ✅ |
+| 031 | Lengthen passages too short for their questions | migration | ⬜ pending |
+
+Next free number: **032**
 
 ## Rules
 
