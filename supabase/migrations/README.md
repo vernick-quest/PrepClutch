@@ -50,7 +50,7 @@ authority; numbers burned on diagnostics leave no file behind.
 | 029 | Section mastery badges (growing bicep) | migration | ✅ |
 
 | 030 | Real titles for reading passages | migration | ✅ |
-| 031 | Lengthen passages too short for their questions | migration | ⬜ pending |
+| 031 | Lengthen passages too short for their questions | migration | ✅ |
 
 Next free number: **032**
 
