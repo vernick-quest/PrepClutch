@@ -52,7 +52,7 @@ authority; numbers burned on diagnostics leave no file behind.
 | 030 | Real titles for reading passages | migration | ✅ |
 | 031 | Lengthen passages too short for their questions | migration | ✅ |
 
-| 032 | Reword position-dependent reading questions | migration | ⬜ pending |
+| 032 | Reword position-dependent reading questions | migration | ✅ |
 
 | 033 | Deepen 25 reading passages to full HSPT length | migration | ✅ |
 | 034 | Add 50 reading questions for the deepened passages | migration | ✅ |
