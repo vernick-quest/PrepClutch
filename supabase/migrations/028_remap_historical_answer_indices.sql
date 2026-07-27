@@ -945,7 +945,10 @@ CREATE TEMP TABLE _qmap (
 CREATE TEMP TABLE _live ON COMMIT DROP AS
 SELECT
   q.id,
-  q.section,
+  -- questions.section is the section_type ENUM; the snapshot carries plain
+  -- TEXT, and Postgres has no implicit enum = text operator. Cast once here so
+  -- every downstream join and PARTITION BY compares like with like.
+  q.section::TEXT AS section,
   q.prompt,
   (SELECT jsonb_agg(v ORDER BY v) FROM jsonb_array_elements_text(q.options) v) AS opt_sig
 FROM questions q
