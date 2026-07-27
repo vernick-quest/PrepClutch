@@ -33,7 +33,7 @@ authority; numbers burned on diagnostics leave no file behind.
 | 015 | Confirm answers map to live questions | diagnostic | ✅ read-only |
 | 016 | Confirm legacy answers credited | diagnostic | ❌ not run |
 | 017 | Fix double-escaped quotes in options | migration | ✅ |
-| 018 | Fix defects found by the question-bank audit | migration | ⬜ pending |
+| 018 | Fix defects found by the question-bank audit | migration | ✅ |
 | 019 | Rebalance answer positions | migration | ⬜ pending |
 | 020 | Add 114 reading questions | migration | ⬜ pending |
 | 021 | Add 75 verbal questions | migration | ⬜ pending |
@@ -41,7 +41,9 @@ authority; numbers burned on diagnostics leave no file behind.
 | 023 | Add 57 math questions | migration | ⬜ pending |
 | 024 | Add 55 language questions | migration | ⬜ pending |
 
-Next free number: **025**
+| 025 | Spot-check 018 landed | diagnostic | ⬜ |
+
+Next free number: **026**
 
 ## Rules
 
