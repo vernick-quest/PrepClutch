@@ -11,6 +11,22 @@ interface AttemptReviewProps {
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
+// The retired hardcoded reading flow stored these ids. Migration 014 adopted
+// the same questions into the bank as md5(legacy_id)::UUID, so past attempts
+// can still be reviewed.
+const LEGACY_ID_MAP: Record<string, string> = {
+  'bio-q1':  '4f9d48ee-9826-f1ad-2f8b-67f5c34044b5',
+  'bio-q2':  '6aece053-77e4-5a6d-1fd1-e61c74d95adf',
+  'bio-q3':  '878e86fb-0f98-82c7-2018-77041a518c35',
+  'silk-q1': '85a4174f-84d9-130e-4b8e-d513539d2c1f',
+  'silk-q2': '36e0ad62-b027-c3a4-9f6e-300aa44397c9',
+  'silk-q3': '093b3182-2c25-f2a9-e1e4-61e94fc2bd41',
+  'silk-q4': '2c2c4ecf-7ad0-c4bc-0408-5c6f9c98d615',
+  'obs-q1':  'c8cd25f9-47f5-ed72-b125-51ba94c56cbf',
+  'obs-q2':  'd283274f-a160-2db2-4211-394daf244d16',
+  'obs-q3':  '7d517cbd-41d2-de6e-1ae4-26ad6a7a886a',
+}
+
 /** Collapsed-by-default review of one past attempt. Question text is not stored
  *  on the attempt, so it is fetched on first expand — a student can have dozens
  *  of attempts and eager-loading every one of them would stall the page. */
@@ -24,8 +40,14 @@ export default function AttemptReview({ answers }: AttemptReviewProps) {
     setLoading(true)
     setError(false)
     // Legacy attempts stored non-UUID question ids (e.g. "bio-q1"); passing one
-    // to a uuid column makes Postgres reject the whole query.
-    const ids = [...new Set(answers.map(a => a.question_id).filter(id => UUID_RE.test(id)))]
+    // to a uuid column makes Postgres reject the whole query. Those questions
+    // were later adopted into the bank under md5(legacy_id)::UUID by migration
+    // 014, so map them across rather than showing them as unavailable.
+    const ids = [...new Set(
+      answers
+        .map(a => LEGACY_ID_MAP[a.question_id] ?? a.question_id)
+        .filter(id => UUID_RE.test(id))
+    )]
 
     if (ids.length === 0) {
       setQuestions(new Map())
@@ -45,7 +67,14 @@ export default function AttemptReview({ answers }: AttemptReviewProps) {
       return
     }
 
-    setQuestions(new Map((data as Question[]).map(q => [q.id, q])))
+    // Key by the id the ANSWER carries, so legacy answers resolve too.
+    const byId = new Map((data as Question[]).map(q => [q.id, q]))
+    const resolved = new Map<string, Question>()
+    for (const a of answers) {
+      const q = byId.get(LEGACY_ID_MAP[a.question_id] ?? a.question_id)
+      if (q) resolved.set(a.question_id, q)
+    }
+    setQuestions(resolved)
     setLoading(false)
   }
 
