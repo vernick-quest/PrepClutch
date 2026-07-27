@@ -3,8 +3,9 @@
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { SECTION_CONFIG, SECTIONS, SECTION_BENCHMARKS_MS } from '@/lib/constants'
+import { SECTION_CONFIG, SECTIONS } from '@/lib/constants'
 import { classifyTiming, FLAG_LABELS } from '@/lib/scoring'
+import QuestionReviewCard from '@/components/quiz/QuestionReviewCard'
 import type { Section, Question, QuizAnswer } from '@/types/database'
 import { createClient } from '@/lib/supabase/client'
 import confetti from 'canvas-confetti'
@@ -266,110 +267,9 @@ export default function ResultsPage() {
 
           {showBreakdown && (
             <div className="space-y-3">
-              {questions.map((q, i) => {
-                const a            = answers[i]
-                const isCorrect    = a?.selected_index === q.correct_index
-                const timedOut     = a?.selected_index === -1
-                const qSection     = (a?.section ?? q.section) as Section
-                // Reading records a per-question target: the first question of
-                // a passage includes the time to read it, so it is not judged
-                // against the same benchmark as follow-up questions.
-                const benchmarkMs  = a?.target_ms ?? SECTION_BENCHMARKS_MS[qSection] ?? 30000
-                const benchmarkS   = (benchmarkMs / 1000).toFixed(0)
-                const takenMs      = a?.time_taken_ms ?? 0
-                const takenS       = (takenMs / 1000).toFixed(1)
-                const difficulty   = q.difficulty ?? 2
-                const diffLabel    = difficulty === 1 ? 'Easy' : difficulty === 3 ? 'Hard' : 'Medium'
-
-                // Time color: green ≤ target, yellow ≤ 125% of target, red > 125%
-                const overRatio    = takenMs / benchmarkMs
-                const timeColor    = overRatio <= 1 ? '#10b981' : overRatio <= 1.25 ? '#f59e0b' : '#f43f5e'
-                const timeBg       = overRatio <= 1 ? '#10b98118' : overRatio <= 1.25 ? '#f59e0b18' : '#f43f5e18'
-
-                const userAnswer   = (a && a.selected_index >= 0) ? q.options[a.selected_index] : null
-                const correctAnswer = q.options[q.correct_index]
-
-                return (
-                  <div
-                    key={q.id}
-                    className={`rounded-2xl border overflow-hidden ${
-                      isCorrect
-                        ? 'border-emerald-500/25 bg-emerald-500/5'
-                        : 'border-rose-500/25 bg-rose-500/5'
-                    }`}
-                  >
-                    {/* ── Topline ── */}
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-4 py-3 border-b border-white/5">
-                      {/* Correct / Wrong */}
-                      <span className="text-base font-bold shrink-0">
-                        {isCorrect ? '✅ Correct' : timedOut ? '⏰ Timed Out' : '❌ Wrong'}
-                      </span>
-
-                      {/* Difficulty dots */}
-                      <div className="flex items-center gap-1 shrink-0">
-                        {[1, 2, 3].map(d => (
-                          <div
-                            key={d}
-                            className="w-2 h-2 rounded-full"
-                            style={{ backgroundColor: d <= difficulty ? '#f59e0b' : 'rgba(255,255,255,0.15)' }}
-                          />
-                        ))}
-                        <span className="text-xs text-zinc-500 ml-1">{diffLabel}</span>
-                      </div>
-
-                      {/* Time chip */}
-                      <div
-                        className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold shrink-0"
-                        style={{ color: timeColor, backgroundColor: timeBg }}
-                      >
-                        ⏱ {takenS}s
-                      </div>
-
-                      {/* Target time */}
-                      <span className="text-xs text-zinc-500 shrink-0">
-                        Target <span className="text-zinc-300 font-medium">{benchmarkS}s</span>
-                      </span>
-                    </div>
-
-                    {/* ── Body ── */}
-                    <div className="px-4 py-4 space-y-3">
-                      {/* Question */}
-                      <p className="text-sm text-zinc-200 leading-relaxed font-medium">{q.prompt}</p>
-
-                      {/* Answers */}
-                      <div className="space-y-1.5">
-                        {/* Your answer — always shown */}
-                        <div className="flex items-start gap-2">
-                          <span className="text-xs text-zinc-500 shrink-0 mt-0.5 w-24">Your answer:</span>
-                          {userAnswer ? (
-                            <span className={`text-xs font-medium ${isCorrect ? 'text-emerald-400' : 'text-rose-400'}`}>
-                              {userAnswer}
-                            </span>
-                          ) : (
-                            <span className="text-xs text-zinc-600 italic">No answer (timed out)</span>
-                          )}
-                        </div>
-
-                        {/* Correct answer — always shown if wrong, or as confirmation if right */}
-                        {!isCorrect && (
-                          <div className="flex items-start gap-2">
-                            <span className="text-xs text-zinc-500 shrink-0 mt-0.5 w-24">Correct answer:</span>
-                            <span className="text-xs font-medium text-emerald-400">{correctAnswer}</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Rationale — always shown */}
-                      {q.explanation && (
-                        <div className="pt-2 border-t border-white/5">
-                          <p className="text-xs text-zinc-500 font-semibold mb-1 uppercase tracking-wide">💡 Rationale</p>
-                          <p className="text-xs text-zinc-400 leading-relaxed">{q.explanation}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
+              {questions.map((q, i) => (
+                <QuestionReviewCard key={q.id} question={q} answer={answers[i]} />
+              ))}
             </div>
           )}
         </div>

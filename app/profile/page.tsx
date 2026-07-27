@@ -6,7 +6,8 @@ import Image from 'next/image'
 import Footer from '@/components/ui/Footer'
 import SignOutButton from '@/components/ui/SignOutButton'
 import ProfileActions from '@/components/profile/ProfileActions'
-import type { Section } from '@/types/database'
+import AttemptReview from '@/components/quiz/AttemptReview'
+import type { Section, QuizAnswer } from '@/types/database'
 
 export const dynamic = 'force-dynamic'
 
@@ -208,19 +209,23 @@ export default async function ProfilePage() {
                 const pct = Math.round((attempt.score / attempt.total_questions) * 100)
                 const isSection = SECTIONS.includes(attempt.section as Section)
                 const cfg = isSection ? SECTION_CONFIG[attempt.section as Section] : null
+                const answers = Array.isArray(attempt.answers) ? attempt.answers as QuizAnswer[] : []
                 return (
-                  <div key={attempt.id} className="bg-white/3 border border-white/5 rounded-xl p-4 flex items-center gap-4">
-                    <span className="text-xl">{cfg?.emoji ?? '🎯'}</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-white">{cfg?.label ?? 'Full Practice Test'}</div>
-                      <div className="text-xs text-zinc-500">
-                        {new Date(attempt.completed_at!).toLocaleDateString()} · {attempt.total_questions} questions
+                  <div key={attempt.id} className="bg-white/3 border border-white/5 rounded-xl overflow-hidden">
+                    <div className="p-4 flex items-center gap-4">
+                      <span className="text-xl">{cfg?.emoji ?? '🎯'}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-white">{cfg?.label ?? 'Full Practice Test'}</div>
+                        <div className="text-xs text-zinc-500">
+                          {new Date(attempt.completed_at!).toLocaleDateString()} · {attempt.total_questions} questions
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className={`text-lg font-bold ${pct >= 80 ? 'text-emerald-400' : pct >= 60 ? 'text-amber-400' : 'text-rose-400'}`}>{attempt.score}/{attempt.total_questions}</div>
+                        <div className="text-xs text-amber-500">+{attempt.total_xp} CP</div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className={`text-lg font-bold ${pct >= 80 ? 'text-emerald-400' : pct >= 60 ? 'text-amber-400' : 'text-rose-400'}`}>{attempt.score}/{attempt.total_questions}</div>
-                      <div className="text-xs text-amber-500">+{attempt.total_xp} CP</div>
-                    </div>
+                    {answers.length > 0 && <AttemptReview answers={answers} />}
                   </div>
                 )
               })}
