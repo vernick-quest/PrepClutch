@@ -17,10 +17,23 @@ interface QuestionReviewCardProps {
 export default function QuestionReviewCard({ question, answer, showPassage = false }: QuestionReviewCardProps) {
   const [passageOpen, setPassageOpen] = useState(false)
 
-  // The stored answer carries its own correct_index, so a card still reads
-  // correctly when the question row is gone.
-  const correctIndex = question?.correct_index ?? answer?.correct_index ?? -1
+  // Trust the answer's OWN correct_index, not the question's current one.
+  // Options are positional, and migration 019 reshuffled every question — so
+  // the live correct_index describes today's option order while the stored
+  // selected_index describes the order at answer time. Comparing across the
+  // two labelled correct answers as Wrong, and a card still reads correctly
+  // when the question row is gone entirely.
+  const correctIndex = answer?.correct_index ?? question?.correct_index ?? -1
   const isCorrect    = answer ? answer.selected_index === correctIndex : false
+
+  // True when the option array has been reordered since this attempt, which
+  // makes the stored indices point at the wrong text. Migration 028 remaps
+  // historical answers; until it runs, suppress the option text rather than
+  // show the student something they never chose.
+  const staleOrder =
+    !!question && !!answer &&
+    answer.correct_index !== undefined &&
+    answer.correct_index !== question.correct_index
   const timedOut     = answer?.selected_index === -1
   const qSection     = (answer?.section ?? question?.section) as Section
   // Reading records a per-question target: the first question of a passage
@@ -38,8 +51,12 @@ export default function QuestionReviewCard({ question, answer, showPassage = fal
   const timeColor    = overRatio <= 1 ? '#10b981' : overRatio <= 1.25 ? '#f59e0b' : '#f43f5e'
   const timeBg       = overRatio <= 1 ? '#10b98118' : overRatio <= 1.25 ? '#f59e0b18' : '#f43f5e18'
 
-  const userAnswer    = (question && answer && answer.selected_index >= 0) ? question.options[answer.selected_index] : null
-  const correctAnswer = question ? question.options[correctIndex] : null
+  // Both indices address the option order as it was AT ANSWER TIME. If the
+  // order has since changed, resolving them against today's options would show
+  // text the student never saw, so show nothing rather than something false.
+  const userAnswer    = (question && answer && answer.selected_index >= 0 && !staleOrder)
+    ? question.options[answer.selected_index] : null
+  const correctAnswer = (question && !staleOrder) ? question.options[correctIndex] : null
 
   return (
     <div
@@ -135,6 +152,16 @@ export default function QuestionReviewCard({ question, answer, showPassage = fal
                 </div>
               )}
             </div>
+
+            {staleOrder && (
+              <div className="pt-2 border-t border-white/5">
+                <p className="text-xs text-amber-400/80 leading-relaxed">
+                  ⓘ The answer choices for this question were reordered after this
+                  quiz was taken, so the specific option you picked can no longer be
+                  shown. Your result and points are unaffected.
+                </p>
+              </div>
+            )}
 
             {/* Rationale — always shown */}
             {question.explanation && (
