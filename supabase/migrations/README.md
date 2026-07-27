@@ -71,11 +71,11 @@ passage into two in the quiz UI. 035-038 are independent of the others.
 | 041 | Rationales: verbal | migration | ❌ never run — SUPERSEDED by 046 |
 | 042 | Rationales: reading | migration | ❌ never run — SUPERSEDED by 047 |
 | 043 | Rationales: language | migration | ❌ never run — SUPERSEDED by 048 |
-| 044 | Rationales: math (order-independent guard) | migration | ⬜ pending |
-| 045 | Rationales: quantitative | migration | ⬜ pending |
-| 046 | Rationales: verbal | migration | ⬜ pending |
-| 047 | Rationales: reading | migration | ⬜ pending |
-| 048 | Rationales: language | migration | ⬜ pending |
+| 044 | Rationales: math (order-independent guard) | migration | ✅ |
+| 045 | Rationales: quantitative | migration | ✅ |
+| 046 | Rationales: verbal | migration | ✅ |
+| 047 | Rationales: reading | migration | ✅ |
+| 048 | Rationales: language | migration | ✅ |
 
 Next free number: **049**
 
