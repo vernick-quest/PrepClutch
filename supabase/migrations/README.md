@@ -38,12 +38,14 @@ authority; numbers burned on diagnostics leave no file behind.
 | 020 | Add 114 reading questions | migration | ✅ |
 | 021 | Add 75 verbal questions | migration | ✅ |
 | 022 | Add 72 quantitative questions | migration | ✅ |
-| 023 | Add 57 math questions | migration | ⬜ pending |
-| 024 | Add 55 language questions | migration | ⬜ pending |
+| 023 | Add 57 math questions | migration | ✅ |
+| 024 | Add 55 language questions | migration | ✅ |
 
 | 025 | Spot-check 018 landed | diagnostic | ✅ read-only |
 
-Next free number: **026**
+| 026 | Admin email lookup (get_admin_user_directory) | migration | ⬜ pending |
+
+Next free number: **027**
 
 ## Rules
 
