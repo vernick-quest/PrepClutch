@@ -79,7 +79,7 @@ passage into two in the quiz UI. 035-038 are independent of the others.
 
 | 049 | Find short explanations | diagnostic | ✅ read-only |
 | 050 | Fix last two math rationales | migration | ✅ |
-| 051 | Rewrite the last short explanations | migration | ⬜ pending |
+| 051 | Rewrite the last short explanations | migration | ✅ |
 
 Next free number: **052**
 
