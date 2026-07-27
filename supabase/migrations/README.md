@@ -66,7 +66,24 @@ sentence position; 033 appends paragraphs that would otherwise break them. 034's
 rows carry the deepened passage text, so running it before 033 would split each
 passage into two in the quiz UI. 035-038 are independent of the others.
 
-Next free number: **039**
+| 039 | Rationales: math | migration | ⚠️ applied, only ~71/250 matched — SUPERSEDED by 044 |
+| 040 | Rationales: quantitative | migration | ❌ never run — SUPERSEDED by 045 |
+| 041 | Rationales: verbal | migration | ❌ never run — SUPERSEDED by 046 |
+| 042 | Rationales: reading | migration | ❌ never run — SUPERSEDED by 047 |
+| 043 | Rationales: language | migration | ❌ never run — SUPERSEDED by 048 |
+| 044 | Rationales: math (order-independent guard) | migration | ⬜ pending |
+| 045 | Rationales: quantitative | migration | ⬜ pending |
+| 046 | Rationales: verbal | migration | ⬜ pending |
+| 047 | Rationales: reading | migration | ⬜ pending |
+| 048 | Rationales: language | migration | ⬜ pending |
+
+Next free number: **049**
+
+**Why 039-043 failed:** they matched rows with `AND options = '[...]'::JSONB`, but
+migration 019 shuffled every question's options in production. The snapshot's
+ordering no longer describes the live rows, so the guard matched only questions
+inserted after 019. 044-048 compare the options as a SORTED SET instead, which is
+order-independent but still disambiguates the 63 rows that share a prompt.
 
 ## Rules
 
