@@ -54,8 +54,8 @@ authority; numbers burned on diagnostics leave no file behind.
 
 | 032 | Reword position-dependent reading questions | migration | ⬜ pending |
 
-| 033 | Deepen 25 reading passages to full HSPT length | migration | ⬜ pending |
-| 034 | Add 50 reading questions for the deepened passages | migration | ⬜ pending |
+| 033 | Deepen 25 reading passages to full HSPT length | migration | ✅ |
+| 034 | Add 50 reading questions for the deepened passages | migration | ✅ |
 | 035 | Add 50 verbal questions | migration | ⬜ pending |
 | 036 | Add 50 quantitative questions | migration | ⬜ pending |
 | 037 | Add 50 math questions | migration | ⬜ pending |
