@@ -36,7 +36,7 @@ authority; numbers burned on diagnostics leave no file behind.
 | 018 | Fix defects found by the question-bank audit | migration | ✅ |
 | 019 | Rebalance answer positions | migration | ✅ |
 | 020 | Add 114 reading questions | migration | ✅ |
-| 021 | Add 75 verbal questions | migration | ⬜ pending |
+| 021 | Add 75 verbal questions | migration | ✅ |
 | 022 | Add 72 quantitative questions | migration | ⬜ pending |
 | 023 | Add 57 math questions | migration | ⬜ pending |
 | 024 | Add 55 language questions | migration | ⬜ pending |
