@@ -78,9 +78,10 @@ passage into two in the quiz UI. 035-038 are independent of the others.
 | 048 | Rationales: language | migration | ✅ |
 
 | 049 | Find short explanations | diagnostic | ✅ read-only |
-| 050 | Fix last two math rationales | migration | ⬜ pending |
+| 050 | Fix last two math rationales | migration | ✅ |
+| 051 | Rewrite the last short explanations | migration | ⬜ pending |
 
-Next free number: **051**
+Next free number: **052**
 
 **Why 039-043 failed:** they matched rows with `AND options = '[...]'::JSONB`, but
 migration 019 shuffled every question's options in production. The snapshot's
