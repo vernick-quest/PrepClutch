@@ -59,7 +59,7 @@ authority; numbers burned on diagnostics leave no file behind.
 | 035 | Add 50 verbal questions | migration | ✅ |
 | 036 | Add 50 quantitative questions | migration | ✅ |
 | 037 | Add 50 math questions | migration | ✅ |
-| 038 | Add 50 language questions | migration | ⬜ pending |
+| 038 | Add 50 language questions | migration | ✅ |
 
 **Apply 032 → 033 → 034 in that order.** 032 unpins four question stems from
 sentence position; 033 appends paragraphs that would otherwise break them. 034's
