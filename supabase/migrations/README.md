@@ -58,7 +58,7 @@ authority; numbers burned on diagnostics leave no file behind.
 | 034 | Add 50 reading questions for the deepened passages | migration | ✅ |
 | 035 | Add 50 verbal questions | migration | ✅ |
 | 036 | Add 50 quantitative questions | migration | ✅ |
-| 037 | Add 50 math questions | migration | ⬜ pending |
+| 037 | Add 50 math questions | migration | ✅ |
 | 038 | Add 50 language questions | migration | ⬜ pending |
 
 **Apply 032 → 033 → 034 in that order.** 032 unpins four question stems from
