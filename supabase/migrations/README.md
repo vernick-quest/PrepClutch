@@ -46,7 +46,9 @@ authority; numbers burned on diagnostics leave no file behind.
 | 026 | Admin email lookup (get_admin_user_directory) | migration | ✅ |
 | 027 | Check 026 function exists | diagnostic | ✅ read-only |
 
-Next free number: **028**
+| 028 | Restore answer text in historical attempts | migration | ⬜ pending |
+
+Next free number: **029**
 
 ## Rules
 
