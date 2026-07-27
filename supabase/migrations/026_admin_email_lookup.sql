@@ -51,19 +51,24 @@ GRANT EXECUTE ON FUNCTION get_admin_user_directory() TO authenticated;
 
 
 -- ── Verification ─────────────────────────────────────────────────────────────
--- Run as yourself (an admin) — expect one row per profile, with emails.
--- A non-admin calling this should get:
---   ERROR: get_admin_user_directory: admin privileges required
 --
---   SELECT user_id, display_name, email, class_code FROM get_admin_user_directory();
+-- This inspects the catalog rather than CALLING the function. Calling it from
+-- the SQL editor always fails: the editor runs as `postgres`, so auth.uid() is
+-- NULL, no profile matches, and the admin check correctly raises — which then
+-- rolls back the CREATE in the same script. (That is exactly what happened on
+-- the first attempt at this migration.)
+--
+-- Expect one row: security_definer = true.
 
-SELECT 'accounts visible to admin directory' AS check, COUNT(*)::TEXT AS value
-FROM get_admin_user_directory()
-UNION ALL
-SELECT 'duplicate display names',
-       COALESCE(string_agg(display_name || ' ×' || n, ', '), 'none')
-FROM (
-  SELECT display_name, COUNT(*) AS n
-  FROM get_admin_user_directory()
-  GROUP BY display_name HAVING COUNT(*) > 1
-) d;
+SELECT p.proname                                   AS function_name,
+       p.prosecdef                                 AS security_definer,
+       pg_get_function_result(p.oid)               AS returns,
+       (SELECT COUNT(*) FROM auth.users)           AS accounts_in_project
+FROM pg_proc p
+JOIN pg_namespace n ON n.oid = p.pronamespace
+WHERE n.nspname = 'public'
+  AND p.proname = 'get_admin_user_directory';
+
+-- To confirm it actually works, sign in to the app as an admin and load
+-- /admin — emails should appear under each display name. There is no way to
+-- exercise the authenticated path from the SQL editor.
