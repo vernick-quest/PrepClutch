@@ -72,3 +72,18 @@ export const MAX_BASE_SCORE = 215 // 3×10 + 4×20 + 3×35
 // Max questions recycled from "previously correct" per session before pool is exhausted
 export const MAX_CORRECT_RECYCLED = 1
 export const QUESTIONS_PER_SESSION = 10
+
+// Quiz history timestamps are rendered on the server (Vercel runs in UTC), so
+// an unpinned toLocale* would show a 6pm PT attempt as the following day. Pin
+// to Pacific — the students and the admin are all in San Francisco.
+export const APP_TIME_ZONE = 'America/Los_Angeles'
+
+/** e.g. "7/26/2026 · 6:14 PM" — date and time in San Francisco. */
+export function formatAttemptTime(iso: string): string {
+  const d = new Date(iso)
+  const date = d.toLocaleDateString('en-US', { timeZone: APP_TIME_ZONE })
+  const time = d.toLocaleTimeString('en-US', {
+    timeZone: APP_TIME_ZONE, hour: 'numeric', minute: '2-digit',
+  })
+  return `${date} · ${time}`
+}

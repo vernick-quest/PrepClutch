@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { SECTION_CONFIG, SECTIONS } from '@/lib/constants'
+import { SECTION_CONFIG, SECTIONS, formatAttemptTime } from '@/lib/constants'
 import Link from 'next/link'
 import Image from 'next/image'
 import Footer from '@/components/ui/Footer'
@@ -217,7 +217,7 @@ export default async function ProfilePage() {
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-medium text-white">{cfg?.label ?? 'Full Practice Test'}</div>
                         <div className="text-xs text-zinc-500">
-                          {new Date(attempt.completed_at!).toLocaleDateString()} · {attempt.total_questions} questions
+                          {formatAttemptTime(attempt.completed_at!)} · {attempt.total_questions} questions
                         </div>
                       </div>
                       <div className="text-right">
