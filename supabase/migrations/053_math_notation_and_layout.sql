@@ -66,14 +66,18 @@ SET prompt = regexp_replace(
                    'square root of ([0-9]+(?:\.[0-9]+)?)',       '√\1', 'gi'),
                  '([0-9)])\s+squared', '\1²', 'g'),
                '([0-9)])\s+cubed',   '\1³', 'g'),
-    explanation = regexp_replace(
+    -- CASE, not COALESCE: coalescing to '' would rewrite a NULL explanation
+    -- into an empty string, which reads as "explained" everywhere downstream.
+    explanation = CASE WHEN explanation IS NULL THEN NULL ELSE
                regexp_replace(
                  regexp_replace(
-                   regexp_replace(COALESCE(explanation, ''),
-                     'the square root of ([0-9]+(?:\.[0-9]+)?)', '√\1', 'gi'),
-                   'square root of ([0-9]+(?:\.[0-9]+)?)',       '√\1', 'gi'),
-                 '([0-9)])\s+squared', '\1²', 'g'),
-               '([0-9)])\s+cubed',   '\1³', 'g')
+                   regexp_replace(
+                     regexp_replace(explanation,
+                       'the square root of ([0-9]+(?:\.[0-9]+)?)', '√\1', 'gi'),
+                     'square root of ([0-9]+(?:\.[0-9]+)?)',       '√\1', 'gi'),
+                   '([0-9)])\s+squared', '\1²', 'g'),
+                 '([0-9)])\s+cubed',   '\1³', 'g')
+               END
 WHERE prompt      ~* '([0-9)])\s+(squared|cubed)|square root of [0-9]'
    OR explanation ~* '([0-9)])\s+(squared|cubed)|square root of [0-9]';
 
