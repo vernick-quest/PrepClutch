@@ -4,8 +4,9 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { scoreQuestion } from '@/lib/scoring'
-import { awardSectionMasteryBadges } from '@/lib/section-mastery'
+import { finishAndRecordQuiz } from '@/lib/finish-quiz'
 import type { ReadingPassage } from '@/lib/reading-passages'
+import type { Question, QuizAnswer } from '@/types/database'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -22,6 +23,19 @@ interface Props {
   /** Questions already mastered before this session — re-answering them scores
    *  session points but does not raise the section total. */
   masteredIds?: string[]
+  /** Running as one section of the full practice test. Nothing is persisted
+   *  and no navigation happens; the container records a single attempt after
+   *  the last section. */
+  embedded?: boolean
+  onComplete?: (answers: QuizAnswer[], questions: Question[]) => void
+  /** Questions completed in earlier sections, so the header counts across the
+   *  whole test instead of restarting at 1. */
+  questionOffset?: number
+  totalOverride?: number
+  /** Show correct/wrong and the explanation immediately after each answer.
+   *  On in the solo section; off in the full test, where every answer is
+   *  revealed at the end. */
+  revealFeedback?: boolean
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -58,10 +72,15 @@ function globalIdx(passages: ReadingPassage[], pIdx: number, qIdx: number): numb
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function ReadingQuizClient({ passages, userId, masteredIds = [] }: Props) {
+export default function ReadingQuizClient({
+  passages, userId, masteredIds = [],
+  embedded = false, onComplete, questionOffset = 0, totalOverride,
+  revealFeedback = true,
+}: Props) {
   const router = useRouter()
 
   const totalQuestions = passages.reduce((s, p) => s + p.questions.length, 0)
+  const shownTotal = totalOverride ?? totalQuestions
 
   // ── Position ──────────────────────────────────────────────────────────────
   const [passageIdx, setPassageIdx] = useState(0)
@@ -102,6 +121,7 @@ export default function ReadingQuizClient({ passages, userId, masteredIds = [] }
   , [readingMsFor])
   const [timeRemainingMs, setTimeRemainingMs] = useState(() => passageTimeMs(0))
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const finishedRef = useRef(false)
   const questionStartRef = useRef<number>(Date.now())
   const [passageTimedOut, setPassageTimedOut] = useState(false)
 
@@ -111,6 +131,13 @@ export default function ReadingQuizClient({ passages, userId, masteredIds = [] }
 
   // ── Finish quiz ───────────────────────────────────────────────────────────
   const finishQuiz = useCallback(async (finalAnswers: (SavedAnswer | null)[]) => {
+    // Answering the final question schedules the advance on a short timeout.
+    // If the passage clock runs out inside that window, handlePassageTimeout
+    // fires too and this runs twice — a duplicate attempt row when solo, and
+    // duplicated answers in the full test, where they are concatenated.
+    if (finishedRef.current) return
+    finishedRef.current = true
+
     if (timerRef.current) clearInterval(timerRef.current)
 
     const allQuestions = passages.flatMap(p => p.questions)
@@ -124,12 +151,6 @@ export default function ReadingQuizClient({ passages, userId, masteredIds = [] }
       target_ms:      a?.targetMs ?? 24_000,
       section:        'reading',
     }))
-
-    const score = finalAnswers.filter(
-      (a, i) => a?.selectedIndex === allQuestions[i].correctIndex
-    ).length
-
-    const totalXP = finalAnswers.reduce((s, a) => s + (a?.xpEarned ?? 0), 0)
 
     // Map to the Question shape the results page expects
     const questionsForResults = passages.flatMap(p =>
@@ -146,57 +167,27 @@ export default function ReadingQuizClient({ passages, userId, masteredIds = [] }
       }))
     )
 
-    // Only newly mastered questions raise the section total; report the
-    // review portion separately rather than implying it all counted.
-    const alreadyMastered = new Set(masteredIds)
-    const reviewXP = answersForResults
-      .filter(a => alreadyMastered.has(a.question_id))
-      .reduce((s, a) => s + a.xp_earned, 0)
-
-    sessionStorage.setItem('quiz_result', JSON.stringify({
-      section:         'reading',
-      answers:         answersForResults,
-      total_xp:        totalXP,
-      new_xp:          totalXP - reviewXP,
-      review_xp:       reviewXP,
-      score,
-      total_questions: totalQuestions,
-      questions:       questionsForResults,
-    }))
-
-    // Persist to DB
-    const supabase = createClient()
-    await supabase.from('quiz_attempts').insert({
-      user_id:         userId,
-      section:         'reading',
-      score,
-      total_questions: totalQuestions,
-      total_xp:        totalXP,
-      answers:         answersForResults,
-      completed_at:    new Date().toISOString(),
-    })
-
-    // Record per-question history. get_section_mastery and leaderboard_view
-    // both derive the section total from user_question_history JOIN questions,
-    // so skipping this leaves reading points stranded on the results page and
-    // out of the student's actual score.
-    for (const a of answersForResults) {
-      await supabase.rpc('upsert_question_history', {
-        p_user_id:     userId,
-        p_question_id: a.question_id,
-        p_correct:     a.selected_index === a.correct_index,
-      })
+    // Embedded: one section of the full test. Hand the answers up; the
+    // container records a single attempt after the last section.
+    if (embedded) {
+      onComplete?.(answersForResults, questionsForResults as Question[])
+      return
     }
 
-    // Cumulative section-mastery badges — must run after the history upserts
-    // above so the milestone crossed by the last question is counted.
-    await awardSectionMasteryBadges(supabase, userId)
+    await finishAndRecordQuiz({
+      supabase: createClient(),
+      userId,
+      section:  'reading',
+      answers:  answersForResults,
+      questions: questionsForResults as Question[],
+      masteredIds,
+    })
 
     // replace, not push: the quiz is finished and already recorded, so it must
     // not stay in history. With push, Back landed the student on a live quiz
     // page they could answer all over again.
     router.replace('/results')
-  }, [passages, totalQuestions, userId, router, masteredIds])
+  }, [passages, userId, router, masteredIds, embedded, onComplete])
 
   // ── Handle passage timeout ────────────────────────────────────────────────
   const handlePassageTimeout = useCallback(() => {
@@ -269,6 +260,9 @@ export default function ReadingQuizClient({ passages, userId, masteredIds = [] }
     const qIdx = qInPassageRef.current
     const passage = passages[pIdx]
 
+    // The pause exists to let the student read the correct/wrong reveal. With
+    // feedback held to the end of the test there is nothing to read, so don't
+    // make them wait.
     setTimeout(() => {
       setSelectedOption(null)
       setLocked(false)
@@ -290,8 +284,8 @@ export default function ReadingQuizClient({ passages, userId, masteredIds = [] }
       } else {
         finishQuiz(newAnswers)
       }
-    }, 750)
-  }, [passages, finishQuiz])
+    }, revealFeedback ? 750 : 120)
+  }, [passages, finishQuiz, revealFeedback])
 
   // ── Handle user selecting an answer ──────────────────────────────────────
   const handleSelect = useCallback((optionIdx: number) => {
@@ -335,7 +329,10 @@ export default function ReadingQuizClient({ passages, userId, masteredIds = [] }
   const optionLabel = (i: number) => ['A', 'B', 'C', 'D'][i] ?? String(i + 1)
 
   function optionStyle(i: number): string {
-    if (!locked) {
+    // Not locked, or locked with feedback withheld: show only what the student
+    // picked. Revealing correct/wrong here would give away the answer in a
+    // full test, where every question is reviewed at the end instead.
+    if (!locked || !revealFeedback) {
       return selectedOption === i
         ? 'bg-amber-500/20 border-amber-500/60 text-white'
         : 'bg-white/5 border-white/10 text-zinc-200 hover:bg-white/8 hover:border-white/20'
@@ -365,7 +362,7 @@ export default function ReadingQuizClient({ passages, userId, masteredIds = [] }
           <div className="flex-1">
             <div className="flex items-center justify-between mb-1.5">
               <span className="text-xs text-zinc-500">
-                Question <span className="text-zinc-300 font-semibold">{gIdx + 1}</span> of {totalQuestions}
+                Question <span className="text-zinc-300 font-semibold">{questionOffset + gIdx + 1}</span> of {shownTotal}
               </span>
               <span className="text-xs text-zinc-500">
                 Passage {passageIdx + 1} of {passages.length}
@@ -377,7 +374,7 @@ export default function ReadingQuizClient({ passages, userId, masteredIds = [] }
             <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
               <div
                 className="h-full rounded-full bg-emerald-500 transition-all duration-300"
-                style={{ width: `${(answeredCount / totalQuestions) * 100}%` }}
+                style={{ width: `${((questionOffset + answeredCount) / shownTotal) * 100}%` }}
               />
             </div>
           </div>
@@ -480,10 +477,10 @@ export default function ReadingQuizClient({ passages, userId, masteredIds = [] }
                 >
                   <span className="text-xs font-black opacity-60 shrink-0 mt-0.5 w-4">{optionLabel(i)}</span>
                   <span className="text-sm leading-relaxed">{opt}</span>
-                  {locked && i === currentQuestion.correctIndex && (
+                  {revealFeedback && locked && i === currentQuestion.correctIndex && (
                     <span className="ml-auto shrink-0 text-emerald-400 text-base">✓</span>
                   )}
-                  {locked && i === selectedOption && i !== currentQuestion.correctIndex && (
+                  {revealFeedback && locked && i === selectedOption && i !== currentQuestion.correctIndex && (
                     <span className="ml-auto shrink-0 text-rose-400 text-base">✗</span>
                   )}
                 </button>
@@ -491,7 +488,7 @@ export default function ReadingQuizClient({ passages, userId, masteredIds = [] }
             </div>
 
             {/* Locked feedback */}
-            {locked && (
+            {revealFeedback && locked && (
               <div
                 className={`rounded-xl px-4 py-3 text-xs leading-relaxed border ${
                   selectedOption === currentQuestion.correctIndex

@@ -3,11 +3,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { SECTION_CONFIG, QUESTION_TIME_LIMIT_S, DIFFICULTY_BASE_POINTS, SECTION_TO_BADGE, DIFF_NAME, MAX_BASE_SCORE } from '@/lib/constants'
+import { SECTION_CONFIG, QUESTION_TIME_LIMIT_S, DIFF_NAME } from '@/lib/constants'
 import { scoreQuestion } from '@/lib/scoring'
-import { evaluateBadges } from '@/lib/badges'
-import type { BadgeStats } from '@/lib/badges'
-import { awardSectionMasteryBadges } from '@/lib/section-mastery'
+import { finishAndRecordQuiz } from '@/lib/finish-quiz'
 import type { Section, Question, QuizAnswer } from '@/types/database'
 import Link from 'next/link'
 
@@ -18,6 +16,15 @@ interface Props {
   /** Questions already mastered before this session — re-answering them scores
    *  session points but does not raise the section total. */
   masteredIds?: string[]
+  /** Running inside the full practice test. Nothing is persisted and no
+   *  navigation happens; the container collects the answers and records one
+   *  attempt after the final section. */
+  embedded?: boolean
+  onComplete?: (answers: QuizAnswer[], questions: Question[]) => void
+  /** Questions completed in earlier sections, so the header counts 1..50
+   *  across the whole test rather than restarting at each section. */
+  questionOffset?: number
+  totalOverride?: number
 }
 
 function getAccentHex(accent: string): string {
@@ -27,7 +34,10 @@ function getAccentHex(accent: string): string {
   return map[accent] ?? '#ffffff'
 }
 
-export default function QuizClient({ section, questions, userId, masteredIds = [] }: Props) {
+export default function QuizClient({
+  section, questions, userId, masteredIds = [],
+  embedded = false, onComplete, questionOffset = 0, totalOverride,
+}: Props) {
   const router = useRouter()
   const [currentIdx, setCurrentIdx] = useState(0)
   const [timeLeft, setTimeLeft] = useState(QUESTION_TIME_LIMIT_S)
@@ -41,7 +51,11 @@ export default function QuizClient({ section, questions, userId, masteredIds = [
   const currentQuestion = questions[currentIdx]
   const prevQuestion    = currentIdx > 0 ? questions[currentIdx - 1] : null
   const totalQuestions  = questions.length
-  const progress        = (currentIdx / totalQuestions) * 100
+  // Header counts across the whole test when embedded; the progress bar and
+  // "12 / 50" both come from these two.
+  const shownTotal    = totalOverride ?? totalQuestions
+  const shownPosition = questionOffset + currentIdx
+  const progress      = (shownPosition / shownTotal) * 100
 
   const samePassage =
     !!currentQuestion?.passage_id &&
@@ -81,66 +95,30 @@ export default function QuizClient({ section, questions, userId, masteredIds = [
   }, [currentIdx])
 
   const finishQuiz = useCallback(async (finalAnswers: QuizAnswer[]) => {
-    setIsSubmitting(true)
-    const supabase = createClient()
-
-    const score   = finalAnswers.filter(a => a.selected_index === a.correct_index).length
-    const totalXP = finalAnswers.reduce((s, a) => s + a.xp_earned, 0)
-
-    const { data: attempt } = await supabase
-      .from('quiz_attempts')
-      .insert({
-        user_id:         userId,
-        section:         section === 'full' ? 'full' : section,
-        score,
-        total_questions: totalQuestions,
-        answers:         finalAnswers,
-        total_xp:        totalXP,
-        completed_at:    new Date().toISOString(),
-      })
-      .select()
-      .single()
-
-    // Record per-question history (smart deduplication for future sessions)
-    for (const a of finalAnswers) {
-      await supabase.rpc('upsert_question_history', {
-        p_user_id:     userId,
-        p_question_id: a.question_id,
-        p_correct:     a.selected_index === a.correct_index,
-      })
+    // Embedded: this is one section of the full test, not the end of it.
+    // Hand the answers up and let the container record a single attempt after
+    // the last section — writing one row per section would show as five
+    // separate quizzes in history and score the test five times over.
+    if (embedded) {
+      onComplete?.(finalAnswers, questions)
+      return
     }
 
-    await checkAchievements(supabase, userId, finalAnswers, score, totalQuestions, section === 'full' ? 'full' : section, questions)
-
-    // Cumulative section-mastery badges — evaluated only after the history
-    // upserts above, so the milestone crossed by the last question counts.
-    await awardSectionMasteryBadges(supabase, userId)
-
-    // Split the session total: only newly mastered questions raise the
-    // section score, so report review points separately rather than implying
-    // every point earned is a point gained.
-    const alreadyMastered = new Set(masteredIds)
-    const reviewXP = finalAnswers
-      .filter(a => alreadyMastered.has(a.question_id))
-      .reduce((s, a) => s + a.xp_earned, 0)
-
-    sessionStorage.setItem('quiz_result', JSON.stringify({
-      attempt_id:      attempt?.id,
+    setIsSubmitting(true)
+    await finishAndRecordQuiz({
+      supabase: createClient(),
+      userId,
       section,
-      answers:         finalAnswers,
-      total_xp:        totalXP,
-      new_xp:          totalXP - reviewXP,
-      review_xp:       reviewXP,
-      score,
-      total_questions: totalQuestions,
+      answers: finalAnswers,
       questions,
-    }))
+      masteredIds,
+    })
 
     // replace, not push: the quiz is finished and already recorded, so it must
     // not stay in history. With push, Back landed the student on a live quiz
     // page they could answer all over again.
     router.replace('/results')
-  }, [userId, section, totalQuestions, questions, router, masteredIds])
+  }, [userId, section, questions, router, masteredIds, embedded, onComplete])
 
   // ─── Handle answer ────────────────────────────────────────────────────────
   const handleAnswer = useCallback((index: number) => {
@@ -170,7 +148,6 @@ export default function QuizClient({ section, questions, userId, masteredIds = [
     } else {
       finishQuiz(updatedAnswers)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIdx, currentQuestion, section, totalQuestions, stopTimer, finishQuiz])
 
   const timerPercent  = (timeLeft / QUESTION_TIME_LIMIT_S) * 100
@@ -191,7 +168,7 @@ export default function QuizClient({ section, questions, userId, masteredIds = [
               />
             </div>
           </div>
-          <span className="text-sm text-zinc-400 shrink-0">{currentIdx + 1} / {totalQuestions}</span>
+          <span className="text-sm text-zinc-400 shrink-0">{shownPosition + 1} / {shownTotal}</span>
         </div>
       </div>
 
@@ -278,90 +255,4 @@ export default function QuizClient({ section, questions, userId, masteredIds = [
       </div>
     </div>
   )
-}
-
-async function checkAchievements(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  supabase: any,
-  userId: string,
-  answers: QuizAnswer[],
-  score: number,
-  total: number,
-  section: string,
-  questions: Question[],
-) {
-  const { data: existing } = await supabase
-    .from('user_achievements')
-    .select('achievement_key')
-    .eq('user_id', userId)
-  const earnedBadgeIds: string[] = (existing ?? []).map((a: { achievement_key: string }) => a.achievement_key)
-
-  const { data: attempts } = await supabase
-    .from('quiz_attempts')
-    .select('section, score, total_questions')
-    .eq('user_id', userId)
-    .not('completed_at', 'is', null)
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('badge_stats')
-    .eq('id', userId)
-    .single()
-  const prevBadgeStats = (profile?.badge_stats ?? {}) as Partial<BadgeStats>
-
-  const allAttempts = [...(attempts ?? []), { section, score, total_questions: total }]
-  const completions: Record<string, number> = {}
-  for (const a of allAttempts) {
-    const bs = SECTION_TO_BADGE[a.section]
-    if (bs) completions[bs] = (completions[bs] ?? 0) + 1
-  }
-
-  const curBadgeSec      = section !== 'full' ? SECTION_TO_BADGE[section] : null
-  const totalCompletions = allAttempts.length
-
-  const perfectSections: string[] = [...(prevBadgeStats.perfectSections ?? [])]
-  if (curBadgeSec && score === total && !perfectSections.includes(curBadgeSec)) {
-    perfectSections.push(curBadgeSec)
-  }
-
-  const speedBadgeSections: string[] = [...(prevBadgeStats.speedBadgeSections ?? [])]
-  if (curBadgeSec && !speedBadgeSections.includes(curBadgeSec)) {
-    // Speed badge: total time ≤ 60% of the sum of per-question benchmarks
-    const { SECTION_BENCHMARKS_MS } = await import('@/lib/constants')
-    const benchmark = SECTION_BENCHMARKS_MS[section] ?? 30_000
-    const totalBenchmarkMs = questions.length * benchmark
-    const totalTakenMs     = answers.reduce((s, a) => s + a.time_taken_ms, 0)
-    if (totalTakenMs <= totalBenchmarkMs * 0.6) speedBadgeSections.push(curBadgeSec)
-  }
-
-  const highScoreSections: string[] = [...(prevBadgeStats.highScoreSections ?? [])]
-  if (curBadgeSec && !highScoreSections.includes(curBadgeSec)) {
-    const baseEarned = answers.reduce((s, a) => {
-      if (a.selected_index !== a.correct_index) return s
-      const q = questions.find(q => q.id === a.question_id)
-      return s + (DIFFICULTY_BASE_POINTS[DIFF_NAME[q?.difficulty ?? 2] ?? 'Medium'] ?? 0)
-    }, 0)
-    if (baseEarned >= MAX_BASE_SCORE * 0.8) highScoreSections.push(curBadgeSec)
-  }
-
-  const newBadgeStats: BadgeStats = {
-    earnedBadgeIds,
-    completions,
-    perfectSections,
-    speedBadgeSections,
-    highScoreSections,
-    totalCompletions,
-  }
-
-  await supabase
-    .from('profiles')
-    .update({ badge_stats: { perfectSections, speedBadgeSections, highScoreSections } })
-    .eq('id', userId)
-
-  const newlyEarned = evaluateBadges(newBadgeStats)
-  if (newlyEarned.length > 0) {
-    await supabase.from('user_achievements').insert(
-      newlyEarned.map(key => ({ user_id: userId, achievement_key: key }))
-    )
-  }
 }

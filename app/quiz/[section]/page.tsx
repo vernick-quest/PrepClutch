@@ -3,6 +3,8 @@ import { redirect, notFound } from 'next/navigation'
 import { SECTIONS, QUESTIONS_PER_SESSION, MAX_CORRECT_RECYCLED } from '@/lib/constants'
 import QuizClient from '@/components/quiz/QuizClient'
 import ReadingQuizClient from '@/components/quiz/ReadingQuizClient'
+import FullTestClient from '@/components/quiz/FullTestClient'
+import type { FullTestBlock } from '@/components/quiz/FullTestClient'
 import { buildPassagesFromRows, PASSAGES_PER_SESSION, MAX_QUESTIONS_PER_PASSAGE, VOCAB_PER_SESSION } from '@/lib/reading-passages'
 import type { ReadingPassage, ReadingQuestionRow } from '@/lib/reading-passages'
 import type { Section, Question } from '@/types/database'
@@ -53,27 +55,37 @@ export default async function QuizPage({ params }: Props) {
     )
   }
 
-  let questions: Question[]
-
+  // The full test is the five solo sections back to back — reading included,
+  // which means reading is selected BY PASSAGE and keeps its passage timer.
+  // Running it through selectSectionQuestions instead gave a student ~10
+  // different passages at 60s each, passage read included.
   if (section === 'full') {
-    const perSection = await Promise.all(
-      SECTIONS.map(s => selectSectionQuestions(supabase, user.id, s))
+    const blocks: FullTestBlock[] = (await Promise.all(
+      SECTIONS.map(async (s): Promise<FullTestBlock | null> => {
+        if (s === 'reading') {
+          const passages = await selectReadingPassages(supabase, user.id)
+          return passages.length > 0 ? { kind: 'reading', section: 'reading', passages } : null
+        }
+        const qs = await selectSectionQuestions(supabase, user.id, s)
+        return qs.length > 0 ? { kind: 'standard', section: s, questions: qs } : null
+      })
+    )).filter((b): b is FullTestBlock => b !== null)
+
+    if (blocks.length === 0) return <NoQuestions />
+
+    const allIds = blocks.flatMap(b =>
+      b.kind === 'reading'
+        ? b.passages.flatMap(p => p.questions.map(q => q.id))
+        : b.questions.map(q => q.id)
     )
-    questions = perSection.flat()
-  } else {
-    questions = await selectSectionQuestions(supabase, user.id, section)
+    const masteredIds = await fetchMasteredIds(supabase, user.id, allIds)
+
+    return <FullTestClient blocks={blocks} userId={user.id} masteredIds={masteredIds} />
   }
 
-  if (questions.length === 0) {
-    return (
-      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-4xl mb-4">🚧</p>
-          <p className="text-zinc-400">No questions found. Please run the seed script.</p>
-        </div>
-      </div>
-    )
-  }
+  const questions: Question[] = await selectSectionQuestions(supabase, user.id, section)
+
+  if (questions.length === 0) return <NoQuestions />
 
   const masteredIds = await fetchMasteredIds(supabase, user.id, questions.map(q => q.id))
 
@@ -84,6 +96,17 @@ export default async function QuizPage({ params }: Props) {
       userId={user.id}
       masteredIds={masteredIds}
     />
+  )
+}
+
+function NoQuestions() {
+  return (
+    <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
+      <div className="text-center">
+        <p className="text-4xl mb-4">🚧</p>
+        <p className="text-zinc-400">No questions found. Please run the seed script.</p>
+      </div>
+    </div>
   )
 }
 
