@@ -81,7 +81,7 @@ passage into two in the quiz UI. 035-038 are independent of the others.
 | 050 | Fix last two math rationales | migration | ✅ |
 | 051 | Rewrite the last short explanations | migration | ✅ |
 | 052 | Find exponent/radical wording + comparison-question layout | diagnostic | ✅ read-only |
-| 053 | Exponents, radicals, one comparison item per line | migration | ⏳ |
+| 053 | Exponents, radicals, one comparison item per line | migration | ✅ |
 
 Next free number: **054**
 
