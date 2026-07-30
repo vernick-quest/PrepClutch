@@ -57,6 +57,26 @@ Check every question. Any failure means fix it, do not emit it:
 - For **reading**, the answer must be derivable from the passage, not from
   outside knowledge.
 
+**Write math the way the exam prints it**, not the way you would say it aloud:
+
+- Exponents and radicals use symbols: `3³`, `4²`, `√81`, `(2/3)²` — never
+  "3 cubed" or "the square root of 81". Prose about a formula is the exception:
+  "the radius squared" stays in words, because "radius²" is not what a student
+  would write.
+- **Comparison questions put each item on its own line.** Prompts render with
+  `whitespace-pre-line`, so embed real newlines:
+
+  ```
+  Examine (a), (b), and (c) and find the best answer.
+  (a) 3³ − 2³
+  (b) 2 × 3²
+  (c) 4² + 3
+  ```
+
+  On one line they wrap on a phone and the third item rolls off mid-expression,
+  which makes them impossible to scan in order. This applies to any question
+  that asks the student to compare a list, in any section.
+
 ### 3. Check the difficulty mix
 
 Sessions target **3 Easy / 4 Medium / 3 Hard** (`DIFFICULTY_TARGETS` in

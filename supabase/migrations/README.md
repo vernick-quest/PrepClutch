@@ -80,8 +80,10 @@ passage into two in the quiz UI. 035-038 are independent of the others.
 | 049 | Find short explanations | diagnostic | ✅ read-only |
 | 050 | Fix last two math rationales | migration | ✅ |
 | 051 | Rewrite the last short explanations | migration | ✅ |
+| 052 | Find exponent/radical wording + comparison-question layout | diagnostic | ✅ read-only |
+| 053 | Exponents, radicals, one comparison item per line | migration | ⏳ |
 
-Next free number: **052**
+Next free number: **054**
 
 **Why 039-043 failed:** they matched rows with `AND options = '[...]'::JSONB`, but
 migration 019 shuffled every question's options in production. The snapshot's
