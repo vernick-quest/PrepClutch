@@ -212,7 +212,10 @@ export default function QuizClient({
 
         {/* Question */}
         <div className="mb-8">
-          <p className="text-xl font-semibold text-white leading-relaxed">{currentQuestion?.prompt}</p>
+          {/* whitespace-pre-line: comparison questions store each item on its
+              own line ("(a) 3³" / "(b) 2 × 3²" / …) so they can be scanned in
+              order instead of wrapping mid-list. */}
+          <p className="text-xl font-semibold text-white leading-relaxed whitespace-pre-line">{currentQuestion?.prompt}</p>
           {currentQuestion?.difficulty && (
             <div className="flex gap-1 mt-3">
               {[1, 2, 3].map(d => (

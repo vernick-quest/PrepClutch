@@ -461,7 +461,7 @@ export default function ReadingQuizClient({
 
             {/* Question text */}
             <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
-              <p className="text-sm font-medium text-zinc-100 leading-relaxed">
+              <p className="text-sm font-medium text-zinc-100 leading-relaxed whitespace-pre-line">
                 {currentQuestion.text}
               </p>
             </div>

@@ -128,7 +128,7 @@ export default function QuestionReviewCard({ question, answer, showPassage = fal
             )}
 
             {/* Question */}
-            <p className="text-sm text-zinc-200 leading-relaxed font-medium">{question.prompt}</p>
+            <p className="text-sm text-zinc-200 leading-relaxed font-medium whitespace-pre-line">{question.prompt}</p>
 
             {/* Answers */}
             <div className="space-y-1.5">
