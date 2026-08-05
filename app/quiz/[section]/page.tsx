@@ -163,11 +163,17 @@ async function selectReadingPassages(supabase: any, userId: string): Promise<Rea
   const passages = buildPassagesFromRows(all.filter(r => r.passage))
   const vocabPool = all.filter(r => !r.passage)
 
-  const { data: history } = await supabase
+  // Same reason as selectSectionQuestions: filter through the FK instead of
+  // listing 300 question ids in the URL.
+  const { data: history, error: historyError } = await supabase
     .from('user_question_history')
-    .select('question_id, times_correct')
+    .select('question_id, times_correct, questions!inner(section)')
     .eq('user_id', userId)
-    .in('question_id', all.map(r => r.id))
+    .eq('questions.section', 'reading')
+
+  if (historyError) {
+    throw new Error(`Could not load reading question history: ${historyError.message}`)
+  }
 
   const mastered = new Set(
     (history ?? [])
@@ -244,11 +250,24 @@ async function selectSectionQuestions(supabase: any, userId: string, section: st
 
   if (!allQuestions || allQuestions.length === 0) return []
 
-  const { data: history } = await supabase
+  // Filter through the FK rather than listing every question id. A section now
+  // holds 300 questions, so `.in('question_id', [...300 UUIDs])` built an ~11KB
+  // URL — past the 8KB header buffer typical of the proxy in front of
+  // PostgREST. When that request fails the student's whole history reads as
+  // empty, every question looks unseen, and they get served questions they had
+  // already mastered.
+  const { data: history, error: historyError } = await supabase
     .from('user_question_history')
-    .select('question_id, times_correct, times_wrong, last_answered_at')
+    .select('question_id, times_correct, times_wrong, last_answered_at, questions!inner(section)')
     .eq('user_id', userId)
-    .in('question_id', allQuestions.map((q: Question) => q.id))
+    .eq('questions.section', section)
+
+  // Never fall through on failure. Treating "we could not read the history" as
+  // "this student has no history" silently wastes a practice session and
+  // reports +0 points at the end, which is exactly how this surfaced.
+  if (historyError) {
+    throw new Error(`Could not load question history for ${section}: ${historyError.message}`)
+  }
 
   const historyMap = new Map(
     (history ?? []).map((h: { question_id: string; times_correct: number; times_wrong: number }) =>
@@ -340,12 +359,22 @@ async function selectSectionQuestions(supabase: any, userId: string, section: st
     }
   }
 
-  // Phase 4: last-resort padding (e.g. section has very few hard questions)
+  // Phase 4: last-resort padding (e.g. section has very few hard questions).
+  //
+  // Ordered unseen → previously wrong → mastered. It used to pad from a plain
+  // shuffle of everything left, which could hand a student a question they had
+  // already mastered while unseen ones sat in another difficulty bucket. That
+  // earns no points and teaches nothing, and it bypassed MAX_CORRECT_RECYCLED
+  // entirely.
   if (selected.length < QUESTIONS_PER_SESSION) {
     const selectedIds = new Set(selected.map(q => q.id))
-    const remainder = shuffle(
-      (allQuestions as Question[]).filter(q => !selectedIds.has(q.id))
-    )
+    const freshness = (q: Question) => {
+      const h = historyMap.get(q.id) as { times_wrong: number } | undefined
+      if (!h) return 0                    // unseen
+      return h.times_wrong > 0 ? 1 : 2    // previously wrong, then mastered
+    }
+    const remainder = shuffle((allQuestions as Question[]).filter(q => !selectedIds.has(q.id)))
+      .sort((a, b) => freshness(a) - freshness(b))
     selected.push(...remainder.slice(0, QUESTIONS_PER_SESSION - selected.length))
   }
 
