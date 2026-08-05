@@ -83,7 +83,7 @@ passage into two in the quiz UI. 035-038 are independent of the others.
 | 052 | Find exponent/radical wording + comparison-question layout | diagnostic | ✅ read-only |
 | 053 | Exponents, radicals, one comparison item per line | migration | ✅ |
 | 054 | Find multiplication/division wording and variable-x usage | diagnostic | ⏭️ never run — its checks were folded into 055 |
-| 055 | Multiplication and division as symbols (× ÷) | migration | ⏳ |
+| 055 | Multiplication and division as symbols (× ÷) | migration | ✅ |
 
 Next free number: **056**
 
