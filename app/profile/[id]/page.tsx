@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import Footer from '@/components/ui/Footer'
 import AttemptReview from '@/components/quiz/AttemptReview'
-import { SECTION_MASTERY_CATEGORY, badgeEmojiStyle, sectionMasteryTier } from '@/lib/badges'
+import { SECTION_MASTERY_CATEGORY, badgeEmojiStyle, sectionMasteryTier, compareBadges } from '@/lib/badges'
 import type { Section, QuizAnswer } from '@/types/database'
 
 export const dynamic = 'force-dynamic'
@@ -175,15 +175,30 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
             <span className="text-sm text-zinc-500">{earnedKeys.size} / {allAchievements?.length ?? 0}</span>
           </div>
           {badgeCategories.map(cat => {
-            const catBadges = (allAchievements ?? []).filter(b => b.category === cat)
+            // Easiest first, same ordering the Bestiary uses. The query only
+            // orders by category, so without this the section-mastery biceps
+            // come back scrambled.
+            const catBadges = (allAchievements ?? [])
+              .filter(b => b.category === cat)
+              .slice()
+              .sort((a, b) => compareBadges(
+                { key: a.key, rarity: a.rarity ?? '', label: a.label ?? '' },
+                { key: b.key, rarity: b.rarity ?? '', label: b.label ?? '' },
+              ))
             if (!catBadges.length) return null
+            // Section mastery holds exactly five tiers per section, so pinning
+            // it to five columns puts one section per row and the arm grows
+            // left to right. Four columns would split every section in half.
+            const gridCols = cat === SECTION_MASTERY_CATEGORY
+              ? 'grid grid-cols-2 sm:grid-cols-5 gap-2'
+              : 'grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-2'
             return (
               <div key={cat} className="mb-6">
                 <div className="flex items-center gap-3 mb-3">
                   <span className="text-[10px] font-bold text-zinc-500 tracking-[3px] uppercase">{cat}</span>
                   <div className="flex-1 h-px bg-white/5" />
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-2">
+                <div className={gridCols}>
                   {catBadges.map(badge => {
                     const earned = earnedKeys.has(badge.key)
                     const r = RARITY_STYLE[badge.rarity ?? 'Common'] ?? RARITY_STYLE.Common
