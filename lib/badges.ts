@@ -128,13 +128,49 @@ function sectionMasteryOrder(key: string): number {
   return (SECTION_MASTERY_SECTIONS as readonly string[]).indexOf(match[1])
 }
 
+/** Canonical section order, matching SECTIONS in lib/constants. Badge keys use
+ *  both "math" and "mathematics", so both map to the same slot. */
+const SECTION_RANK: Record<string, number> = {
+  verbal: 0, quantitative: 1, quant: 1, reading: 2, math: 3, mathematics: 3, language: 4,
+}
+
+/**
+ * How hard a badge is to earn, used to break ties WITHIN a rarity. Rarity is
+ * the author's own difficulty encoding and dominates; this only settles the
+ * order of equally-rare badges, where an alphabetical fallback would put
+ * "Completed 10 challenges" before "Completed 3 challenges".
+ */
+function difficultyRank(key: string): number {
+  if (key === 'combo_all_five')        return 5     // every section at once
+  if (key === 'milestone_all_sections') return 100
+  if (key === 'milestone_all_perfect')  return 1000
+
+  // combo_verbal_quant = 2 sections, combo_v_q_m = 3. More sections, harder.
+  const combo = /^combo_(.+)$/.exec(key)
+  if (combo) return combo[1].split('_').length
+
+  // milestone_3 before milestone_10.
+  const milestone = /^milestone_(\d+)$/.exec(key)
+  if (milestone) return Number(milestone[1])
+
+  // first_/perfect_/speed_ are equally hard across sections, so order them the
+  // way every other list in the app does rather than alphabetically.
+  const sectioned = /^(?:first|perfect|speed)_([a-z]+)$/.exec(key)
+  if (sectioned) return SECTION_RANK[sectioned[1]] ?? 99
+
+  return 0
+}
+
 /**
  * Sort comparator for badges inside one category: easiest first, hardest last.
  *
  * Section mastery sorts by section, then by threshold, so each section reads
- * 50 → 250 left to right and the arm visibly grows across the row. Every other
- * category falls back to rarity, then label, so the order is at least stable
- * rather than whatever the query happened to return.
+ * 50 → 250 left to right and the arm visibly grows across the row.
+ *
+ * Everything else sorts by rarity ascending — Common, Uncommon, Rare, Epic,
+ * Legendary, Mythic — then by difficultyRank. Unearned badges keep their slot
+ * rather than being pushed to the end, so the ladder stays readable and a
+ * student can see what the next rung costs.
  */
 export function compareBadges(
   a: { key: string; rarity: string; label: string },
@@ -148,7 +184,9 @@ export function compareBadges(
 
   const rarityA = RARITY_RANK[a.rarity] ?? 99
   const rarityB = RARITY_RANK[b.rarity] ?? 99
-  return rarityA - rarityB || a.label.localeCompare(b.label)
+  return rarityA - rarityB
+      || difficultyRank(a.key) - difficultyRank(b.key)
+      || a.label.localeCompare(b.label)
 }
 
 /** 1–5 for a section-mastery badge key, 0 for anything else. */
