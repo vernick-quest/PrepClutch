@@ -84,7 +84,7 @@ passage into two in the quiz UI. 035-038 are independent of the others.
 | 053 | Exponents, radicals, one comparison item per line | migration | ✅ |
 | 054 | Find multiplication/division wording and variable-x usage | diagnostic | ⏭️ never run — its checks were folded into 055 |
 | 055 | Multiplication and division as symbols (× ÷) | migration | ✅ |
-| 056 | Why a session served only already-mastered questions | diagnostic | ⏳ read-only |
+| 056 | Why a session served only already-mastered questions | diagnostic | ✅ read-only |
 
 Next free number: **057**
 

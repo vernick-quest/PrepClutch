@@ -289,35 +289,56 @@ async function selectSectionQuestions(supabase: any, userId: string, section: st
     return out
   }
 
-  // Partition every question by difficulty, then by history status
-  const byDiff: Record<number, { unseen: Question[]; wrong: Question[]; correct: Question[] }> = {
-    1: { unseen: [], wrong: [], correct: [] },
-    2: { unseen: [], wrong: [], correct: [] },
-    3: { unseen: [], wrong: [], correct: [] },
+  // Partition every question by difficulty, then by history status.
+  //
+  // The states are ordered by what a student GAINS from being shown the
+  // question. Clutch Points are cumulative: a question already answered
+  // correctly once can never raise the section total again, however many times
+  // it comes back. So only `unseen` and `unmastered` can earn anything.
+  //
+  //   unseen      no history at all
+  //   unmastered  seen, never once correct        <- still worth points
+  //   shaky       mastered, but missed at least once before
+  //   solid       mastered first try
+  //
+  // This used to be a three-way split on `times_wrong > 0`, which conflated
+  // "never got it right" with "got it wrong once, then mastered it" and put
+  // both in the high-priority pool. For a student who had seen every question
+  // in a section, that pool was overwhelmingly already-mastered, so a whole
+  // session could score 8/10 and earn +0.
+  const byDiff: Record<number, { unseen: Question[]; unmastered: Question[]; shaky: Question[]; solid: Question[] }> = {
+    1: { unseen: [], unmastered: [], shaky: [], solid: [] },
+    2: { unseen: [], unmastered: [], shaky: [], solid: [] },
+    3: { unseen: [], unmastered: [], shaky: [], solid: [] },
   }
 
   for (const q of allQuestions as Question[]) {
     const d = q.difficulty ?? 2
     const bucket = byDiff[d] ?? byDiff[2]
-    const h = historyMap.get(q.id)
-    if (!h) {
-      bucket.unseen.push(q)
-    } else if ((h as { times_wrong: number }).times_wrong > 0) {
-      bucket.wrong.push(q)
-    } else {
-      bucket.correct.push(q)
-    }
+    const h = historyMap.get(q.id) as { times_correct: number; times_wrong: number } | undefined
+    if (!h)                       bucket.unseen.push(q)
+    else if (h.times_correct === 0) bucket.unmastered.push(q)
+    else if (h.times_wrong > 0)     bucket.shaky.push(q)
+    else                            bucket.solid.push(q)
   }
 
   const selected: Question[] = []
   let masteredUsed = 0  // global cap on recycled-mastered questions
 
-  // Phase 1 & 2: fill each difficulty bucket from unseen then prevWrong
+  // Phase 1 & 2: fill each difficulty bucket from unseen, then unmastered
   const shortfalls: { diff: number; need: number }[] = []
+
+  // Oldest-answered first. Taking these at random leaves a coupon-collector
+  // tail where the last few never come up.
+  const oldestFirst = (pool: Question[]) => pool.slice().sort((a, b) => {
+    const at = (historyMap.get(a.id) as { last_answered_at?: string } | undefined)?.last_answered_at ?? ''
+    const bt = (historyMap.get(b.id) as { last_answered_at?: string } | undefined)?.last_answered_at ?? ''
+    return at.localeCompare(bt)
+  })
 
   for (const [diffStr, target] of Object.entries(DIFFICULTY_TARGETS)) {
     const diff = Number(diffStr)
-    const { unseen, wrong, correct } = byDiff[diff]
+    const { unseen, unmastered } = byDiff[diff]
 
     const picked: Question[] = []
     const pick = (pool: Question[], limit: number, randomise = true) => {
@@ -325,36 +346,27 @@ async function selectSectionQuestions(supabase: any, userId: string, section: st
       picked.push(...taken)
     }
 
-    // Unseen questions are interchangeable, so shuffle them. Previously-missed
-    // ones are not: taking them at random leaves a coupon-collector tail where
-    // the last few keep not coming up. Ordering oldest-seen-first guarantees
-    // every missed question cycles back instead of relying on luck.
-    const wrongOldestFirst = wrong.slice().sort((a, b) => {
-      const at = (historyMap.get(a.id) as { last_answered_at?: string } | undefined)?.last_answered_at ?? ''
-      const bt = (historyMap.get(b.id) as { last_answered_at?: string } | undefined)?.last_answered_at ?? ''
-      return at.localeCompare(bt)
-    })
-
+    // Unseen questions are interchangeable, so shuffle them. Unmastered ones
+    // are not — cycle the longest-untouched back first.
     pick(unseen, target)
-    if (picked.length < target) pick(wrongOldestFirst, target - picked.length, false)
+    if (picked.length < target) pick(oldestFirst(unmastered), target - picked.length, false)
 
     selected.push(...picked)
 
     const remaining = target - picked.length
-    if (remaining > 0) {
-      // Record shortfall: needs mastered Qs or fallback
-      shortfalls.push({ diff, need: remaining })
-      // Stash the correct pool on byDiff so phase 3 can reach it
-      byDiff[diff].correct = shuffle(correct)
-    }
+    if (remaining > 0) shortfalls.push({ diff, need: remaining })
   }
 
-  // Phase 3: fill shortfalls using mastered questions, globally capped
+  // Phase 3: fill shortfalls with review questions, globally capped.
+  //
+  // Shaky before solid: a question missed at least once is worth revisiting,
+  // one answered right first time is not. Neither can raise the section total,
+  // which is why MAX_CORRECT_RECYCLED keeps them rare.
   for (const { diff, need } of shortfalls) {
-    const correct = byDiff[diff].correct
-    const canUse = Math.min(need, correct.length, MAX_CORRECT_RECYCLED - masteredUsed)
+    const review = [...shuffle(byDiff[diff].shaky), ...shuffle(byDiff[diff].solid)]
+    const canUse = Math.min(need, review.length, MAX_CORRECT_RECYCLED - masteredUsed)
     if (canUse > 0) {
-      selected.push(...correct.slice(0, canUse))
+      selected.push(...review.slice(0, canUse))
       masteredUsed += canUse
     }
   }
@@ -369,9 +381,10 @@ async function selectSectionQuestions(supabase: any, userId: string, section: st
   if (selected.length < QUESTIONS_PER_SESSION) {
     const selectedIds = new Set(selected.map(q => q.id))
     const freshness = (q: Question) => {
-      const h = historyMap.get(q.id) as { times_wrong: number } | undefined
+      const h = historyMap.get(q.id) as { times_correct: number; times_wrong: number } | undefined
       if (!h) return 0                    // unseen
-      return h.times_wrong > 0 ? 1 : 2    // previously wrong, then mastered
+      if (h.times_correct === 0) return 1 // unmastered — still worth points
+      return h.times_wrong > 0 ? 2 : 3    // shaky, then solid
     }
     const remainder = shuffle((allQuestions as Question[]).filter(q => !selectedIds.has(q.id)))
       .sort((a, b) => freshness(a) - freshness(b))
