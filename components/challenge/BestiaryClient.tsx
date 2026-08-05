@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { SECTION_MASTERY_CATEGORY, badgeEmojiStyle } from '@/lib/badges'
+import { SECTION_MASTERY_CATEGORY, badgeEmojiStyle, compareBadges } from '@/lib/badges'
 
 export interface DbBadge {
   key: string
@@ -123,6 +123,20 @@ export default function BestiaryClient({ displayName, avatarColor, allBadges, ea
       minHeight: '100vh', background: '#080c14', color: '#e2e8f0',
       fontFamily: "'Georgia','Times New Roman',serif", paddingBottom: 80,
     }}>
+      {/* Section Mastery holds exactly five tiers per section, so pinning it to
+          five columns puts one section on each row and the bicep grows left to
+          right across it. Auto-fill would split a section across two rows at
+          most widths, which is what made the progression impossible to read. */}
+      <style>{`
+        .bestiary-grid {
+          display: grid;
+          gap: 12px;
+          grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+        }
+        @media (min-width: 700px) {
+          .bestiary-grid--tiers { grid-template-columns: repeat(5, 1fr); }
+        }
+      `}</style>
       <div style={{
         textAlign: 'center', padding: '52px 24px 32px',
         background: 'radial-gradient(ellipse at 50% 0%,#1a0828 0%,#080c14 68%)',
@@ -181,8 +195,11 @@ export default function BestiaryClient({ displayName, avatarColor, allBadges, ea
 
       <div style={{ maxWidth: 920, margin: '28px auto 0', padding: '0 24px' }}>
         {CATEGORY_ORDER.filter(cat => catFilter === 'All' || catFilter === cat).map(cat => {
-          const catBadges = filtered.filter(b => b.category === cat)
+          // Easiest first. The query returns rows in no particular order within
+          // a category, which is what scrambled the biceps.
+          const catBadges = filtered.filter(b => b.category === cat).slice().sort(compareBadges)
           if (!catBadges.length) return null
+          const isTiered = cat === SECTION_MASTERY_CATEGORY
           const catEarned = catBadges.filter(b => earnedSet.has(b.key)).length
           return (
             <div key={cat} style={{ marginBottom: 44 }}>
@@ -191,7 +208,7 @@ export default function BestiaryClient({ displayName, avatarColor, allBadges, ea
                 <div style={{ flex: 1, height: 1, background: '#111827' }} />
                 <div style={{ fontSize: 9, color: '#1f2937', whiteSpace: 'nowrap' }}>{catEarned}/{catBadges.length}</div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(155px,1fr))', gap: 12 }}>
+              <div className={isTiered ? 'bestiary-grid bestiary-grid--tiers' : 'bestiary-grid'}>
                 {catBadges.map(badge => (
                   <BadgeCard key={badge.key} badge={badge} earned={earnedSet.has(badge.key)} />
                 ))}

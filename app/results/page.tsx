@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { SECTION_CONFIG, SECTIONS } from '@/lib/constants'
 import { classifyTiming, FLAG_LABELS } from '@/lib/scoring'
-import { badgeEmojiStyle, sectionMasteryTier } from '@/lib/badges'
+import { badgeEmojiStyle, sectionMasteryTier, compareBadges } from '@/lib/badges'
 import QuestionReviewCard from '@/components/quiz/QuestionReviewCard'
 import type { Section, Question, QuizAnswer } from '@/types/database'
 import { createClient } from '@/lib/supabase/client'
@@ -61,12 +61,18 @@ export default function ResultsPage() {
         .gte('earned_at', new Date(Date.now() - 60000).toISOString())
 
       if (data && data.length > 0) {
-        const earned = data
+        const earned = (data
           .map((a: { achievement_key: string; achievement_definitions: unknown }) =>
             a.achievement_definitions
               ? { ...(a.achievement_definitions as Achievement), key: a.achievement_key }
               : null)
-          .filter(Boolean) as Achievement[]
+          .filter(Boolean) as Achievement[])
+          // Crossing several mastery tiers at once should reveal them smallest
+          // bicep first, so the growth reads as growth.
+          .sort((x, y) => compareBadges(
+            { key: x.key ?? '', rarity: x.rarity ?? '', label: x.label },
+            { key: y.key ?? '', rarity: y.rarity ?? '', label: y.label },
+          ))
         setNewAchievements(earned)
         if (!confettiFired.current) {
           confettiFired.current = true

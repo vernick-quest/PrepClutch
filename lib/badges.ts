@@ -101,6 +101,56 @@ export function evaluateSectionMasteryBadges(
   return newly
 }
 
+// ── Display order ────────────────────────────────────────────────────────────
+//
+// The Bestiary used to render whatever order the database returned, so the
+// biceps appeared scrambled — a tier IV next to a tier I, with a section's
+// five tiers split across two rows. The badges themselves were right; only the
+// placement was wrong. These two helpers give every badge a deliberate
+// easiest-to-hardest position.
+
+/** Rarity ladder, easiest → hardest. Anything unrecognised sorts last. */
+const RARITY_RANK: Record<string, number> = {
+  Common: 0, Uncommon: 1, Rare: 2, Epic: 3, Legendary: 4, Mythic: 5,
+}
+
+/** Question threshold for a section-mastery key (50–250), 0 for anything else. */
+export function sectionMasteryThreshold(key: string): number {
+  const match = /^mastery_[a-z]+_(\d+)$/.exec(key)
+  return match ? Number(match[1]) : 0
+}
+
+/** Position of a section-mastery key's section, or -1. Groups a section's
+ *  five tiers together so one row shows one bicep growing. */
+function sectionMasteryOrder(key: string): number {
+  const match = /^mastery_([a-z]+)_\d+$/.exec(key)
+  if (!match) return -1
+  return (SECTION_MASTERY_SECTIONS as readonly string[]).indexOf(match[1])
+}
+
+/**
+ * Sort comparator for badges inside one category: easiest first, hardest last.
+ *
+ * Section mastery sorts by section, then by threshold, so each section reads
+ * 50 → 250 left to right and the arm visibly grows across the row. Every other
+ * category falls back to rarity, then label, so the order is at least stable
+ * rather than whatever the query happened to return.
+ */
+export function compareBadges(
+  a: { key: string; rarity: string; label: string },
+  b: { key: string; rarity: string; label: string },
+): number {
+  const secA = sectionMasteryOrder(a.key)
+  const secB = sectionMasteryOrder(b.key)
+  if (secA >= 0 && secB >= 0) {
+    return secA - secB || sectionMasteryThreshold(a.key) - sectionMasteryThreshold(b.key)
+  }
+
+  const rarityA = RARITY_RANK[a.rarity] ?? 99
+  const rarityB = RARITY_RANK[b.rarity] ?? 99
+  return rarityA - rarityB || a.label.localeCompare(b.label)
+}
+
 /** 1–5 for a section-mastery badge key, 0 for anything else. */
 export function sectionMasteryTier(key: string): number {
   const match = /^mastery_[a-z]+_(\d+)$/.exec(key)
