@@ -22,6 +22,9 @@ const RARITY: Record<string, { bg: string; border: string; text: string; glow: s
   Epic:      { bg: '#160820', border: '#7c3aed66', text: '#c084fc', glow: '0 0 32px #a855f744', stars: 4 },
   Legendary: { bg: '#1a1200', border: '#d9770666', text: '#fbbf24', glow: '0 0 40px #f59e0b55', stars: 5 },
   Mythic:    { bg: '#0e0018', border: '#9333ea99', text: '#e879f9', glow: '0 0 56px #a855f777', stars: 6 },
+  // Tier 6 — the whole 300-question section. Cyan so it reads as a step beyond
+  // Mythic's magenta rather than another shade of it.
+  Ascendant: { bg: '#001a1e', border: '#06b6d4aa', text: '#67e8f9', glow: '0 0 64px #06b6d488', stars: 7 },
 }
 
 const CATEGORY_ORDER = ['First Completion', 'Perfect Score', 'Speed', 'Combo', 'Milestone', SECTION_MASTERY_CATEGORY]
@@ -29,7 +32,7 @@ const CATEGORY_ORDER = ['First Completion', 'Perfect Score', 'Speed', 'Combo', '
 function Stars({ count, color }: { count: number; color: string }) {
   return (
     <div style={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
-      {Array.from({ length: 6 }).map((_, i) => (
+      {Array.from({ length: 7 }).map((_, i) => (
         <span key={i} style={{
           fontSize: 8, transition: 'all 0.3s',
           color: i < count ? color : '#1f2937',
@@ -123,8 +126,8 @@ export default function BestiaryClient({ displayName, avatarColor, allBadges, ea
       minHeight: '100vh', background: '#080c14', color: '#e2e8f0',
       fontFamily: "'Georgia','Times New Roman',serif", paddingBottom: 80,
     }}>
-      {/* Section Mastery holds exactly five tiers per section, so pinning it to
-          five columns puts one section on each row and the bicep grows left to
+      {/* Section Mastery holds exactly six tiers per section, so pinning it to
+          six columns puts one section on each row and the bicep grows left to
           right across it. Auto-fill would split a section across two rows at
           most widths, which is what made the progression impossible to read. */}
       <style>{`
@@ -134,7 +137,7 @@ export default function BestiaryClient({ displayName, avatarColor, allBadges, ea
           grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
         }
         @media (min-width: 700px) {
-          .bestiary-grid--tiers { grid-template-columns: repeat(5, 1fr); }
+          .bestiary-grid--tiers { grid-template-columns: repeat(6, 1fr); }
         }
       `}</style>
       <div style={{

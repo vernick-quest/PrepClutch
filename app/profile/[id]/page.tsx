@@ -24,6 +24,7 @@ const RARITY_STYLE: Record<string, { border: string; bg: string; text: string; g
   Epic:      { border: '#7c3aed66', bg: '#160820', text: '#c084fc', glow: '0 0 28px #a855f744' },
   Legendary: { border: '#d9770666', bg: '#1a1200', text: '#fbbf24', glow: '0 0 36px #f59e0b55' },
   Mythic:    { border: '#9333ea99', bg: '#0e0018', text: '#e879f9', glow: '0 0 48px #a855f777' },
+  Ascendant: { border: '#06b6d4aa', bg: '#001a1e', text: '#67e8f9', glow: '0 0 56px #06b6d488' },
 }
 
 export default async function PublicProfilePage({ params }: { params: Promise<{ id: string }> }) {
@@ -186,11 +187,11 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
                 { key: b.key, rarity: b.rarity ?? '', label: b.label ?? '' },
               ))
             if (!catBadges.length) return null
-            // Section mastery holds exactly five tiers per section, so pinning
-            // it to five columns puts one section per row and the arm grows
+            // Section mastery holds exactly six tiers per section, so pinning
+            // it to six columns puts one section per row and the arm grows
             // left to right. Four columns would split every section in half.
             const gridCols = cat === SECTION_MASTERY_CATEGORY
-              ? 'grid grid-cols-2 sm:grid-cols-5 gap-2'
+              ? 'grid grid-cols-2 sm:grid-cols-6 gap-2'
               : 'grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-2'
             return (
               <div key={cat} className="mb-6">

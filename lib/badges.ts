@@ -59,13 +59,17 @@ export function evaluateBadges(stats: BadgeStats): string[] {
 //
 // These badges are NOT derived from a single quiz attempt like everything
 // above — they track cumulative mastery (questions with times_correct > 0)
-// per section, read from the get_section_mastery() RPC. Each section holds
-// 250 questions, so tier 5 is a genuine "section complete".
+// per section, read from the get_section_mastery() RPC.
+//
+// A section holds 300 questions. Tier 5 was the top when the bank was 250 and
+// its badge announced "All 250 ... mastered" — which quietly became a lie when
+// migrations 034-038 grew every section to 300. Tier 6 is the real
+// section-complete; tier 5 is now an honest waypoint. Migration 057 rewords it.
 
 export const SECTION_MASTERY_CATEGORY = 'Section Mastery'
 
-/** Correct-question thresholds, tier 1 → tier 5. */
-export const SECTION_MASTERY_TIERS = [50, 100, 150, 200, 250] as const
+/** Correct-question thresholds, tier 1 → tier 6. Tier 6 = the full section. */
+export const SECTION_MASTERY_TIERS = [50, 100, 150, 200, 250, 300] as const
 
 export const SECTION_MASTERY_SECTIONS = [
   'verbal', 'quantitative', 'reading', 'math', 'language',
@@ -111,17 +115,17 @@ export function evaluateSectionMasteryBadges(
 
 /** Rarity ladder, easiest → hardest. Anything unrecognised sorts last. */
 const RARITY_RANK: Record<string, number> = {
-  Common: 0, Uncommon: 1, Rare: 2, Epic: 3, Legendary: 4, Mythic: 5,
+  Common: 0, Uncommon: 1, Rare: 2, Epic: 3, Legendary: 4, Mythic: 5, Ascendant: 6,
 }
 
-/** Question threshold for a section-mastery key (50–250), 0 for anything else. */
+/** Question threshold for a section-mastery key (50–300), 0 for anything else. */
 export function sectionMasteryThreshold(key: string): number {
   const match = /^mastery_[a-z]+_(\d+)$/.exec(key)
   return match ? Number(match[1]) : 0
 }
 
 /** Position of a section-mastery key's section, or -1. Groups a section's
- *  five tiers together so one row shows one bicep growing. */
+ *  six tiers together so one row shows one bicep growing. */
 function sectionMasteryOrder(key: string): number {
   const match = /^mastery_([a-z]+)_\d+$/.exec(key)
   if (!match) return -1
@@ -198,7 +202,9 @@ export function sectionMasteryTier(key: string): number {
 }
 
 /** Multiplier applied to the base emoji size so the bicep visibly grows. */
-const BICEP_SCALE = [1, 1.35, 1.8, 2.4, 3.2]
+// Six tiers now share the row, so each card is narrower — the ladder is
+// rescaled to stay monotonic without the tier-6 emoji overflowing its card.
+const BICEP_SCALE = [1, 1.3, 1.7, 2.2, 2.8, 3.4]
 
 /**
  * Emoji rendering for a badge. Ordinary badges get the grid's base size and

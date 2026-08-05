@@ -85,8 +85,9 @@ passage into two in the quiz UI. 035-038 are independent of the others.
 | 054 | Find multiplication/division wording and variable-x usage | diagnostic | ⏭️ never run — its checks were folded into 055 |
 | 055 | Multiplication and division as symbols (× ÷) | migration | ✅ |
 | 056 | Why a session served only already-mastered questions | diagnostic | ✅ read-only |
+| 057 | Section mastery tier 6 (all 300) + reword tier 5 | migration | ⏳ |
 
-Next free number: **057**
+Next free number: **058**
 
 **Why 039-043 failed:** they matched rows with `AND options = '[...]'::JSONB`, but
 migration 019 shuffled every question's options in production. The snapshot's
