@@ -94,10 +94,13 @@ export function sectionMasteryKey(section: string, threshold: number): string {
   return `mastery_${section}_${threshold}`
 }
 
-/** Shape of one get_section_mastery() row (only the fields we need). */
+/** Shape of one get_section_mastery() row (only the fields we need).
+ *  `total` is the question count for the section — needed to tell a finished
+ *  section from one that merely earned nothing this round. */
 export interface SectionMasteryRow {
   section: string
   correct: number
+  total: number
 }
 
 /**

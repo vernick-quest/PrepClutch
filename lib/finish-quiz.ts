@@ -60,7 +60,11 @@ export async function finishAndRecordQuiz({
   }
 
   await checkAchievements(supabase, userId, answers, score, total, section, questions)
-  await awardSectionMasteryBadges(supabase, userId)
+
+  // Reuses the get_section_mastery() call the badge step already makes. The
+  // results page needs these to tell "you finished this section" apart from
+  // "this round earned nothing" — both show +0 and only one is good news.
+  const { rows: mastery } = await awardSectionMasteryBadges(supabase, userId)
 
   // Only newly mastered questions raise a section total, so report the review
   // portion separately rather than implying every point earned was a gain.
@@ -79,6 +83,7 @@ export async function finishAndRecordQuiz({
     score,
     total_questions: total,
     questions,
+    mastery,
   }
 
   sessionStorage.setItem('quiz_result', JSON.stringify(payload))

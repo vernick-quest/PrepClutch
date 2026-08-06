@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { SECTION_CONFIG, SECTIONS } from '@/lib/constants'
 import { classifyTiming, FLAG_LABELS } from '@/lib/scoring'
-import { badgeEmojiStyle, sectionMasteryTier, compareBadges } from '@/lib/badges'
+import { badgeEmojiStyle, sectionMasteryTier, compareBadges, isSectionComplete } from '@/lib/badges'
+import type { SectionMasteryRow } from '@/lib/badges'
 import QuestionReviewCard from '@/components/quiz/QuestionReviewCard'
 import type { Section, Question, QuizAnswer } from '@/types/database'
 import { createClient } from '@/lib/supabase/client'
@@ -24,6 +25,9 @@ interface StoredResult {
   score: number
   total_questions: number
   questions: Question[]
+  /** Per-section mastery as of the moment this quiz was recorded. Absent on
+   *  results stored before this existed, which is why every use is guarded. */
+  mastery?: SectionMasteryRow[]
 }
 
 type Achievement = { key?: string; icon_emoji: string; label: string; description: string; rarity?: string; creature?: string; lore?: string }
@@ -88,7 +92,20 @@ export default function ResultsPage() {
     </div>
   )
 
-  const { section, answers, total_xp, new_xp, review_xp, score, total_questions, questions } = result
+  const { section, answers, total_xp, new_xp, review_xp, score, total_questions, questions, mastery } = result
+
+  // Three distinct outcomes hide behind the same "+0":
+  //   1. points earned          -> show them
+  //   2. section finished       -> celebrate it
+  //   3. everything was review  -> explain it, so it does not read as a bug
+  // Case 3 is not rare: any round drawn from already-mastered questions lands
+  // there, and a bare +0 after going 9/10 looks exactly like broken scoring.
+  const sectionMastery = section !== 'full'
+    ? mastery?.find(m => m.section === section)
+    : undefined
+  const sectionDone  = isSectionComplete(sectionMastery)
+  const pointsGained = review_xp ? (new_xp ?? 0) : total_xp
+  const allReview    = !sectionDone && pointsGained === 0 && (review_xp ?? 0) > 0
   const pct = Math.round((score / total_questions) * 100)
   const cfg = section === 'full'
     ? { label: 'Full Practice Test', emoji: '🎯', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/30' }
@@ -142,14 +159,48 @@ export default function ResultsPage() {
                 big number imply a big gain. */}
             {section !== 'full' && (
               <div className="text-center">
-                <div className="text-5xl font-black text-amber-400">
-                  +{review_xp ? new_xp : total_xp}
-                </div>
-                <div className="text-zinc-400 text-sm mt-1">Clutch Points</div>
-                {!!review_xp && (
-                  <div className="text-zinc-500 text-xs mt-1.5">
-                    +{review_xp} reviewed <span className="text-zinc-600">· already mastered</span>
-                  </div>
+                {sectionDone ? (
+                  <>
+                    <div className="text-5xl leading-none mb-1">💪</div>
+                    <div className="text-lg font-black text-cyan-300">Section complete</div>
+                    <div className="text-zinc-400 text-sm mt-1 tabular-nums">
+                      {sectionMastery!.correct} / {sectionMastery!.total} mastered
+                    </div>
+                    {pointsGained > 0 && (
+                      <div className="text-2xl font-black text-amber-400 mt-2">
+                        +{pointsGained}
+                        <span className="text-xs font-normal text-zinc-400 ml-1.5">Clutch Points</span>
+                      </div>
+                    )}
+                    <div className="text-zinc-500 text-xs mt-1.5">
+                      {pointsGained > 0
+                        ? 'You just finished the section. Practice rounds are free review from here.'
+                        : 'Every question answered correctly · practice rounds are free review now'}
+                    </div>
+                  </>
+                ) : allReview ? (
+                  <>
+                    <div className="text-3xl font-black text-zinc-300">Review round</div>
+                    <div className="text-zinc-400 text-sm mt-1">
+                      +{review_xp} reviewed
+                    </div>
+                    <div className="text-zinc-500 text-xs mt-1.5">
+                      You had already mastered these, so they don&rsquo;t add points.
+                      New questions still will.
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-5xl font-black text-amber-400">
+                      +{pointsGained}
+                    </div>
+                    <div className="text-zinc-400 text-sm mt-1">Clutch Points</div>
+                    {!!review_xp && (
+                      <div className="text-zinc-500 text-xs mt-1.5">
+                        +{review_xp} reviewed <span className="text-zinc-600">· already mastered</span>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             )}

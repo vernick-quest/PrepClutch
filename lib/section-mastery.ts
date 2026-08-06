@@ -14,14 +14,19 @@ type BrowserClient = ReturnType<typeof createClient>
  * Read-only with respect to mastery data: it calls the RPC and writes only to
  * user_achievements. Idempotent — (user_id, achievement_key) is the primary
  * key, so re-earning is ignored rather than erroring.
+ *
+ * Returns the mastery rows as well as the newly-earned keys. The caller needs
+ * them to tell a finished section apart from a round that simply earned
+ * nothing — both show +0, and only one of them is good news. Handing them back
+ * avoids a second get_section_mastery() call for the same numbers.
  */
 export async function awardSectionMasteryBadges(
   supabase: BrowserClient,
   userId: string,
-): Promise<string[]> {
+): Promise<{ newly: string[]; rows: SectionMasteryRow[] }> {
   const { data: masteryRaw, error: masteryError } = await supabase
     .rpc('get_section_mastery', { p_user_id: userId })
-  if (masteryError) return []
+  if (masteryError) return { newly: [], rows: [] }
 
   const rows = (masteryRaw ?? []) as SectionMasteryRow[]
 
@@ -34,7 +39,7 @@ export async function awardSectionMasteryBadges(
   )
 
   const newly = evaluateSectionMasteryBadges(rows, earnedKeys)
-  if (newly.length === 0) return []
+  if (newly.length === 0) return { newly, rows }
 
   await supabase
     .from('user_achievements')
@@ -43,5 +48,5 @@ export async function awardSectionMasteryBadges(
       { onConflict: 'user_id,achievement_key', ignoreDuplicates: true },
     )
 
-  return newly
+  return { newly, rows }
 }
