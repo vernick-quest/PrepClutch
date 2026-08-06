@@ -1,7 +1,40 @@
 -- Auto-generated: 725 questions (700 from questions.js + 25 reading from HSPTQuestionBank.jsx)
--- Run this AFTER 001_initial.sql. It replaces the manually seeded questions.
+-- Run this AFTER 001_initial.sql, ON AN EMPTY DATABASE ONLY.
+--
+-- ⚠️  THIS FILE IS NOT A WAY TO ADD CONTENT. To add or change questions, write
+--     a numbered migration in supabase/migrations/ instead.
+--
+-- Why: `delete from questions` cascades. user_question_history.question_id is
+-- declared REFERENCES questions(id) ON DELETE CASCADE, so deleting the bank
+-- deletes every student's answer history along with it — and every Clutch Point
+-- total is computed as user_question_history JOIN questions. Running this
+-- against live data would:
+--
+--   * zero every student's score in every section, and the leaderboard
+--   * regenerate every question id (`default uuid_generate_v4()`), so the
+--     history cannot be rebuilt from quiz_attempts the way migration 008 did
+--   * leave earned badges in place — user_achievements has no FK to questions —
+--     so a student would keep a "250 questions mastered" badge beside 0 points
+--   * shrink the bank from 1,500 back to 724 and revert every content fix:
+--     answer-key corrections, rationales, passage titles, notation, layout
+--
+-- The guard below makes that require a deliberate TRUNCATE first, rather than
+-- one absent-minded paste.
 
--- Clear existing questions (keep achievements)
+DO $$
+DECLARE
+  n INT;
+BEGIN
+  SELECT COUNT(*) INTO n FROM questions;
+  IF n > 0 THEN
+    -- One literal on one line, and USING for the detail. RAISE takes a literal
+    -- format string, so `||` is not valid in that position -- keep it simple.
+    RAISE EXCEPTION 'seed_questions.sql refuses to run: questions already holds % rows.', n
+      USING HINT = 'This file DELETES every question, which cascades to user_question_history and zeroes every student''s Clutch Points. To add or change content, write a numbered migration in supabase/migrations/ instead.';
+  END IF;
+END $$;
+
+-- Only reached on an empty database, where this is a no-op.
 delete from questions;
 
 insert into questions (section, prompt, passage, options, correct_index, difficulty, explanation) values

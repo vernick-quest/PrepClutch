@@ -11,13 +11,21 @@ destroying existing student mastery**. This skill exists to get those right.
 
 ## The one rule that matters most
 
-**NEVER re-run `supabase/seed_questions.sql` to add questions.**
+**NEVER re-run `supabase/seed_questions.sql` to add questions.** It now aborts
+against a non-empty `questions` table, but treat that guard as a backstop, not
+a workflow — it can be bypassed with a TRUNCATE.
 
 It begins with `delete from questions;` and `questions.id` defaults to
-`uuid_generate_v4()`. Re-seeding therefore deletes every question and
-regenerates every id — which orphans every row in `user_question_history` and
-silently zeroes **all mastery for every student**. Scores are computed as
-`user_question_history JOIN questions`, so an orphaned id contributes nothing.
+`uuid_generate_v4()`. The rows are not merely orphaned — `user_question_history`
+declares `question_id ... REFERENCES questions(id) ON DELETE CASCADE`, so
+deleting the bank **deletes every student's answer history outright**. Scores
+are computed as `user_question_history JOIN questions`, so every Clutch Point
+total and the whole leaderboard go to zero.
+
+It is not recoverable. Migration 008 once rebuilt history from `quiz_attempts`,
+but that matched on `question_id`, and re-seeding regenerates every id. Earned
+badges survive (no FK to `questions`), so a student would keep a "250 questions
+mastered" badge next to a score of 0.
 
 New questions are **always** added as an `INSERT` migration with **deterministic
 ids**, never by re-seeding. Use `md5(<stable-key>)::UUID` so re-running the

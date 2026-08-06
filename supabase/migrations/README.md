@@ -102,8 +102,11 @@ order-independent but still disambiguates the 63 rows that share a prompt.
   is visible rather than silent.
 - Use deterministic ids (`md5(<stable-key>)::UUID`) for inserted rows so a
   re-run is a no-op instead of a duplicate.
-- **Never** re-run `seed_questions.sql` to add content: it opens with
-  `delete from questions;` and regenerates every id, which orphans
-  `user_question_history` and zeroes every student's mastery.
+- **Never** re-run `seed_questions.sql` to add content. It now refuses to run
+  against a non-empty `questions` table, because it opens with
+  `delete from questions;` and regenerates every id. `user_question_history`
+  cascades on that delete, so every student's history is DELETED, not orphaned,
+  and every score goes to zero. Not recoverable — migration 008's rebuild-from-
+  quiz_attempts matched on question_id, and re-seeding regenerates every id.
 - Deliver SQL as a `.txt` file or an inline code block — never via the
   clipboard, which the next copied snippet silently overwrites.
