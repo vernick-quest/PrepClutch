@@ -4,6 +4,7 @@ import { SECTION_CONFIG, SECTIONS } from '@/lib/constants'
 import Link from 'next/link'
 import Image from 'next/image'
 import Footer from '@/components/ui/Footer'
+import { isSectionComplete } from '@/lib/badges'
 import type { Section } from '@/types/database'
 
 export const dynamic = 'force-dynamic'
@@ -137,15 +138,27 @@ export default async function DashboardPage() {
             <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 flex-1">
               {SECTIONS.map(section => {
                 const cfg = SECTION_CONFIG[section]
+                // Every question mastered. Practice still works, but it is all
+                // review now, so say so rather than let the student wonder why
+                // a good round scores +0.
+                const done = isSectionComplete(mastery.get(section))
                 return (
                   <Link
                     key={section}
                     href={`/quiz/${section}`}
-                    className={`flex flex-col items-center gap-1 ${cfg.bg} border ${cfg.border} text-white font-bold py-3 px-2 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.99]`}
+                    className={`relative flex flex-col items-center gap-1 ${cfg.bg} border ${done ? 'border-cyan-400/50' : cfg.border} text-white font-bold py-3 px-2 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.99]`}
                   >
+                    {done && (
+                      <span
+                        className="absolute -top-1.5 -right-1.5 text-[13px] leading-none"
+                        title={`${cfg.label} complete — every question mastered`}
+                      >💪</span>
+                    )}
                     <span className="text-xl">{cfg.emoji}</span>
                     <span className="text-[12px] text-center leading-tight">{cfg.label}</span>
-                    <span className="text-[10px] text-zinc-400 font-normal">10 Q</span>
+                    <span className={`text-[10px] font-normal ${done ? 'text-cyan-300' : 'text-zinc-400'}`}>
+                      {done ? 'Complete' : '10 Q'}
+                    </span>
                   </Link>
                 )
               })}
@@ -389,8 +402,10 @@ export default async function DashboardPage() {
 
                       {/* Questions mastered count — subtle secondary */}
                       <div className="flex justify-between items-center">
-                        <span className="text-[10px] text-zinc-600">Questions mastered</span>
-                        <span className="text-[10px] text-zinc-600 tabular-nums">
+                        <span className={`text-[10px] ${isSectionComplete(m) ? 'text-cyan-300 font-semibold' : 'text-zinc-600'}`}>
+                          {isSectionComplete(m) ? '💪 Section complete' : 'Questions mastered'}
+                        </span>
+                        <span className={`text-[10px] tabular-nums ${isSectionComplete(m) ? 'text-cyan-300' : 'text-zinc-600'}`}>
                           {m ? `${m.correct} / ${m.total}` : '— / —'}
                         </span>
                       </div>

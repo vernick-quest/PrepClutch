@@ -68,6 +68,21 @@ export function evaluateBadges(stats: BadgeStats): string[] {
 
 export const SECTION_MASTERY_CATEGORY = 'Section Mastery'
 
+/**
+ * True when every question in a section has been answered correctly at least
+ * once — the tier-6 state.
+ *
+ * Worth marking in the UI: practice still works, but nothing can raise the
+ * section total any more, so the results page shows +0. That is identical to
+ * how a genuine scoring bug looked, and without a "complete" marker a student
+ * cannot tell the difference between "you finished this" and "something is
+ * broken".
+ */
+export function isSectionComplete(m?: { correct?: number; total?: number } | null): boolean {
+  const total = m?.total ?? 0
+  return total > 0 && (m?.correct ?? 0) >= total
+}
+
 /** Correct-question thresholds, tier 1 → tier 6. Tier 6 = the full section. */
 export const SECTION_MASTERY_TIERS = [50, 100, 150, 200, 250, 300] as const
 

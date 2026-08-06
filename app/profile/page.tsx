@@ -7,6 +7,7 @@ import Footer from '@/components/ui/Footer'
 import SignOutButton from '@/components/ui/SignOutButton'
 import ProfileActions from '@/components/profile/ProfileActions'
 import AttemptReview from '@/components/quiz/AttemptReview'
+import { isSectionComplete } from '@/lib/badges'
 import type { Section, QuizAnswer } from '@/types/database'
 
 export const dynamic = 'force-dynamic'
@@ -164,8 +165,10 @@ export default async function ProfilePage() {
                     <div className="h-full rounded-full transition-all duration-500" style={{ width: `${cpPct}%`, backgroundColor: getAccentHex(cfg.accent) }} />
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-zinc-600">
-                      {m ? `${m.correct} / ${m.total} mastered` : 'No attempts yet'}
+                    <span className={`text-xs ${isSectionComplete(m) ? 'text-cyan-300 font-semibold' : 'text-zinc-600'}`}>
+                      {isSectionComplete(m)
+                        ? `💪 Complete — ${m!.correct} / ${m!.total}`
+                        : m ? `${m.correct} / ${m.total} mastered` : 'No attempts yet'}
                     </span>
                     <Link href={`/quiz/${section}`} className={`text-xs ${cfg.color} hover:underline`}>Practice →</Link>
                   </div>

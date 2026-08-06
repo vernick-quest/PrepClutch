@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import Footer from '@/components/ui/Footer'
 import AttemptReview from '@/components/quiz/AttemptReview'
-import { SECTION_MASTERY_CATEGORY, badgeEmojiStyle, sectionMasteryTier, compareBadges } from '@/lib/badges'
+import { SECTION_MASTERY_CATEGORY, badgeEmojiStyle, sectionMasteryTier, compareBadges, isSectionComplete } from '@/lib/badges'
 import type { Section, QuizAnswer } from '@/types/database'
 
 export const dynamic = 'force-dynamic'
@@ -160,8 +160,10 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
                   <div className="h-2.5 bg-white/10 rounded-full overflow-hidden mb-3">
                     <div className="h-full rounded-full transition-all duration-500" style={{ width: `${cpPct}%`, backgroundColor: getAccentHex(cfg.accent) }} />
                   </div>
-                  <div className="text-xs text-zinc-600">
-                    {m ? `${m.correct} / ${m.total} mastered` : 'No attempts yet'}
+                  <div className={`text-xs ${isSectionComplete(m) ? 'text-cyan-300 font-semibold' : 'text-zinc-600'}`}>
+                    {isSectionComplete(m)
+                      ? `💪 Complete — ${m!.correct} / ${m!.total}`
+                      : m ? `${m.correct} / ${m.total} mastered` : 'No attempts yet'}
                   </div>
                 </div>
               )
