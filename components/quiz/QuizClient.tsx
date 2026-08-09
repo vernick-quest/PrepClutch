@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { SECTION_CONFIG, QUESTION_TIME_LIMIT_S, DIFF_NAME, questionTargetMs } from '@/lib/constants'
+import { SECTION_CONFIG, DIFF_NAME, questionTargetMs, questionTimeoutMs, sectionBudgetMs } from '@/lib/constants'
+import type { TimingMode } from '@/lib/constants'
 import { scoreQuestion } from '@/lib/scoring'
 import { finishAndRecordQuiz } from '@/lib/finish-quiz'
 import type { Section, Question, QuizAnswer } from '@/types/database'
@@ -25,6 +26,9 @@ interface Props {
    *  across the whole test rather than restarting at each section. */
   questionOffset?: number
   totalOverride?: number
+  /** 'practice' gives each question its own cutoff. 'test' gives the whole
+   *  section one clock, like the real exam. Defaults to practice. */
+  timing?: TimingMode
 }
 
 function getAccentHex(accent: string): string {
@@ -37,15 +41,33 @@ function getAccentHex(accent: string): string {
 export default function QuizClient({
   section, questions, userId, masteredIds = [],
   embedded = false, onComplete, questionOffset = 0, totalOverride,
+  timing = 'practice',
 }: Props) {
   const router = useRouter()
   const [currentIdx, setCurrentIdx] = useState(0)
-  const [timeLeft, setTimeLeft] = useState(QUESTION_TIME_LIMIT_S)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // The section for timing purposes. In the full test each block is one
+  // section, so this is just `section` unless someone passes 'full' directly.
+  const timingSection = section === 'full'
+    ? (questions[0]?.section ?? 'math')
+    : (section as string)
+
+  // Test mode: one deadline for the whole section, set once on mount.
+  const budgetMs = useMemo(
+    () => sectionBudgetMs(timingSection, questions),
+    [timingSection, questions],
+  )
+  const deadlineRef = useRef<number>(Date.now() + budgetMs)
+
+  const [timeLeft, setTimeLeft] = useState(() => timing === 'test'
+    ? Math.ceil(budgetMs / 1000)
+    : Math.ceil(questionTimeoutMs(timingSection, questions[0]?.difficulty ?? 2) / 1000))
 
   const answersRef   = useRef<QuizAnswer[]>([])
   const startTimeRef = useRef<number>(Date.now())
   const handledRef   = useRef(false)
+  const expiredRef   = useRef(false)
   const timerRef     = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const currentQuestion = questions[currentIdx]
@@ -73,17 +95,30 @@ export default function QuizClient({
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }
   }, [])
 
-  // ─── Timer: resets on each question ──────────────────────────────────────
+  // ─── Timer ───────────────────────────────────────────────────────────────
+  //
+  // practice: a fresh cutoff per question, scaled off that question's target.
+  // test:     one deadline for the section, so the clock does NOT reset — it
+  //           just keeps running as the student moves through.
   useEffect(() => {
     handledRef.current = false
     startTimeRef.current = Date.now()
-    setTimeLeft(QUESTION_TIME_LIMIT_S)
+
+    if (timing === 'test') {
+      setTimeLeft(Math.max(0, Math.ceil((deadlineRef.current - Date.now()) / 1000)))
+    } else {
+      const q = questions[currentIdx]
+      setTimeLeft(Math.ceil(questionTimeoutMs(timingSection, q?.difficulty ?? 2) / 1000))
+    }
 
     timerRef.current = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
           stopTimer()
-          handleAnswer(-1)
+          // Test mode: the section clock is out, so every remaining question
+          // is unanswered, not just this one.
+          if (timing === 'test') expireRemaining()
+          else handleAnswer(-1)
           return 0
         }
         return prev - 1
@@ -119,6 +154,34 @@ export default function QuizClient({
     // page they could answer all over again.
     router.replace('/results')
   }, [userId, section, questions, router, masteredIds, embedded, onComplete])
+
+  // Section clock expired in test mode. Record every question not yet answered
+  // as a timeout so the attempt still lines up with `questions` by index, then
+  // finish — the same shape ReadingQuizClient uses when a passage times out.
+  const expireRemaining = useCallback(() => {
+    // Unconditional: once every question has an answer the round is finishing
+    // (or finished), and re-entering here would hand the container a second
+    // copy of the whole block. ReadingQuizClient hit exactly this today.
+    if (expiredRef.current || answersRef.current.length >= totalQuestions) return
+    expiredRef.current = true
+    handledRef.current = true
+    stopTimer()
+
+    const done = answersRef.current.length
+    const rest = questions.slice(done).map(q => ({
+      question_id:    q.id,
+      selected_index: -1,
+      correct_index:  q.correct_index,
+      time_taken_ms:  0,
+      xp_earned:      0,
+      section:        section === 'full' ? q.section : (section as string),
+      target_ms:      questionTargetMs(timingSection, q.difficulty),
+    }))
+    const all = [...answersRef.current, ...rest]
+    answersRef.current = all
+    finishQuiz(all)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [questions, totalQuestions, section, timingSection, stopTimer, finishQuiz])
 
   // ─── Handle answer ────────────────────────────────────────────────────────
   const handleAnswer = useCallback((index: number) => {
@@ -159,8 +222,15 @@ export default function QuizClient({
                           section === 'full' ? (currentQuestion?.section ?? 'math') : (section as string),
                           currentQuestion?.difficulty ?? 2,
                         ) / 1000)
-  const timerPercent  = (timeLeft / QUESTION_TIME_LIMIT_S) * 100
-  const timerColor    = timeLeft > 20 ? '#10b981' : timeLeft > 10 ? '#f59e0b' : '#f43f5e'
+  const limitS        = timing === 'test'
+                          ? Math.ceil(budgetMs / 1000)
+                          : Math.ceil(questionTimeoutMs(timingSection, currentQuestion?.difficulty ?? 2) / 1000)
+  const timerPercent  = limitS > 0 ? (timeLeft / limitS) * 100 : 0
+  // A section clock runs into the minutes, so m:ss rather than a raw count.
+  const timerLabel    = timing === 'test'
+                          ? `${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, '0')}`
+                          : String(timeLeft)
+  const timerColor    = timerPercent > 33 ? '#10b981' : timerPercent > 15 ? '#f59e0b' : '#f43f5e'
   const circumference = 2 * Math.PI * 20
 
   return (
@@ -202,7 +272,7 @@ export default function QuizClient({
                 style={{ transition: 'stroke-dashoffset 1s linear, stroke 0.5s' }}
               />
             </svg>
-            <span className="absolute inset-0 flex items-center justify-center text-sm font-bold text-white">{timeLeft}</span>
+            <span className={`absolute inset-0 flex items-center justify-center font-bold text-white ${timing === 'test' ? 'text-xs' : 'text-sm'}`}>{timerLabel}</span>
           </div>
         </div>
 

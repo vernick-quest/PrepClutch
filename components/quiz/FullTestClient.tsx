@@ -19,7 +19,8 @@
 import { useState, useRef, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { SECTION_CONFIG } from '@/lib/constants'
+import { SECTION_CONFIG, sectionBudgetMs, questionTimeoutMs } from '@/lib/constants'
+import type { TimingMode } from '@/lib/constants'
 import { finishAndRecordQuiz } from '@/lib/finish-quiz'
 import QuizClient from '@/components/quiz/QuizClient'
 import ReadingQuizClient from '@/components/quiz/ReadingQuizClient'
@@ -46,7 +47,8 @@ export default function FullTestClient({ blocks, userId, masteredIds }: Props) {
   const router = useRouter()
 
   const [idx, setIdx]     = useState(0)
-  const [phase, setPhase] = useState<'quiz' | 'break' | 'saving'>('quiz')
+  const [phase, setPhase] = useState<'choose' | 'quiz' | 'break' | 'saving'>('choose')
+  const [timing, setTiming] = useState<TimingMode>('practice')
 
   // Refs, not state: these are appended from a child's completion callback and
   // read again immediately on the final section. State would still hold the
@@ -101,6 +103,69 @@ export default function FullTestClient({ blocks, userId, masteredIds }: Props) {
     )
   }
 
+  // ── Timing mode ───────────────────────────────────────────────────────────
+  //
+  // Only offered here. A single-section practice run always uses per-question
+  // cutoffs; simulating exam pressure only makes sense across a whole test.
+  if (phase === 'choose') {
+    const standard = blocks.filter(b => b.kind === 'standard')
+    const budgetMin = standard.reduce(
+      (m, b) => m + sectionBudgetMs(b.section, b.questions as { difficulty?: number }[]), 0) / 60_000
+    const hardest = Math.max(
+      ...standard.flatMap(b => b.questions.map(q => questionTimeoutMs(b.section, q.difficulty ?? 2))))
+
+    return (
+      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center px-4 py-10">
+        <div className="max-w-lg w-full space-y-5">
+          <div className="text-center">
+            <p className="text-5xl mb-3">🎯</p>
+            <h1 className="text-2xl font-black text-white">Full Practice Test</h1>
+            <p className="text-zinc-500 text-sm mt-2">
+              {total} questions · all five sections · answers reviewed at the end
+            </p>
+          </div>
+
+          <p className="text-center text-zinc-400 text-sm">How do you want to be timed?</p>
+
+          <button
+            onClick={() => { setTiming('practice'); setPhase('quiz') }}
+            className="w-full text-left rounded-2xl border border-emerald-500/30 bg-emerald-500/5 hover:border-emerald-500/60 transition-colors p-5"
+          >
+            <div className="flex items-center justify-between mb-1">
+              <span className="font-bold text-emerald-400">📚 Practice timing</span>
+              <span className="text-[10px] uppercase tracking-widest text-zinc-600">Recommended</span>
+            </div>
+            <p className="text-zinc-400 text-sm leading-relaxed">
+              Every question gets its own time limit, scaled to how hard it is —
+              up to {Math.round(hardest / 1000)}s on the toughest ones. Take as
+              long as you need on one without it costing you the next.
+            </p>
+          </button>
+
+          <button
+            onClick={() => { setTiming('test'); setPhase('quiz') }}
+            className="w-full text-left rounded-2xl border border-amber-500/30 bg-amber-500/5 hover:border-amber-500/60 transition-colors p-5"
+          >
+            <div className="flex items-center justify-between mb-1">
+              <span className="font-bold text-amber-400">⏱ Test conditions</span>
+              <span className="text-[10px] uppercase tracking-widest text-zinc-600">Like the real HSPT</span>
+            </div>
+            <p className="text-zinc-400 text-sm leading-relaxed">
+              One clock per section, about {Math.round(budgetMin)} minutes across
+              the four written sections plus the reading passages. Spend too long
+              on a hard question and you have to race the easy ones — which is
+              exactly what the real test measures.
+            </p>
+          </button>
+
+          <p className="text-center text-zinc-600 text-xs">
+            Reading is timed by passage either way, since you have to read it first.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   // ── Section break ─────────────────────────────────────────────────────────
   // A gate between sections, not just a pause. Reading starts its passage
   // clock the moment it mounts, so dropping a student straight into it from
@@ -147,7 +212,10 @@ export default function FullTestClient({ blocks, userId, masteredIds }: Props) {
           </button>
 
           <p className="text-zinc-600 text-xs">
-            The timer starts when you tap. Your answers are all reviewed at the end.
+            {timing === 'test' && next.kind === 'standard'
+              ? `The section clock (${Math.round(sectionBudgetMs(next.section, next.questions as { difficulty?: number }[]) / 60_000)} min) starts when you tap.`
+              : 'The timer starts when you tap.'}{' '}
+            Your answers are all reviewed at the end.
           </p>
         </div>
       </div>
@@ -183,6 +251,7 @@ export default function FullTestClient({ blocks, userId, masteredIds }: Props) {
       onComplete={handleBlockComplete}
       questionOffset={offset}
       totalOverride={total}
+      timing={timing}
     />
   )
 }

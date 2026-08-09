@@ -50,6 +50,8 @@ export const AVATAR_COLORS = [
 
 export const SECTIONS: Section[] = ['verbal', 'quantitative', 'reading', 'math', 'language']
 
+// Legacy flat cutoff. Superseded by questionTimeoutMs(); kept only so older
+// stored results and any straggler import still resolve to something sane.
 export const QUESTION_TIME_LIMIT_S = 60
 
 // Difficulty base points — difficulty 1=Easy, 2=Medium, 3=Hard
@@ -74,6 +76,33 @@ export const DIFFICULTY_TIME_FACTOR: Record<number, number> = { 1: 0.6, 2: 0.9, 
 export function questionTargetMs(section: string, difficulty: number): number {
   const base = SECTION_BENCHMARKS_MS[section] ?? 30_000
   return Math.round(base * (DIFFICULTY_TIME_FACTOR[difficulty] ?? 1))
+}
+
+// ── Timing modes ─────────────────────────────────────────────────────────────
+//
+// PRACTICE (the default): each question has its own cutoff, scaled off its
+// target. Nothing a student does on one question can cost them another, which
+// is what you want when the goal is learning the material.
+//
+// TEST CONDITIONS: one clock for the whole section, sized as the sum of its
+// questions' targets. Spending two minutes on a hard one means racing the
+// easy ones — which is the actual skill the HSPT measures. Offered on the full
+// practice test, where simulating the exam is the point.
+export type TimingMode = 'practice' | 'test'
+
+/** Hard cutoff for one question in practice mode. Twice its target, floored so
+ *  no question is ever a scramble and capped so none can be sat on. */
+export function questionTimeoutMs(section: string, difficulty: number): number {
+  const target = questionTargetMs(section, difficulty)
+  return Math.min(Math.max(target * 2, 45_000), 120_000)
+}
+
+/** Clock for a whole section in test mode: the sum of its questions' targets. */
+export function sectionBudgetMs(
+  section: string,
+  questions: { difficulty?: number }[],
+): number {
+  return questions.reduce((ms, q) => ms + questionTargetMs(section, q.difficulty ?? 2), 0)
 }
 // Clutch Points are now cumulative mastery — max per section is derived from
 // the question bank at runtime via get_section_mastery(). No fixed cap needed.
