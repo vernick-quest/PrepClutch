@@ -56,9 +56,24 @@ export const QUESTION_TIME_LIMIT_S = 60
 export const DIFFICULTY_BASE_POINTS: Record<string, number> = {
   Easy: 10, Medium: 20, Hard: 35,
 }
-// Per-section time benchmarks (ms) derived from official HSPT timing
+// Per-section time benchmarks (ms) derived from official HSPT timing. These are
+// the exam's per-question AVERAGES: math is 64 questions in 45 minutes, verbal
+// 60 in 16, and so on.
 export const SECTION_BENCHMARKS_MS: Record<string, number> = {
   verbal: 16_000, quantitative: 34_000, reading: 24_000, math: 42_000, language: 25_000,
+}
+
+// An average flattens the thing a student most needs to learn: a hard math
+// question deserves more than a quarter of the time an easy one does. Targets
+// scale off difficulty, and the factors are chosen so a 3 Easy / 4 Medium /
+// 3 Hard session still averages 0.99x the section benchmark — pacing across a
+// whole section is unchanged, only its distribution across questions.
+export const DIFFICULTY_TIME_FACTOR: Record<number, number> = { 1: 0.6, 2: 0.9, 3: 1.5 }
+
+/** Time a student should aim to spend on one question, in ms. */
+export function questionTargetMs(section: string, difficulty: number): number {
+  const base = SECTION_BENCHMARKS_MS[section] ?? 30_000
+  return Math.round(base * (DIFFICULTY_TIME_FACTOR[difficulty] ?? 1))
 }
 // Clutch Points are now cumulative mastery — max per section is derived from
 // the question bank at runtime via get_section_mastery(). No fixed cap needed.

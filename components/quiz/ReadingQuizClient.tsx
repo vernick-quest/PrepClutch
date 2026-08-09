@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { scoreQuestion } from '@/lib/scoring'
+import { questionTargetMs } from '@/lib/constants'
 import { finishAndRecordQuiz } from '@/lib/finish-quiz'
 import type { ReadingPassage } from '@/lib/reading-passages'
 import type { Question, QuizAnswer } from '@/types/database'
@@ -99,26 +100,30 @@ export default function ReadingQuizClient({
   const answersRef = useRef<(SavedAnswer | null)[]>(new Array(totalQuestions).fill(null))
 
   // ── Timer ─────────────────────────────────────────────────────────────────
-  // Passage timer = estimated reading time + question target time.
+  // Passage timer = estimated reading time + the sum of the questions' targets.
   // Reading time: word count ÷ 200 wpm (generous pace for test-takers).
-  // Question target (24s each) is kept separate — it's a benchmark shown in
-  // results feedback only, not the actual countdown limit.
+  // Question targets scale with difficulty (see questionTargetMs).
   const readingMsFor = useCallback((idx: number) => {
     const wordCount = passages[idx].body.split(/\s+/).length
     return Math.ceil(wordCount / 200) * 60_000              // 200 wpm
   }, [passages])
 
+  // Sum each question's OWN target rather than a flat 24s apiece, so a passage
+  // carrying hard inference questions gets a bigger budget than one with three
+  // easy detail lookups.
   const passageTimeMs = useCallback((idx: number) => {
-    const questionMs = passages[idx].questions.length * 24_000  // target benchmark
+    const questionMs = passages[idx].questions.reduce(
+      (s, q) => s + questionTargetMs('reading', q.difficulty), 0)
     return readingMsFor(idx) + questionMs
   }, [passages, readingMsFor])
 
   // The first question of a passage absorbs the entire read, so judging it
   // against the flat 24s benchmark always marks it red no matter how quickly
   // the student actually worked. Give it the reading allowance on top.
-  const targetMsFor = useCallback((pIdx: number, qIdx: number) =>
-    qIdx === 0 ? 24_000 + readingMsFor(pIdx) : 24_000
-  , [readingMsFor])
+  const targetMsFor = useCallback((pIdx: number, qIdx: number) => {
+    const own = questionTargetMs('reading', passages[pIdx].questions[qIdx]?.difficulty ?? 2)
+    return qIdx === 0 ? own + readingMsFor(pIdx) : own
+  }, [passages, readingMsFor])
   const [timeRemainingMs, setTimeRemainingMs] = useState(() => passageTimeMs(0))
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const finishedRef = useRef(false)
@@ -148,7 +153,7 @@ export default function ReadingQuizClient({
       correct_index:  allQuestions[i].correctIndex,
       time_taken_ms:  a?.timeTakenMs ?? 0,
       xp_earned:      a?.xpEarned ?? 0,
-      target_ms:      a?.targetMs ?? 24_000,
+      target_ms:      a?.targetMs ?? questionTargetMs('reading', allQuestions[i].difficulty),
       section:        'reading',
     }))
 

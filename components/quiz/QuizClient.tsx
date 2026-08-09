@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { SECTION_CONFIG, QUESTION_TIME_LIMIT_S, DIFF_NAME } from '@/lib/constants'
+import { SECTION_CONFIG, QUESTION_TIME_LIMIT_S, DIFF_NAME, questionTargetMs } from '@/lib/constants'
 import { scoreQuestion } from '@/lib/scoring'
 import { finishAndRecordQuiz } from '@/lib/finish-quiz'
 import type { Section, Question, QuizAnswer } from '@/types/database'
@@ -138,6 +138,11 @@ export default function QuizClient({
       time_taken_ms:  timeTakenMs,
       xp_earned:      scored.total,
       section:        qSection,
+      // Stamped per answer, so the results page, quiz history and the speed
+      // badge all judge this question against ITS target rather than the
+      // section average. Reading has always done this; the other sections
+      // fell back to a flat number.
+      target_ms:      questionTargetMs(qSection, currentQuestion.difficulty),
     }
 
     const updatedAnswers = [...answersRef.current, newAnswer]
@@ -150,6 +155,10 @@ export default function QuizClient({
     }
   }, [currentIdx, currentQuestion, section, totalQuestions, stopTimer, finishQuiz])
 
+  const targetS       = Math.round(questionTargetMs(
+                          section === 'full' ? (currentQuestion?.section ?? 'math') : (section as string),
+                          currentQuestion?.difficulty ?? 2,
+                        ) / 1000)
   const timerPercent  = (timeLeft / QUESTION_TIME_LIMIT_S) * 100
   const timerColor    = timeLeft > 20 ? '#10b981' : timeLeft > 10 ? '#f59e0b' : '#f43f5e'
   const circumference = 2 * Math.PI * 20
@@ -195,6 +204,15 @@ export default function QuizClient({
             </svg>
             <span className="absolute inset-0 flex items-center justify-center text-sm font-bold text-white">{timeLeft}</span>
           </div>
+        </div>
+
+        {/* Pacing target for THIS question. Sits with the difficulty dots
+            because the two belong together: harder question, longer target. */}
+        <div className="flex items-center justify-end -mt-4 mb-4">
+          <span className="text-[11px] text-zinc-500">
+            Aim for <span className="text-zinc-300 font-semibold">{targetS}s</span>
+            <span className="text-zinc-600"> · {DIFF_NAME[currentQuestion?.difficulty ?? 2] ?? 'Medium'}</span>
+          </span>
         </div>
 
         {/* Passage — stable key prevents remount across same-passage questions */}
