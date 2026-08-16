@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
-import { SECTIONS, QUESTIONS_PER_SESSION, MAX_CORRECT_RECYCLED } from '@/lib/constants'
+import { SECTIONS, QUESTIONS_PER_SESSION, MAX_CORRECT_RECYCLED, DEFAULT_EXAM } from '@/lib/constants'
+import type { ExamId } from '@/lib/constants'
 import QuizClient from '@/components/quiz/QuizClient'
 import ReadingQuizClient from '@/components/quiz/ReadingQuizClient'
 import FullTestClient from '@/components/quiz/FullTestClient'
@@ -151,10 +152,16 @@ async function fetchMasteredIds(supabase: any, userId: string, questionIds: stri
 // while unmastered ones remain.
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function selectReadingPassages(supabase: any, userId: string): Promise<ReadingPassage[]> {
+async function selectReadingPassages(
+  supabase: any, userId: string, exam: ExamId = DEFAULT_EXAM,
+): Promise<ReadingPassage[]> {
+  // Exam scoping is not optional. The two banks share the `questions` table and
+  // the `section` enum, so without this filter an SSAT passage would be served
+  // in an HSPT quiz and counted toward HSPT mastery.
   const { data: rows } = await supabase
     .from('questions')
     .select('id, prompt, passage, passage_id, passage_title, options, correct_index, difficulty, explanation')
+    .eq('exam', exam)
     .eq('section', 'reading')
 
   if (!rows || rows.length === 0) return []
@@ -167,8 +174,9 @@ async function selectReadingPassages(supabase: any, userId: string): Promise<Rea
   // listing 300 question ids in the URL.
   const { data: history, error: historyError } = await supabase
     .from('user_question_history')
-    .select('question_id, times_correct, questions!inner(section)')
+    .select('question_id, times_correct, questions!inner(section, exam)')
     .eq('user_id', userId)
+    .eq('questions.exam', exam)
     .eq('questions.section', 'reading')
 
   if (historyError) {
@@ -242,10 +250,13 @@ async function selectReadingPassages(supabase: any, userId: string): Promise<Rea
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function selectSectionQuestions(supabase: any, userId: string, section: string): Promise<Question[]> {
+async function selectSectionQuestions(
+  supabase: any, userId: string, section: string, exam: ExamId = DEFAULT_EXAM,
+): Promise<Question[]> {
   const { data: allQuestions } = await supabase
     .from('questions')
     .select('*')
+    .eq('exam', exam)
     .eq('section', section)
 
   if (!allQuestions || allQuestions.length === 0) return []
@@ -258,8 +269,9 @@ async function selectSectionQuestions(supabase: any, userId: string, section: st
   // already mastered.
   const { data: history, error: historyError } = await supabase
     .from('user_question_history')
-    .select('question_id, times_correct, times_wrong, last_answered_at, questions!inner(section)')
+    .select('question_id, times_correct, times_wrong, last_answered_at, questions!inner(section, exam)')
     .eq('user_id', userId)
+    .eq('questions.exam', exam)
     .eq('questions.section', section)
 
   // Never fall through on failure. Treating "we could not read the history" as
