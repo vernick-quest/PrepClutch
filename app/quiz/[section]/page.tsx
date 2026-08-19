@@ -111,6 +111,26 @@ function NoQuestions() {
   )
 }
 
+
+// ── Exam scoping, tolerant of an unapplied migration ─────────────────────────
+//
+// Migrations here are applied BY HAND, so a deploy can land before its schema
+// change does. Code must therefore never HARD-require a new column: shipping
+// the exam filter ahead of migration 058 took every quiz down with
+// "column questions.exam does not exist".
+//
+// Probe once and cache only the positive result, so the filter switches itself
+// on the moment 058 is applied — no redeploy, no restart.
+let examColumnReady = false
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function hasExamColumn(supabase: any): Promise<boolean> {
+  if (examColumnReady) return true
+  const { error } = await supabase.from('questions').select('exam').limit(1)
+  examColumnReady = !error
+  return examColumnReady
+}
+
 // ── Smart question selection ──────────────────────────────────────────────────
 //
 // Targets 3 Easy / 4 Medium / 3 Hard per 10-question session.
@@ -158,11 +178,14 @@ async function selectReadingPassages(
   // Exam scoping is not optional. The two banks share the `questions` table and
   // the `section` enum, so without this filter an SSAT passage would be served
   // in an HSPT quiz and counted toward HSPT mastery.
-  const { data: rows } = await supabase
+  const scoped = await hasExamColumn(supabase)
+
+  let rowQuery = supabase
     .from('questions')
     .select('id, prompt, passage, passage_id, passage_title, options, correct_index, difficulty, explanation')
-    .eq('exam', exam)
     .eq('section', 'reading')
+  if (scoped) rowQuery = rowQuery.eq('exam', exam)
+  const { data: rows } = await rowQuery
 
   if (!rows || rows.length === 0) return []
 
@@ -172,12 +195,15 @@ async function selectReadingPassages(
 
   // Same reason as selectSectionQuestions: filter through the FK instead of
   // listing 300 question ids in the URL.
-  const { data: history, error: historyError } = await supabase
+  let histQuery = supabase
     .from('user_question_history')
-    .select('question_id, times_correct, questions!inner(section, exam)')
+    .select(scoped
+      ? 'question_id, times_correct, questions!inner(section, exam)'
+      : 'question_id, times_correct, questions!inner(section)')
     .eq('user_id', userId)
-    .eq('questions.exam', exam)
     .eq('questions.section', 'reading')
+  if (scoped) histQuery = histQuery.eq('questions.exam', exam)
+  const { data: history, error: historyError } = await histQuery
 
   if (historyError) {
     throw new Error(`Could not load reading question history: ${historyError.message}`)
@@ -253,11 +279,11 @@ async function selectReadingPassages(
 async function selectSectionQuestions(
   supabase: any, userId: string, section: string, exam: ExamId = DEFAULT_EXAM,
 ): Promise<Question[]> {
-  const { data: allQuestions } = await supabase
-    .from('questions')
-    .select('*')
-    .eq('exam', exam)
-    .eq('section', section)
+  const scoped = await hasExamColumn(supabase)
+
+  let qQuery = supabase.from('questions').select('*').eq('section', section)
+  if (scoped) qQuery = qQuery.eq('exam', exam)
+  const { data: allQuestions } = await qQuery
 
   if (!allQuestions || allQuestions.length === 0) return []
 
@@ -267,12 +293,15 @@ async function selectSectionQuestions(
   // PostgREST. When that request fails the student's whole history reads as
   // empty, every question looks unseen, and they get served questions they had
   // already mastered.
-  const { data: history, error: historyError } = await supabase
+  let histQuery = supabase
     .from('user_question_history')
-    .select('question_id, times_correct, times_wrong, last_answered_at, questions!inner(section, exam)')
+    .select(scoped
+      ? 'question_id, times_correct, times_wrong, last_answered_at, questions!inner(section, exam)'
+      : 'question_id, times_correct, times_wrong, last_answered_at, questions!inner(section)')
     .eq('user_id', userId)
-    .eq('questions.exam', exam)
     .eq('questions.section', section)
+  if (scoped) histQuery = histQuery.eq('questions.exam', exam)
+  const { data: history, error: historyError } = await histQuery
 
   // Never fall through on failure. Treating "we could not read the history" as
   // "this student has no history" silently wastes a practice session and
