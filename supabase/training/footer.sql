@@ -19,7 +19,17 @@ SELECT
   bool_and(jsonb_array_length(t.option_notes) = 4
            AND NOT (t.option_notes::TEXT LIKE '%""%'))              AS notes_ok,
   ROUND(100.0 * MAX(pos.n) / COUNT(*)) || '%'                          AS max_answer_share,
-  (SELECT COUNT(*) FROM questions)                                  AS scoring_bank_untouched
+  (SELECT COUNT(*) FROM questions)                                  AS scoring_bank_untouched,
+  -- Hash of every prompt, option, note and explanation as STORED, compared to
+  -- the hash of the validated source. Catches anything corrupted between the
+  -- generator and the database — a slipped character in a copy and paste
+  -- passes every count above but fails here.
+  (SELECT md5(string_agg(concat_ws('|', c.concept, c.prompt, COALESCE(c.passage, ''),
+                                     c.options::TEXT, c.option_notes::TEXT, c.explanation,
+                                     c.correct_index::TEXT, c.difficulty::TEXT),
+                           '#' ORDER BY c.section::TEXT, c.sort_order))
+     FROM training_questions AS c
+    WHERE c.exam = 'hspt') = '{{CHECKSUM}}'                            AS content_intact
 FROM training_questions t
 JOIN LATERAL (
   SELECT COUNT(*) AS n FROM training_questions t2

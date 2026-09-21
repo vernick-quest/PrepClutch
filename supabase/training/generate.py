@@ -30,7 +30,19 @@ for sec, qs in SECTIONS:
 
 HEADER = open('header.sql').read()
 FOOTER = open('footer.sql').read()
-sql = HEADER + ",\n\n".join(rows) + FOOTER
+# Same fields, same order, same separators as the SQL checksum in footer.sql.
+import hashlib
+recs = []
+for sec, qs in sorted(SECTIONS, key=lambda x: x[0]):
+    for q in sorted(qs, key=lambda q: q['sort']):
+        opts = [o[0] for o in q['options']]; notes = [o[1] for o in q['options']]
+        # options::TEXT and option_notes::TEXT are Postgres's own JSONB rendering;
+        # json.dumps with default separators matches it (proven against PGlite).
+        recs.append('|'.join([q['concept'], q['prompt'], q.get('passage') or '',
+                              json.dumps(opts, ensure_ascii=False), json.dumps(notes, ensure_ascii=False),
+                              q['explanation'], str(opts.index(q['answer'])), str(q['diff'])]))
+CHECKSUM = hashlib.md5('#'.join(recs).encode('utf-8')).hexdigest()
+sql = HEADER + ",\n\n".join(rows) + FOOTER.replace('{{CHECKSUM}}', CHECKSUM)
 open('060_training_bank.sql', 'w').write(sql)
 
 # ── Round-trip: decode every literal back and compare with the source ────────
@@ -50,5 +62,5 @@ for m, (key, prompt, opts, notes, expl, passage) in zip(parsed, source):
         if got[f] != want[f]:
             bad += 1; print(f"  MISMATCH {key}.{f}")
 print(f"rows generated: {len(rows)} | parsed back: {len(parsed)} | round-trip mismatches: {bad}")
-print(f"file: 060_training_bank.sql  {len(sql):,} bytes")
+print(f"file: 060_training_bank.sql  {len(sql):,} bytes | content checksum {CHECKSUM}")
 sys.exit(0 if len(parsed) == len(rows) == 75 and bad == 0 else 1)

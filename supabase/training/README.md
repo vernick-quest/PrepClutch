@@ -24,3 +24,20 @@ own expected message, which is what exposed that.
 - no answer letter above ~27% per section (the original bank put B at 46%)
 - no positional references like "Sentence B" — they break if options reorder
 - the 053/055 notation conventions: `3²`, `√`, `×`, `÷`
+
+## Running it against real Postgres
+
+There is no local Postgres, so `pglite/` runs the migrations in PGlite —
+Postgres compiled to WebAssembly — against a minimal stand-in schema:
+
+```bash
+cd /tmp && mkdir pgv && cd pgv && npm init -y && npm install @electric-sql/pglite@0.2
+cp ~/PrepClutch/supabase/training/pglite/*.mjs . && node run.mjs && node corrupt.mjs
+```
+
+`run.mjs` applies 059 then 060 twice (idempotency). `corrupt.mjs` plants
+single-character corruptions and requires `content_intact` to flip to false.
+
+⚠️ PGlite is not Supabase. A checksum using `WITH ORDINALITY AS a(o, n)` passed
+here and failed in production with `relation "a" does not exist`. The checksum
+is now a single flat expression; prefer plain constructs in verification SQL.
