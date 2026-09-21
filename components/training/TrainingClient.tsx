@@ -100,9 +100,11 @@ export default function TrainingClient({
             <h1 className="text-2xl font-black text-white">{cfg.label} training complete</h1>
             <p className="text-zinc-500 text-sm mt-2">
               You worked through all {total} questions. None of it counted toward your
-              score — now go earn some points for real.
+              score.
             </p>
           </div>
+          {/* No hand-off into a quiz. Training ends at understanding; the
+              student decides when they are ready to be timed and scored. */}
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={restart}
@@ -111,15 +113,12 @@ export default function TrainingClient({
               ↺ Start over
             </button>
             <Link
-              href={`/quiz/${section}`}
-              className="flex items-center justify-center bg-amber-500 hover:bg-amber-400 text-black font-bold py-3.5 rounded-2xl transition-colors"
+              href="/"
+              className="flex items-center justify-center bg-sky-500 hover:bg-sky-400 text-black font-bold py-3.5 rounded-2xl transition-colors"
             >
-              Take the quiz →
+              Dashboard
             </Link>
           </div>
-          <Link href="/" className="block text-zinc-500 hover:text-white text-sm transition-colors">
-            ← Dashboard
-          </Link>
         </div>
       </div>
     )
