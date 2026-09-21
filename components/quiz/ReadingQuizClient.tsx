@@ -34,8 +34,10 @@ interface Props {
   questionOffset?: number
   totalOverride?: number
   /** Show correct/wrong and the explanation immediately after each answer.
-   *  On in the solo section; off in the full test, where every answer is
-   *  revealed at the end. */
+   *  OFF for every quiz — reading used to be the only section that revealed
+   *  mid-quiz, which told a student the answer before they had finished and
+   *  made it the odd one out. Training mode turns it back on, which is the
+   *  whole point of training mode. */
   revealFeedback?: boolean
 }
 
@@ -76,7 +78,7 @@ function globalIdx(passages: ReadingPassage[], pIdx: number, qIdx: number): numb
 export default function ReadingQuizClient({
   passages, userId, masteredIds = [],
   embedded = false, onComplete, questionOffset = 0, totalOverride,
-  revealFeedback = true,
+  revealFeedback = false,
 }: Props) {
   const router = useRouter()
 
