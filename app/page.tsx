@@ -57,6 +57,17 @@ export default async function DashboardPage() {
   const { data: masteryRaw } = await supabase
     .rpc('get_section_mastery', { p_user_id: user.id })
 
+  // Sections with training content. The row below renders only for these, so
+  // training can ship before all its questions are written — and a missing
+  // table (migration 059 unapplied) simply yields none.
+  const { data: trainingRows } = await supabase
+    .from('training_questions')
+    .select('section')
+  const trainingCounts = new Map<string, number>()
+  for (const r of (trainingRows ?? []) as { section: string }[]) {
+    trainingCounts.set(r.section, (trainingCounts.get(r.section) ?? 0) + 1)
+  }
+
   type MasteryRow = { section: string; score: number; max_score: number; correct: number; seen: number; total: number }
   const mastery = new Map<string, MasteryRow>(
     (masteryRaw ?? []).map((r: MasteryRow) => [r.section, r])
@@ -121,6 +132,37 @@ export default async function DashboardPage() {
               : `Class: ${className}`}
           </p>
         </div>
+
+        {/* Training — above the quizzes on purpose. A student who does not yet
+            know the question types should meet them here first, one at a time
+            and explained, rather than be timed on them. */}
+        {trainingCounts.size > 0 && (
+          <div>
+            <h2 className="text-xl font-bold text-white mb-1">🧠 Training</h2>
+            <p className="text-zinc-500 text-sm mb-3">
+              Work through questions one at a time, easiest first, with the reasoning
+              explained after each. Not timed, and it doesn&rsquo;t affect your score.
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+              {SECTIONS.filter(s => trainingCounts.has(s)).map(section => {
+                const cfg = SECTION_CONFIG[section]
+                return (
+                  <Link
+                    key={section}
+                    href={`/training/${section}`}
+                    className="flex flex-col items-center gap-1 bg-sky-500/10 border border-sky-500/30 text-white font-bold py-3 px-2 rounded-xl transition-all hover:scale-[1.02] hover:border-sky-400/60 active:scale-[0.99]"
+                  >
+                    <span className="text-xl">{cfg.emoji}</span>
+                    <span className="text-[12px] text-center leading-tight">{cfg.label}</span>
+                    <span className="text-[10px] text-sky-300/80 font-normal">
+                      {trainingCounts.get(section)} to learn
+                    </span>
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Start Practice */}
         <div>

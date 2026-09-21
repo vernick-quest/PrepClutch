@@ -87,7 +87,7 @@ passage into two in the quiz UI. 035-038 are independent of the others.
 | 056 | Why a session served only already-mastered questions | diagnostic | ✅ read-only |
 | 057 | Section mastery tier 6 (all 300) + reword tier 5 | migration | ✅ |
 | 058 | Split the question bank by exam (HSPT / SSAT) | migration | ⏳ |
-| 059 | Training questions table + 3-question verbal pilot | migration | ⏳ |
+| 059 | Training questions table + 3-question verbal pilot | migration | ✅ |
 
 Next free number: **060**
 
