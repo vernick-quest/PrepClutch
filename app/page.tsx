@@ -144,17 +144,19 @@ export default async function DashboardPage() {
               explained after each. Not timed, and it doesn&rsquo;t affect your score.
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+              {/* Same colors as the quiz boxes below, so a section reads as one
+                  thing across both rows. */}
               {SECTIONS.filter(s => trainingCounts.has(s)).map(section => {
                 const cfg = SECTION_CONFIG[section]
                 return (
                   <Link
                     key={section}
                     href={`/training/${section}`}
-                    className="flex flex-col items-center gap-1 bg-sky-500/10 border border-sky-500/30 text-white font-bold py-3 px-2 rounded-xl transition-all hover:scale-[1.02] hover:border-sky-400/60 active:scale-[0.99]"
+                    className={`flex flex-col items-center gap-1 ${cfg.bg} border ${cfg.border} text-white font-bold py-3 px-2 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.99]`}
                   >
                     <span className="text-xl">{cfg.emoji}</span>
                     <span className="text-[12px] text-center leading-tight">{cfg.label}</span>
-                    <span className="text-[10px] text-sky-300/80 font-normal">
+                    <span className={`text-[10px] font-normal ${cfg.color} opacity-80`}>
                       {trainingCounts.get(section)} to learn
                     </span>
                   </Link>
