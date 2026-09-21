@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import { normalizeClassCode } from '@/lib/constants'
 
 interface Props {
   userId: string
@@ -34,7 +35,7 @@ export default function ProfileActions({
 
   async function handleJoinClass() {
     const code = classInput.trim()
-    if (code.length !== 5) { setClassMsg({ type: 'error', text: 'Enter a 5-digit class code.' }); return }
+    if (code.length < 5) { setClassMsg({ type: 'error', text: 'Enter your class code.' }); return }
     setClassLoading(true)
     setClassMsg(null)
     const supabase = createClient()
@@ -128,13 +129,13 @@ export default function ProfileActions({
               <input
                 type="text"
                 value={classInput}
-                onChange={e => setClassInput(e.target.value.replace(/\D/g, '').slice(0, 5))}
-                placeholder="5-digit code"
+                onChange={e => setClassInput(normalizeClassCode(e.target.value))}
+                placeholder="Class code"
                 className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white font-mono text-base focus:outline-none focus:border-amber-500/50 transition-colors"
               />
               <button
                 onClick={handleJoinClass}
-                disabled={classLoading || classInput.length !== 5}
+                disabled={classLoading || classInput.length < 5}
                 className="px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-black font-bold rounded-xl text-sm transition-colors disabled:opacity-40"
               >
                 Join

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { normalizeClassCode } from '@/lib/constants'
 
 interface ClassRow {
   code: string
@@ -52,7 +53,7 @@ export default function AdminClassEditor({ classes, students }: Props) {
 
   async function saveStudentCode(studentId: string) {
     const code = editCode.trim()
-    if (code.length !== 5) { setMsg({ type: 'error', text: 'Code must be exactly 5 digits.' }); return }
+    if (code.length < 5) { setMsg({ type: 'error', text: 'Code must be at least 5 characters.' }); return }
     setSaving(true)
     setMsg(null)
     const supabase = createClient()
@@ -139,11 +140,11 @@ export default function AdminClassEditor({ classes, students }: Props) {
                   <input
                     type="text"
                     value={editCode}
-                    onChange={e => setEditCode(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                    onChange={e => setEditCode(normalizeClassCode(e.target.value))}
                     placeholder="new code"
                     className="w-24 bg-white/10 border border-white/20 rounded-lg px-2 py-1 text-white font-mono text-sm focus:outline-none focus:border-amber-500/50"
                   />
-                  <button onClick={() => saveStudentCode(student.id)} disabled={saving || editCode.length !== 5} className="px-2 py-1 bg-amber-500 text-black font-bold rounded-lg text-xs disabled:opacity-40">
+                  <button onClick={() => saveStudentCode(student.id)} disabled={saving || editCode.length < 5} className="px-2 py-1 bg-amber-500 text-black font-bold rounded-lg text-xs disabled:opacity-40">
                     {saving ? '…' : 'Move'}
                   </button>
                   <button onClick={() => setEditingStudent(null)} className="px-2 py-1 bg-white/5 text-zinc-400 rounded-lg text-xs">✕</button>

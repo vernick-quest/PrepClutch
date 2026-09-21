@@ -48,6 +48,13 @@ export const AVATAR_COLORS = [
   '#3b82f6', '#ec4899', '#14b8a6', '#f97316', '#a855f7',
 ]
 
+// Class codes were 5 digits (generate_class_code) until named ones like LOS2027
+// (migration 061). Accept either: uppercase letters and digits, capped well
+// above anything real. Onboarding already uppercases; this matches it.
+export function normalizeClassCode(raw: string): string {
+  return raw.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 12)
+}
+
 export const SECTIONS: Section[] = ['verbal', 'quantitative', 'reading', 'math', 'language']
 
 // ── Exams ────────────────────────────────────────────────────────────────────
