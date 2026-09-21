@@ -51,9 +51,18 @@ export default function TrainingClient({
 
   // Resume where they left off. Browser-only and best-effort: cleared storage
   // just starts them at the beginning, which is a fine outcome for training.
+  //
+  // `restored` must be STATE, not a ref, even though the lint rule below would
+  // be satisfied by a ref. Effects run in declaration order: with a ref, the
+  // save effect would fire on the same pass with `idx` still 0 and overwrite
+  // the saved position with zero before the restore ever took. The setState
+  // forces a re-render, so the save effect re-runs seeing the restored index.
   useEffect(() => {
     try {
       const saved = Number(window.localStorage.getItem(storageKey))
+      // Reading localStorage requires an effect — it does not exist during the
+      // server render — so restoring position is necessarily a setState here.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (Number.isFinite(saved) && saved > 0 && saved < total) setIdx(saved)
     } catch { /* private mode or blocked storage */ }
     setRestored(true)
