@@ -163,6 +163,38 @@ export default async function DashboardPage() {
                 )
               })}
             </div>
+
+            {/* Review — quiz questions the student already got right. Quizzes
+                stop serving those, so without this row they are gone for good.
+                `correct` is the same mastered count Clutch Points are built on. */}
+            {SECTIONS.some(s => (mastery.get(s)?.correct ?? 0) > 0) && (
+              <div className="mt-4">
+                <h3 className="text-sm font-bold text-amber-300">⭐ Review what you&rsquo;ve mastered</h3>
+                <p className="text-zinc-500 text-xs mb-2">
+                  Quiz questions you got right, by Easy, Medium or Hard. Still not scored.
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                  {SECTIONS.filter(s => (mastery.get(s)?.correct ?? 0) > 0).map(section => {
+                    const cfg = SECTION_CONFIG[section]
+                    return (
+                      <Link
+                        key={section}
+                        href={`/training/${section}/review`}
+                        className={`flex items-center justify-center gap-2 ${cfg.bg} border ${cfg.border} rounded-xl py-2.5 px-2 transition-all hover:scale-[1.02] active:scale-[0.99]`}
+                      >
+                        <span>{cfg.emoji}</span>
+                        <span className="flex flex-col leading-tight">
+                          <span className="text-[12px] font-bold text-white">{cfg.label}</span>
+                          <span className={`text-[10px] ${cfg.color} opacity-80`}>
+                            ⭐ {mastery.get(section)!.correct} mastered
+                          </span>
+                        </span>
+                      </Link>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
