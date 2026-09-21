@@ -34,11 +34,18 @@ export default async function DashboardPage() {
 
   if (!profile) redirect('/onboarding')
 
-  const { data: leaderboard } = await supabase
-    .from('leaderboard_view')
-    .select('*')
-    .eq('class_code', profile.class_code)
-    .order('aggregate_score', { ascending: false })
+  // No class (class_code '') is a real state — students removed from a class
+  // land there. Everyone classless shares that '' code, so a "class"
+  // leaderboard for them would rank strangers together. Show global only.
+  const hasClass = (profile.class_code ?? '').trim() !== ''
+
+  const { data: leaderboard } = hasClass
+    ? await supabase
+        .from('leaderboard_view')
+        .select('*')
+        .eq('class_code', profile.class_code)
+        .order('aggregate_score', { ascending: false })
+    : { data: null }
 
   const { data: globalLeaderboard } = await supabase
     .from('leaderboard_view')
@@ -76,8 +83,16 @@ export default async function DashboardPage() {
   // Total possible Clutch Points across all sections (from question bank)
   const totalMaxScore = Array.from(mastery.values()).reduce((s, r) => s + (r.max_score ?? 0), 0)
 
-  const myEntry = leaderboard?.find(e => e.user_id === user.id)
+  // Your own row, read directly rather than picked out of the class list, so
+  // the progress panel still renders for a student with no class.
+  const { data: ownRow } = await supabase
+    .from('leaderboard_view')
+    .select('*')
+    .eq('user_id', user.id)
+    .maybeSingle()
+  const myEntry = leaderboard?.find(e => e.user_id === user.id) ?? ownRow ?? undefined
   const myRank = leaderboard?.findIndex(e => e.user_id === user.id) ?? -1
+  const myGlobalRank = globalLeaderboard?.findIndex(e => e.user_id === user.id) ?? -1
   const isAdmin = (profile as Record<string, unknown>).is_admin === true
 
   return (
@@ -125,7 +140,13 @@ export default async function DashboardPage() {
             Hey, {profile.display_name.split(' ')[0]}! 👋
           </h1>
           <p className="text-zinc-400 mt-1">
-            {myRank === 0
+            {!hasClass
+              ? myGlobalRank === 0
+                ? '👑 You\'re #1 globally!'
+                : myGlobalRank > 0
+                ? `Ranked #${myGlobalRank + 1} globally`
+                : 'Not in a class · join one from your profile'
+              : myRank === 0
               ? '👑 You\'re #1 in your class!'
               : myRank > 0
               ? `Ranked #${myRank + 1} in ${className}`
@@ -246,7 +267,8 @@ export default async function DashboardPage() {
           {/* Leaderboards */}
           <div className="lg:col-span-2 space-y-8">
 
-            {/* Class leaderboard */}
+            {/* Class leaderboard — only for students in a class. */}
+            {hasClass && (
             <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-bold text-white">🏆 Class — {className}</h2>
@@ -338,6 +360,7 @@ export default async function DashboardPage() {
               )}
             </div>
             </div>
+            )}
 
             {/* Global leaderboard */}
             <div className="space-y-4">
