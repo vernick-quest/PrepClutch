@@ -8,14 +8,14 @@
 -- written, every question was checked for: exactly one correct answer, a
 -- "Correct." note on that option and on no other, every math/quantitative
 -- answer RECOMPUTED rather than trusted, balanced answer positions (the
--- original bank put the key on B 46% of the time; here no letter exceeds 27%),
+-- original bank put the key on B 46% of the time, here no letter exceeds 27%),
 -- no positional references like "Sentence B", and the notation conventions
 -- from 053/055. The validator was itself proven by planting six known faults.
 --
 -- SAFE: `training_questions` has no dependents — nothing references it by
 -- foreign key and no score reads it — so replacing its rows cannot touch any
 -- student's data. (The same DELETE on `questions` would cascade into every
--- student's history; that is why this bank lives in its own table.)
+-- student's history, that is why this bank lives in its own table.)
 -- The SQL editor runs this as one transaction: if any insert fails, the delete
 -- rolls back with it and the pilot stays in place.
 

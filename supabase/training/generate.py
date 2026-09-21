@@ -12,6 +12,18 @@ def lit(s):            # SQL string literal; standard_conforming_strings is on
 def jlit(v):
     return lit(json.dumps(v, ensure_ascii=False)) + '::JSONB'
 
+import base64
+def b64(s):
+    # Content travels as base64: letters, digits, + / = only. Supabase's SQL
+    # editor rejected the plain-literal version with `relation "a" does not
+    # exist` — English inside a string ("...ground; one is picked from a
+    # tree") surfacing as SQL. Whatever its preprocessing does, it cannot
+    # misread text that contains no quotes, semicolons, $ or -- at all.
+    return "convert_from(decode('" + base64.b64encode(s.encode('utf-8')).decode() + "', 'base64'), 'UTF8')"
+
+def b64json(v):
+    return b64(json.dumps(v, ensure_ascii=False)) + '::JSONB'
+
 rows, source = [], []
 for sec, qs in SECTIONS:
     for q in sorted(qs, key=lambda q: q['sort']):
@@ -20,12 +32,12 @@ for sec, qs in SECTIONS:
         ci    = opts.index(q['answer'])
         key   = f"train-hspt-{sec}-{q['sort']:02d}"
         rows.append(
-            f"({lit(key)}, {lit(sec)}, {q['sort']}, {lit(q['concept'])},\n"
-            f" {lit(q['prompt'])},\n"
-            f" {lit(q['passage']) if q.get('passage') else 'NULL'},\n"
-            f" {jlit(opts)}, {ci}, {q['diff']},\n"
-            f" {lit(q['explanation'])},\n"
-            f" {jlit(notes)})")
+            f"({lit(key)}, {lit(sec)}, {q['sort']}, {b64(q['concept'])},\n"
+            f" {b64(q['prompt'])},\n"
+            f" {b64(q['passage']) if q.get('passage') else 'NULL::TEXT'},\n"
+            f" {b64json(opts)}, {ci}, {q['diff']},\n"
+            f" {b64(q['explanation'])},\n"
+            f" {b64json(notes)})")
         source.append((key, q['prompt'], opts, notes, q['explanation'], q.get('passage')))
 
 HEADER = open('header.sql').read()
@@ -45,22 +57,25 @@ CHECKSUM = hashlib.md5('#'.join(recs).encode('utf-8')).hexdigest()
 sql = HEADER + ",\n\n".join(rows) + FOOTER.replace('{{CHECKSUM}}', CHECKSUM)
 open('060_training_bank.sql', 'w').write(sql)
 
-# ── Round-trip: decode every literal back and compare with the source ────────
-# Catches escaping mistakes (a stray quote, a mangled newline, a JSON escape)
-# without needing a database to run the SQL against.
-LIT = r"'((?:[^']|'')*)'"
-pat = re.compile(r"\(" + LIT + r", " + LIT + r", (\d+), " + LIT + r",\n " + LIT + r",\n (NULL|" + LIT + r"),\n "
-                 + LIT + r"::JSONB, (\d), (\d),\n " + LIT + r",\n " + LIT + r"::JSONB\)")
-un = lambda s: s.replace("''", "'")
+# ── Round-trip: decode every base64 field back and compare with the source ──
+B = r"convert_from\(decode\('([A-Za-z0-9+/=]*)', 'base64'\), 'UTF8'\)"
+pat = re.compile(r"\('([a-z0-9-]+)', '([a-z]+)', (\d+), " + B + r",\n " + B + r",\n (NULL::TEXT|" + B + r"),\n "
+                 + B + r"::JSONB, (\d), (\d),\n " + B + r",\n " + B + r"::JSONB\)")
+dec = lambda s: base64.b64decode(s).decode('utf-8')
 parsed = pat.findall(sql)
 bad = 0
 for m, (key, prompt, opts, notes, expl, passage) in zip(parsed, source):
-    got = dict(key=un(m[0]), prompt=un(m[4]), passage=None if m[5] == 'NULL' else un(m[6]),
-               opts=json.loads(un(m[7])), expl=un(m[10]), notes=json.loads(un(m[11])))
+    got = dict(key=m[0], prompt=dec(m[4]), passage=None if m[5] == 'NULL::TEXT' else dec(m[6]),
+               opts=json.loads(dec(m[7])), expl=dec(m[10]), notes=json.loads(dec(m[11])))
     want = dict(key=key, prompt=prompt, passage=passage, opts=opts, expl=expl, notes=notes)
     for f in want:
         if got[f] != want[f]:
             bad += 1; print(f"  MISMATCH {key}.{f}")
+
+# ── Nothing an editor could misread may remain inside any string literal ──
+literals = re.findall(r"'((?:[^']|'')*)'", re.sub(r'--[^\n]*', '', sql))
+risky = [l for l in literals if any(c in l for c in (';', '$')) or '--' in l]
+print(f"string literals scanned: {len(literals)} | containing ; $ or --: {len(risky)}")
 print(f"rows generated: {len(rows)} | parsed back: {len(parsed)} | round-trip mismatches: {bad}")
 print(f"file: 060_training_bank.sql  {len(sql):,} bytes | content checksum {CHECKSUM}")
-sys.exit(0 if len(parsed) == len(rows) == 75 and bad == 0 else 1)
+sys.exit(0 if len(parsed) == len(rows) == 75 and bad == 0 and not risky else 1)
