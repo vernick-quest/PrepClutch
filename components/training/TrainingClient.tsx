@@ -131,9 +131,9 @@ export default function TrainingClient({
     if (!locked) {
       return 'bg-white/5 border-white/10 text-zinc-200 hover:bg-white/8 hover:border-white/25'
     }
-    if (i === q.correct_index) return 'bg-emerald-500/20 border-emerald-500/60 text-emerald-200'
-    if (i === selected)        return 'bg-rose-500/20 border-rose-500/50 text-rose-200'
-    return 'bg-white/3 border-white/5 text-zinc-600'
+    if (i === q.correct_index) return 'bg-emerald-500/15 border-emerald-500/50 text-emerald-100'
+    if (i === selected)        return 'bg-rose-500/15 border-rose-500/45 text-rose-100'
+    return 'bg-white/[0.02] border-white/8 text-zinc-400'
   }
 
   return (
@@ -195,54 +195,61 @@ export default function TrainingClient({
           {q.prompt}
         </p>
 
+        {/* Once answered, EVERY option explains itself — not just the one the
+            student picked. A student who guessed right needs to see why the
+            other three fail, or they learn nothing from the guess. */}
         <div className="space-y-2.5">
-          {q.options.map((opt, i) => (
-            <button
-              key={`${q.id}-${i}`}
-              onClick={() => choose(i)}
-              disabled={locked}
-              className={`w-full flex items-start gap-3 p-4 rounded-2xl border text-left transition-all disabled:cursor-default ${optionStyle(i)}`}
-            >
-              <span className="text-xs font-black opacity-60 shrink-0 mt-0.5 w-4">{LETTER[i] ?? i + 1}</span>
-              <span className="text-sm leading-relaxed">{opt}</span>
-              {locked && i === q.correct_index && <span className="ml-auto text-emerald-400">✓</span>}
-              {locked && i === selected && i !== q.correct_index && <span className="ml-auto text-rose-400">✗</span>}
-            </button>
-          ))}
+          {q.options.map((opt, i) => {
+            const isAnswer = i === q.correct_index
+            const isPick   = i === selected
+            return (
+              <button
+                key={`${q.id}-${i}`}
+                onClick={() => choose(i)}
+                disabled={locked}
+                className={`w-full rounded-2xl border text-left transition-all disabled:cursor-default ${optionStyle(i)}`}
+              >
+                <div className="flex items-start gap-3 p-4">
+                  <span className="text-xs font-black opacity-60 shrink-0 mt-0.5 w-4">{LETTER[i] ?? i + 1}</span>
+                  <span className="text-sm leading-relaxed flex-1">{opt}</span>
+                  {locked && isPick && (
+                    <span className="shrink-0 text-[10px] font-bold uppercase tracking-wide opacity-70 mt-0.5">Your pick</span>
+                  )}
+                  {locked && (isAnswer
+                    ? <span className="shrink-0 text-emerald-400">✓</span>
+                    : <span className={`shrink-0 ${isPick ? 'text-rose-400' : 'text-zinc-600'}`}>✗</span>)}
+                </div>
+                {locked && (
+                  <p className={`px-4 pb-4 pl-11 -mt-1 text-[13px] leading-relaxed ${
+                    isAnswer ? 'text-emerald-200/90' : isPick ? 'text-rose-200/90' : 'text-zinc-500'
+                  }`}>
+                    {q.option_notes[i]}
+                  </p>
+                )}
+              </button>
+            )
+          })}
         </div>
 
         {locked && (
           <div className="mt-5 space-y-3">
-            {/* The note for the option THEY picked, first — it is the question
-                they are actually asking. */}
-            <div className={`rounded-2xl border p-4 ${
+            <div className={`rounded-2xl border px-4 py-3 ${
               isCorrect ? 'bg-emerald-500/8 border-emerald-500/25' : 'bg-rose-500/8 border-rose-500/25'
             }`}>
-              <p className={`text-xs font-bold uppercase tracking-wide mb-1.5 ${
-                isCorrect ? 'text-emerald-400' : 'text-rose-400'
-              }`}>
-                {isCorrect ? '✅' : '❌'} You picked {LETTER[selected ?? 0]}
+              <p className={`text-sm font-bold ${isCorrect ? 'text-emerald-300' : 'text-rose-300'}`}>
+                {isCorrect
+                  ? '✅ Correct! Read why the other three don\u2019t work — that is where the learning is.'
+                  : `❌ Not quite — the answer is ${LETTER[q.correct_index]}. Each choice is explained above.`}
               </p>
-              <p className="text-sm text-zinc-300 leading-relaxed">{q.option_notes[selected ?? 0]}</p>
             </div>
 
-            {/* Shown even when they were right: guessing right and knowing why
-                are different things, and only one of them transfers. */}
+            {/* The method, shown whether they were right or wrong. */}
             <div className="rounded-2xl border border-white/10 bg-white/3 p-4">
               <p className="text-xs font-bold uppercase tracking-wide text-zinc-500 mb-1.5">
                 💡 How to get there
               </p>
               <p className="text-sm text-zinc-300 leading-relaxed">{q.explanation}</p>
             </div>
-
-            {!isCorrect && (
-              <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4">
-                <p className="text-xs font-bold uppercase tracking-wide text-emerald-400 mb-1.5">
-                  ✓ The answer — {LETTER[q.correct_index]}
-                </p>
-                <p className="text-sm text-zinc-300 leading-relaxed">{q.option_notes[q.correct_index]}</p>
-              </div>
-            )}
 
             <button
               onClick={next}

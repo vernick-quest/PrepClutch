@@ -21,7 +21,9 @@ export default async function TrainingPage({ params }: Props) {
   // sequenced so the first teaches the second.
   const { data, error } = await supabase
     .from('training_questions')
-    .select('id, section, prompt, passage, options, correct_index, difficulty, explanation, option_notes')
+    // '*' rather than a column list, so `concept` flows through once migration
+    // 060 adds it — and nothing errors before it does.
+    .select('*')
     .eq('section', section)
     .order('difficulty', { ascending: true })
     .order('sort_order', { ascending: true })
