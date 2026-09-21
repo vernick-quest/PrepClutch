@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import { SECTIONS, QUESTIONS_PER_SESSION, MAX_CORRECT_RECYCLED, DEFAULT_EXAM } from '@/lib/constants'
 import type { ExamId } from '@/lib/constants'
+import { hasExamColumn } from '@/lib/exam-scope'
 import QuizClient from '@/components/quiz/QuizClient'
 import ReadingQuizClient from '@/components/quiz/ReadingQuizClient'
 import FullTestClient from '@/components/quiz/FullTestClient'
@@ -111,25 +112,6 @@ function NoQuestions() {
   )
 }
 
-
-// ── Exam scoping, tolerant of an unapplied migration ─────────────────────────
-//
-// Migrations here are applied BY HAND, so a deploy can land before its schema
-// change does. Code must therefore never HARD-require a new column: shipping
-// the exam filter ahead of migration 058 took every quiz down with
-// "column questions.exam does not exist".
-//
-// Probe once and cache only the positive result, so the filter switches itself
-// on the moment 058 is applied — no redeploy, no restart.
-let examColumnReady = false
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function hasExamColumn(supabase: any): Promise<boolean> {
-  if (examColumnReady) return true
-  const { error } = await supabase.from('questions').select('exam').limit(1)
-  examColumnReady = !error
-  return examColumnReady
-}
 
 // ── Smart question selection ──────────────────────────────────────────────────
 //

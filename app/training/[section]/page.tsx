@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import { SECTIONS } from '@/lib/constants'
+import { masteredCounts } from '@/lib/mastered-review'
 import TrainingClient from '@/components/training/TrainingClient'
 import type { TrainingQuestion } from '@/components/training/TrainingClient'
 import type { Section } from '@/types/database'
@@ -37,5 +38,10 @@ export default async function TrainingPage({ params }: Props) {
   const questions = (data ?? []) as TrainingQuestion[]
   if (questions.length === 0) notFound()
 
-  return <TrainingClient section={section as Section} questions={questions} />
+  // For the "review what you've mastered" links. Best-effort: a failure here
+  // must not take training down with it.
+  const counts = await masteredCounts(supabase, user.id, section).catch(() => null)
+  const mastered = counts ? counts[1] + counts[2] + counts[3] : 0
+
+  return <TrainingClient section={section as Section} questions={questions} mastered={mastered} />
 }
