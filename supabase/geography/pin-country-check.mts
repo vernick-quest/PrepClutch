@@ -230,7 +230,7 @@ const cap = (iso: string) => ({ iso, lat: C(iso).capitals[0].lat, lon: C(iso).ca
   const problems: string[] = []
   const seen = new Set<string>()
   for (const ct of geo.CONTINENTS) {
-    const all = geo.COUNTRIES.filter(c => c.continent === ct)
+    const all = geo.COUNTRIES.filter(c => c.continent === ct && !geo.COUNTRY_NOT_ASKED.has(c.iso))
     for (const l of pin.PIN_LEVELS) {
       for (let k = 0; k < 40; k++) {
         const r = geo.buildCountryRound(ct, l, rnd)
@@ -246,9 +246,13 @@ const cap = (iso: string) => ({ iso, lat: C(iso).capitals[0].lat, lon: C(iso).ca
     }
   }
   check('country rounds: 10 different countries of the continent, the level\'s tier first, never repeated', !problems.length, problems.slice(0, 5).join('; '))
-  const disputed = [...geo.SHAPE_DISPUTED].filter(i => seen.has(i))
-  check(`disputed-border countries are asked too (${disputed.length} of ${geo.SHAPE_DISPUTED.size} seen in 720 rounds)`, disputed.length === geo.SHAPE_DISPUTED.size, [...geo.SHAPE_DISPUTED].filter(i => !seen.has(i)).join(' '))
-  check(`every UN member is asked somewhere (${seen.size} of ${geo.COUNTRIES.length})`, seen.size === geo.COUNTRIES.length)
+  const askable = (i: string) => !geo.COUNTRY_NOT_ASKED.has(i)
+  const shouldSee = [...geo.SHAPE_DISPUTED].filter(askable)
+  const disputed = shouldSee.filter(i => seen.has(i))
+  check(`disputed-border countries are asked too (${disputed.length} of ${shouldSee.length} seen in 720 rounds)`, disputed.length === shouldSee.length, shouldSee.filter(i => !seen.has(i)).join(' '))
+  const members = geo.COUNTRIES.filter(c => askable(c.iso)).length
+  check(`every UN member but COUNTRY_NOT_ASKED is asked somewhere (${seen.size} of ${members})`, seen.size === members)
+  check(`COUNTRY_NOT_ASKED (${[...geo.COUNTRY_NOT_ASKED].join(' ')}) is never asked`, [...geo.COUNTRY_NOT_ASKED].every(i => !seen.has(i)))
 }
 
 // ── 8. Shades ────────────────────────────────────────────────────────────────

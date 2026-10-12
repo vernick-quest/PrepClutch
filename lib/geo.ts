@@ -365,14 +365,21 @@ export function buildPinRound(continent: Continent, level: PinLevel, rnd: () => 
 
 /** Ten countries for a "Find the country" round: the level's own tier (the
  *  capitals' tiers, pinTiers), then the nearest other tiers when a continent
- *  is short, never one twice. Every UN member is asked, disputed borders
+ *  is short, never one twice. Every UN member but COUNTRY_NOT_ASKED is asked, disputed borders
  *  included: a tap on disputed land is right for every party to the
  *  dispute (DISPUTED_AREAS in lib/geo-pin.ts), so no answer turns on a
  *  contested line. South America has exactly ten, so every level asks all
  *  of them. */
+/** Countries Find the country never asks. Israel: where its borders end and
+ *  Palestine's begin is itself the dispute, so "Tap Israel" can't be judged
+ *  without taking a side (Robert, 2026-10-12: "remove palestine from the
+ *  questions"). Palestine is not a UN member, so it is never asked either.
+ *  Pin the map's places mode still asks Jerusalem: a point, not a border. */
+export const COUNTRY_NOT_ASKED = new Set(['IL'])
+
 export function buildCountryRound(continent: Continent, level: PinLevel, rnd: () => number = Math.random): PinCountry[] {
   const tiers = pinTiers()
-  const all = COUNTRIES.filter(c => c.continent === continent).map((c): PinCountry => ({
+  const all = COUNTRIES.filter(c => c.continent === continent && !COUNTRY_NOT_ASKED.has(c.iso)).map((c): PinCountry => ({
     iso: c.iso, name: c.name, continent: c.continent, tier: tiers.get(c.iso)!,
     lat: c.capitals[0].lat, lon: c.capitals[0].lon, tiny: isTinyCountry(c.iso),
   }))
