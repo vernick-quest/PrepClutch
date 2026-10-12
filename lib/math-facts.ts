@@ -338,9 +338,22 @@ function shuffle<T>(xs: T[]): T[] {
 // cards are mixed in as review, and fill the deck once nothing else is left.
 const QUOTA: [CardState, number][] = [['struggling', 3], ['learning', 3], ['unseen', 9], ['fluent', 1]]
 
+// A times-table fact's missing-number cards (? × 8 = 56, 7 × ? = 56) wait
+// until its plain card (7 × 8 = ?) has been answered right once, the same
+// order Learn teaches in. So a beginner's round is plain facts, and the ?
+// starts moving only for facts they already know. Cards already played stay
+// eligible, and a narrow deck (one table, missing-only) is never starved.
+function gateMissing(pool: FactCard[], history: Map<string, FactHistoryRow>): FactCard[] {
+  const knowsPlain = (c: FactCard) =>
+    (history.get(factKey(c.op!, c.a!, c.b!, 'c'))?.times_correct ?? 0) > 0
+  const gated = pool.filter(c =>
+    c.topic !== 'times' || c.form === 'c' || history.has(c.key) || knowsPlain(c))
+  return gated.length >= SESSION_SIZE ? gated : pool
+}
+
 export function buildDeck(opts: DeckOptions, history: Map<string, FactHistoryRow>): FactCard[] {
   const buckets = new Map<CardState, FactCard[]>()
-  for (const c of shuffle(deckPool(opts))) {
+  for (const c of shuffle(gateMissing(deckPool(opts), history))) {
     const s = cardState(history.get(c.key))
     buckets.set(s, [...(buckets.get(s) ?? []), c])
   }
