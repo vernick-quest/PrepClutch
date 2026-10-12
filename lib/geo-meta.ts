@@ -19,30 +19,33 @@ export const CONTINENT_EMOJI: Record<Continent, string> = {
   af: '🌍', as: '🌏', eu: '🌍', na: '🌎', sa: '🌎', oc: '🌏',
 }
 
-export type GeoKind = 'cap' | 'capr' | 'flag' | 'flagr' | 'cur' | 'lang' | 'cont' | 'shape'
+export type GeoKind = 'cap' | 'capr' | 'flag' | 'flagr' | 'cur' | 'lang' | 'cont' | 'shape' | 'city'
 // Currency and language cards ('cur', 'lang') are built and validated but NOT
 // in the catalogue: Robert judged them too hard for the age group. Their data
 // stays in lib/geo-data.ts so they can return later as an opt-in Expert mode.
 export const EXPERT_KINDS: GeoKind[] = ['cur', 'lang']
-export const KINDS: GeoKind[] = ['cap', 'capr', 'flag', 'flagr', 'cont', 'shape']
+export const KINDS: GeoKind[] = ['cap', 'capr', 'flag', 'flagr', 'cont', 'shape', 'city']
 /** The kinds migration 069 loaded. 'shape' (Name that country, on the map)
- *  arrives with the map migration; until it is applied the catalogue has no
- *  shape cards and pages offer only these (see availableGeoKinds). */
+ *  and 'city' (Which country is Rio de Janeiro in?) arrive with the map
+ *  migration (070); until it is applied the catalogue has neither and pages
+ *  offer only these (see availableGeoKinds). */
 export const KINDS_069: GeoKind[] = ['cap', 'capr', 'flag', 'flagr', 'cont']
+/** One card per country and kind. City cards are one per city instead. */
+export const COUNTRY_KINDS: GeoKind[] = KINDS.filter(k => k !== 'city')
 
 /** The groups a student can pick to play. One group = one or two kinds. */
-export type KindGroup = 'all' | 'capitals' | 'flags' | 'money' | 'languages' | 'continents' | 'shapes'
-export const GROUPS: KindGroup[] = ['all', 'capitals', 'flags', 'continents', 'shapes']
+export type KindGroup = 'all' | 'capitals' | 'flags' | 'money' | 'languages' | 'continents' | 'shapes' | 'cities'
+export const GROUPS: KindGroup[] = ['all', 'capitals', 'flags', 'continents', 'shapes', 'cities']
 export const GROUP_KINDS: Record<KindGroup, GeoKind[]> = {
   all: KINDS, capitals: ['cap', 'capr'], flags: ['flag', 'flagr'],
-  money: ['cur'], languages: ['lang'], continents: ['cont'], shapes: ['shape'],
+  money: ['cur'], languages: ['lang'], continents: ['cont'], shapes: ['shape'], cities: ['city'],
 }
 export const GROUP_LABEL: Record<KindGroup, string> = {
   all: 'Everything', capitals: 'Capitals', flags: 'Flags', money: 'Money',
-  languages: 'Languages', continents: 'Continents', shapes: 'Shapes',
+  languages: 'Languages', continents: 'Continents', shapes: 'Shapes', cities: 'Cities',
 }
 export const GROUP_EMOJI: Record<KindGroup, string> = {
-  all: '✨', capitals: '🏛️', flags: '🚩', money: '🪙', languages: '💬', continents: '🗺️', shapes: '🧩',
+  all: '✨', capitals: '🏛️', flags: '🚩', money: '🪙', languages: '💬', continents: '🗺️', shapes: '🧩', cities: '🏙️',
 }
 /** A group's kinds that the catalogue has (empty = do not offer the group). */
 export const groupKinds = (g: KindGroup, available: GeoKind[]) => GROUP_KINDS[g].filter(k => available.includes(k))
@@ -58,10 +61,15 @@ export const KIND_SCORE: Record<GeoKind, { points: number; targetMs: number }> =
   // Naming a highlighted country is a real map skill, worth a capital. The
   // extra second is for taking in the map before the four names.
   shape: { points: 15, targetMs: 8000 },
+  // Which country a famous city is in: a step up from capital → country
+  // (the city is not the one the country is known for), but the cities are
+  // ones kids have heard of, so the same 10 points and 7 seconds.
+  city:  { points: 10, targetMs: 7000 },
 }
 export const KIND_LABEL: Record<GeoKind, string> = {
   cap: 'Capital', capr: 'Capital → country', flag: 'Flag', flagr: 'Find the flag',
   cur: 'Currency', lang: 'Language', cont: 'Continent', shape: 'Name that country',
+  city: 'City → country',
 }
 
 export interface GeoOption {
@@ -148,5 +156,15 @@ export function geoCardState(h: GeoHistoryRow | undefined): GeoCardState {
   return h.times_wrong > 0 ? 'struggling' : 'learning'
 }
 
-/** One map tile: a country, without the rest of its data. */
-export interface MapCountry { iso: string; name: string; continent: Continent; capital: string }
+/** One map tile: a country, without the rest of its data. `cities` are its
+ *  famous cities' card keys and names (lib/geo-cities.ts), often none. */
+export interface MapCountry {
+  iso: string; name: string; continent: Continent; capital: string
+  cities: { key: string; name: string }[]
+}
+
+/** The cards one kind has for a country: one per country, except cities
+ *  (one per famous city, so none for most countries). */
+export function countryCardKeys(c: MapCountry, kind: GeoKind): string[] {
+  return kind === 'city' ? c.cities.map(x => x.key) : [geoKey(kind, c.iso)]
+}

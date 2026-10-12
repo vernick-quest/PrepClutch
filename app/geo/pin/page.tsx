@@ -36,7 +36,7 @@ export default async function GeoPinPage({ searchParams }: Props) {
         <div className="max-w-md mx-auto px-4 py-8 space-y-5">
           <div>
             <h1 className="text-2xl font-black text-white">📍 Pin the map</h1>
-            <p className="text-sm text-zinc-400 mt-1">Ten capitals. Tap where each one is. The closer, the more points.</p>
+            <p className="text-sm text-zinc-400 mt-1">Ten places, capitals and famous cities. Tap where each one is. The closer, the more points.</p>
           </div>
           <div className="grid grid-cols-2 gap-2">
             {CONTINENTS.map(ct => (
@@ -59,5 +59,5 @@ export default async function GeoPinPage({ searchParams }: Props) {
   const places = buildPinRound(continent, level)
   const canSave = await pinReady(supabase)
   // A new round is a new session: remount so "Play again" starts clean.
-  return <PinClient key={places.map(x => x.iso).join()} places={places} continent={continent} level={level} canSave={canSave} />
+  return <PinClient key={places.map(x => x.key).join()} places={places} continent={continent} level={level} canSave={canSave} />
 }

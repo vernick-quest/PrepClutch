@@ -3,7 +3,8 @@
 // A separate track inside PrepClutch with its own Explorer Points, badges and
 // leaderboards. Nothing here touches questions, Clutch Points or Math Facts.
 //
-// Eight cards per country, 193 countries (lib/geo-data.ts), 1,544 cards:
+// Cards per country and kind, 193 countries (lib/geo-data.ts), plus one
+// card per famous city (lib/geo-cities.ts):
 //
 //   kind   question                                   points  target
 //   cont   Which continent is Egypt in?                  5     6s
@@ -14,14 +15,18 @@
 //   lang   Which is an official language of Peru?       15     8s
 //   cur    Which currency does Japan use?               15     8s
 //   shape  [map, one country lit] Which country is this? 15    8s
+//   city   Which country is Rio de Janeiro in?          10     7s
 //
-// The first seven kinds came with migration 069 (KINDS_069). Shape cards
-// came with the map migration (supabase/geography/NNN.template.sql); until
-// it is applied pages ask availableGeoKinds and leave them out.
+// Currency and language cards are built but not in the catalogue
+// (EXPERT_KINDS). The other five kinds came with migration 069 (KINDS_069).
+// Shape and city cards come with the map migration (070); until it is
+// applied pages ask availableGeoKinds and leave them out.
 //
 // Every card is multiple choice with 4 options. The three wrong options are
 // chosen from the same continent first (for shape cards: from the nearest
-// countries, which are on the same map), so they are plausible, and are fixed
+// countries, which are on the same map; for city cards: two of the country's
+// nearest neighbours on its continent, then the rest of the continent), so
+// they are plausible, and are fixed
 // per card (seeded by its key) so a card is equally hard every time. Their
 // ORDER is shuffled every round so the right answer's position means nothing.
 //
@@ -34,18 +39,20 @@
 // No '@/' imports, so the Node generators can load this file.
 
 import { COUNTRIES, LOOKALIKE_FLAGS } from './geo-data'
+import { CITIES } from './geo-cities'
 import { NEIGHBOURS, POPULATION } from './geo-map-data'
-import { PIN_ROUND } from './geo-pin'
+import { PIN_ROUND, PIN_CITY_SHARE, pinPlaceKey } from './geo-pin'
 import type { PinLevel, PinPlace } from './geo-pin'
 import type { Country, Continent } from './geo-data'
+import type { City } from './geo-cities'
 import {
-  CONTINENTS, CONTINENT_LABEL, KINDS, EXPERT_KINDS, GROUP_KINDS, KIND_SCORE, SESSION_SIZE, geoKey, geoCardState,
+  CONTINENTS, CONTINENT_LABEL, KINDS, COUNTRY_KINDS, EXPERT_KINDS, GROUP_KINDS, KIND_SCORE, SESSION_SIZE, geoKey, geoCardState,
 } from './geo-meta'
 import type { GeoKind, GeoOption, GeoCard, DeckOptions, GeoHistoryRow, GeoCardState, MapCountry } from './geo-meta'
 
 export * from './geo-meta'
-export type { Country }
-export { COUNTRIES }
+export type { Country, City }
+export { COUNTRIES, CITIES }
 
 // ── Deterministic choice ─────────────────────────────────────────────────────
 
@@ -181,6 +188,8 @@ function makeCard(c: Country, kind: GeoKind): GeoCard {
       return { ...base, prompt: 'Which country is this?', map: c.iso, answer: c.iso,
         options: [c, ...wrong].map(country), full: `That is ${of}, in ${CONTINENT_LABEL[c.continent]}.` }
     }
+    case 'city':
+      throw new Error('city cards are made per city (makeCityCard)')
     case 'cont': {
       const also = c.alsoContinent ?? []
       const rnd = seed(key)
@@ -192,11 +201,38 @@ function makeCard(c: Country, kind: GeoKind): GeoCard {
   }
 }
 
+/** "Which country is Rio de Janeiro in?" Two wrong answers from the
+ *  country's six nearest neighbours on its own continent (the plausible
+ *  mix-ups: Argentina for Rio, Oman for Dubai), one from anywhere else on
+ *  the continent, never one the city's notWrong lists (a same-named place is
+ *  really there), all fixed by the card's key. */
+function makeCityCard(city: City): GeoCard {
+  const key = geoKey('city', city.id)
+  const c = byIso.get(city.iso)!
+  const never = new Set([c.iso, ...(city.notWrong ?? [])])
+  const rnd = seed(key)
+  const sameCont = (iso: string) => byIso.get(iso)!.continent === c.continent && !never.has(iso)
+  const near = shuffleWith(NEIGHBOURS[c.iso].slice(0, 6).filter(sameCont), rnd).slice(0, 2)
+  const rest = shuffleWith(COUNTRIES.filter(x => sameCont(x.iso) && !near.includes(x.iso)), rnd)
+  const wrong = [...near.map(i => byIso.get(i)!), ...rest].slice(0, 3)
+  if (wrong.length < 3) throw new Error(`not enough wrong options for ${key}`)
+  return {
+    key, iso: c.iso, kind: 'city', continent: c.continent, ...KIND_SCORE.city,
+    prompt: `Which country is ${city.name} in?`, answer: c.iso,
+    options: [c, ...wrong].map(x => ({ value: x.iso, label: x.name })),
+    full: `${city.name} is in ${inSentence(c)}.`,
+  }
+}
+
 let ALL: GeoCard[] | null = null
-/** Every card of every kind, including any the catalogue may not have yet. */
+/** Every card of every kind, including any the catalogue may not have yet:
+ *  the country cards in country order, then one card per city. */
 export function allGeoCards(): GeoCard[] {
   if (ALL) return ALL
-  return (ALL = COUNTRIES.flatMap(c => KINDS.map(k => makeCard(c, k))))
+  return (ALL = [
+    ...COUNTRIES.flatMap(c => COUNTRY_KINDS.filter(k => KINDS.includes(k)).map(k => makeCard(c, k))),
+    ...(KINDS.includes('city') ? CITIES.map(makeCityCard) : []),
+  ])
 }
 /** The cards of the given kinds, e.g. the ones the catalogue has. */
 export const geoCards = (kinds: GeoKind[]) => allGeoCards().filter(c => kinds.includes(c.kind))
@@ -214,15 +250,18 @@ export function parseGeoKey(key: string): GeoCard | null {
   return BY_KEY.get(key) ?? null
 }
 
-export const maxGeoPoints = (kinds: GeoKind[] = KINDS) => COUNTRIES.length * kinds.reduce((s, k) => s + KIND_SCORE[k].points, 0)
-export const geoCardCount = (kinds: GeoKind[] = KINDS) => COUNTRIES.length * kinds.length
+export const maxGeoPoints = (kinds: GeoKind[] = KINDS) => geoCards(kinds).reduce((s, c) => s + c.points, 0)
+export const geoCardCount = (kinds: GeoKind[] = KINDS) => geoCards(kinds).length
 
 export function countryByIso(iso: string): Country | undefined { return byIso.get(iso.toUpperCase()) }
 
 /** The map's tiles: just what a tile needs, so the page can pass it to the
  *  client without the rest of the data. */
 export function mapCountries(): MapCountry[] {
-  return COUNTRIES.map(c => ({ iso: c.iso, name: c.name, continent: c.continent, capital: c.capitals[0].name }))
+  return COUNTRIES.map(c => ({
+    iso: c.iso, name: c.name, continent: c.continent, capital: c.capitals[0].name,
+    cities: CITIES.filter(x => x.iso === c.iso).map(x => ({ key: geoKey('city', x.id), name: x.name })),
+  }))
 }
 
 // ── Rounds ───────────────────────────────────────────────────────────────────
@@ -270,17 +309,38 @@ export function pinTiers(): Map<string, PinLevel> {
   return out
 }
 
-/** Ten capitals for a round: from the level's own third, topped up from the
- *  nearest other third when a continent is small. */
-export function buildPinRound(continent: Continent, level: PinLevel): PinPlace[] {
+/** Every place Pin the map can ask: each country's asked capital (tier =
+ *  pinTiers) and every famous city (tier = its fame). Loaded into
+ *  geo_pin_places, which record_geo_pin_round scores against. */
+export function pinPlaces(): PinPlace[] {
   const tiers = pinTiers()
+  return [
+    ...COUNTRIES.map((c): PinPlace => ({
+      key: pinPlaceKey('capital', c.iso), kind: 'capital', name: c.capitals[0].name, iso: c.iso, country: c.name, continent: c.continent,
+      tier: tiers.get(c.iso)!, lat: c.capitals[0].lat, lon: c.capitals[0].lon, where: `the capital of ${inSentence(c)}`,
+    })),
+    ...CITIES.map((x): PinPlace => ({
+      key: pinPlaceKey('city', x.id), kind: 'city', name: x.name, iso: x.iso, country: byIso.get(x.iso)!.name, continent: x.continent,
+      tier: x.tier, lat: x.lat, lon: x.lon, where: `a city in ${inSentence(byIso.get(x.iso)!)}`,
+    })),
+  ]
+}
+
+/** Ten places for a round: the level's own tier first, then the nearest
+ *  other tiers when a continent is short. From each tier, cities first up
+ *  to PIN_CITY_SHARE for the whole round, then capitals, then any cities
+ *  still needed, so a round mixes the two wherever the continent can. */
+export function buildPinRound(continent: Continent, level: PinLevel, rnd: () => number = Math.random): PinPlace[] {
+  const all = pinPlaces().filter(p => p.continent === continent)
   const order: PinLevel[] = level === 1 ? [1, 2, 3] : level === 2 ? [2, 1, 3] : [3, 2, 1]
-  const picked: Country[] = []
+  const picked: PinPlace[] = []
+  const take = (pool: PinPlace[], n: number) => picked.push(...pool.filter(p => !picked.includes(p)).slice(0, Math.max(0, n)))
   for (const t of order) {
-    const pool = shuffle(COUNTRIES.filter(c => c.continent === continent && tiers.get(c.iso) === t))
-    picked.push(...pool.slice(0, PIN_ROUND - picked.length))
+    const cities = shuffleWith(all.filter(p => p.tier === t && p.kind === 'city'), rnd)
+    const caps = shuffleWith(all.filter(p => p.tier === t && p.kind === 'capital'), rnd)
+    take(cities, Math.min(PIN_CITY_SHARE - picked.filter(p => p.kind === 'city').length, PIN_ROUND - picked.length))
+    take(caps, PIN_ROUND - picked.length)
+    take(cities, PIN_ROUND - picked.length)
   }
-  return shuffle(picked).map(c => ({
-    iso: c.iso, country: c.name, capital: c.capitals[0].name, lat: c.capitals[0].lat, lon: c.capitals[0].lon,
-  }))
+  return shuffleWith(picked, rnd)
 }

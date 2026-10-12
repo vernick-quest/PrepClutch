@@ -32,34 +32,9 @@ const control = (name: string, problems: string[]) => {
   if (!problems.length) fails++
 }
 
-// ── Point in shape ───────────────────────────────────────────────────────────
+// ── Point in shape (shared with validate-cities.mts) ─────────────────────────
 
-function inShape(s: MapShape, lon: number, lat: number): boolean {
-  let inside = false
-  for (const r of s.rings) {
-    for (let i = 0, j = r.length - 2; i < r.length; j = i, i += 2) {
-      const xi = r[i], yi = r[i + 1], xj = r[j], yj = r[j + 1]
-      if ((yi > lat) !== (yj > lat) && lon < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) inside = !inside
-    }
-  }
-  return inside   // even-odd across all rings, exactly as the SVG fills
-}
-function nearestKm(s: MapShape, lon: number, lat: number): number {
-  if (inShape(s, lon, lat)) return 0
-  // Distance to the nearest edge, on a local plane (fine at these distances).
-  const k = Math.cos(lat * Math.PI / 180) * 111.32
-  let best = Infinity
-  for (const r of s.rings) {
-    for (let i = 0, j = r.length - 2; i < r.length; j = i, i += 2) {
-      const ax = proj.wrapLon(r[j] - lon) * k, ay = (r[j + 1] - lat) * 111.32
-      const bx = proj.wrapLon(r[i] - lon) * k, by = (r[i + 1] - lat) * 111.32
-      const dx = bx - ax, dy = by - ay, l2 = dx * dx + dy * dy
-      const t = l2 ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / l2)) : 0
-      best = Math.min(best, Math.hypot(ax + t * dx, ay + t * dy))
-    }
-  }
-  return best
-}
+const { inShape, nearestKm } = await import('./map-geom.mts')
 
 // ── 1. Every UN member resolves ──────────────────────────────────────────────
 
