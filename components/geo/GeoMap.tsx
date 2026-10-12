@@ -116,8 +116,8 @@ export default function GeoMap({ history, countries, readOnly = false, kinds: av
         {!readOnly && (
           <div className="shrink-0 flex items-center gap-1.5">
             <Link
-              href={tab === 'all' ? '/geo/pin' : pinHref(tab, 1)}
-              title="Pin the map: find capitals and famous cities on the map"
+              href={tab === 'all' ? '/geo/pin' : pinHref(tab, 1, 'country')}
+              title="Pin the map: find the countries, then the capitals and famous cities, on the map"
               className="flex items-center bg-white/5 border border-white/15 hover:border-white/30 text-white font-bold px-3 py-3 rounded-xl transition-colors"
             >
               📍 Pin

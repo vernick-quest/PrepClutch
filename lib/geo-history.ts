@@ -30,6 +30,22 @@ export async function pinReady(supabase: any): Promise<boolean> {
   return !rounds.error && !places.error && !!places.data?.length
 }
 
+/** Whether "Find the country" rounds can be saved: Pin the map is set up
+ *  (pinReady) and migration 073 added record_geo_country_round. The probe
+ *  calls it with a deck it refuses before touching anything: a missing
+ *  function answers PostgREST's PGRST202 (a missing table would be PGRST205,
+ *  never Postgres's 42xxx codes), a present one raises its own error
+ *  ("unknown pin deck"). Until then a country round plays but is not saved. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function countryPinReady(supabase: any): Promise<boolean> {
+  const [pins, probe] = await Promise.all([
+    pinReady(supabase),
+    supabase.rpc('record_geo_country_round', { p_deck: 'probe', p_pins: [] }),
+  ])
+  const code = probe.error?.code
+  return pins && !!probe.error && code !== 'PGRST202' && code !== 'PGRST205' && code !== '42883'
+}
+
 // Reads a student's Geography history. `ready: false` means the table is not
 // there yet (the Geography migration is not applied) or could not be read.
 // Migrations are applied by hand, often after the deploy, so every page must

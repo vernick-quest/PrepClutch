@@ -104,6 +104,32 @@ export const REGION_BOX: Record<Region, Box> = {
   oc:    { w: 110,  s: -48, e: 192, n: 10 },
 }
 
+/** Where Pin the map opens, when the whole region wastes the screen. Europe's
+ *  region runs from Iceland to the Caucasus, which on a phone (a tall, narrow
+ *  frame) leaves mainland Europe a strip across the middle. Pin the map opens
+ *  on this box (Portugal to Moscow, Sicily to central Scandinavia) and can
+ *  still pan and zoom out to the whole region (REGION_BOX). The other regions
+ *  already fit their land closely. */
+export const PIN_FOCUS: Partial<Record<Continent, Box>> = {
+  eu: { w: -11, s: 35, e: 40, n: 66 },
+}
+
+/** The box a Pin the map round opens on: the continent's focus, widened to
+ *  take in every place the round asks (so no question starts off screen),
+ *  never past the region. One box per round, so the view does not jump
+ *  between questions or hint at where the next answer is. */
+export function pinViewBox(continent: Continent, points: { lat: number; lon: number }[]): Box {
+  const region = REGION_BOX[continent]
+  const b = { ...(PIN_FOCUS[continent] ?? region) }
+  for (const p of points) {
+    // The point's longitude on the region's side of the seam (Oceania runs past 180).
+    const lon = region.w + ((((p.lon - region.w) % 360) + 360) % 360)
+    b.w = Math.min(b.w, lon - 3); b.e = Math.max(b.e, lon + 3)
+    b.s = Math.min(b.s, p.lat - 2); b.n = Math.max(b.n, p.lat + 2)
+  }
+  return { w: Math.max(b.w, region.w), s: Math.max(b.s, region.s), e: Math.min(b.e, region.e), n: Math.min(b.n, region.n) }
+}
+
 // ── Views ────────────────────────────────────────────────────────────────────
 
 /** A rectangle in SVG units, plus the meridian it is centred on. */
@@ -121,17 +147,22 @@ export function fromSvg(x: number, y: number, lon0: number): { lat: number; lon:
   return invert(x / SCALE, -y / SCALE, lon0)
 }
 
-/** The view that shows `box`, widened to the container's shape (w / h). */
-export function fitView(box: Box, aspect: number, pad = 0.04): View {
-  const lon0 = wrapLon((box.w + box.e) / 2)
+/** The view that shows `box`, widened to the container's shape (w / h).
+ *  Centred on the box's middle meridian unless `lon0` is given (a second,
+ *  larger box drawn in the same projection, e.g. how far a map may pan). */
+/** `crop` above 1 lets a box wider than the screen lose up to that share of
+ *  its width (centred) instead of letterboxing: a portrait phone showed
+ *  Europe in the top half with Africa below it. The rest is a pan away. */
+export function fitView(box: Box, aspect: number, pad = 0.04, lon0 = wrapLon((box.w + box.e) / 2), crop = 1): View {
   const half = (box.e - box.w) / 2
+  const off = wrapLon((box.w + box.e) / 2 - lon0)
   let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity
   // The outline of a lon/lat box is curved in this projection: sample it.
   for (let i = 0; i <= 16; i++) {
     const t = i / 16
     const pts: [number, number][] = [
-      [-half + 2 * half * t, box.s], [-half + 2 * half * t, box.n],
-      [-half, box.s + (box.n - box.s) * t], [half, box.s + (box.n - box.s) * t],
+      [off - half + 2 * half * t, box.s], [off - half + 2 * half * t, box.n],
+      [off - half, box.s + (box.n - box.s) * t], [off + half, box.s + (box.n - box.s) * t],
     ]
     for (const [dl, lat] of pts) {
       const [x, y] = project(dl, lat, 0, true)
@@ -142,7 +173,7 @@ export function fitView(box: Box, aspect: number, pad = 0.04): View {
   let w = (x1 - x0) * (1 + 2 * pad), h = (y1 - y0) * (1 + 2 * pad)
   const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2
   if (w / h < aspect) w = h * aspect
-  else h = w / aspect
+  else { w = Math.max(w / crop, h * aspect); h = w / aspect }
   return { lon0, x: cx - w / 2, y: cy - h / 2, w, h }
 }
 
@@ -201,4 +232,117 @@ export const TINY_PX = 9
 export function sidePx(km2: number, pxPerUnit: number): number {
   // One SVG unit is 1/SCALE radian, about 6371/SCALE km on the ground.
   return Math.sqrt(km2) / (6371 / SCALE) * pxPerUnit
+}
+
+// ── Which country is under a tap ─────────────────────────────────────────────
+
+/** Whether (lon, lat) is in the shape: even-odd across all its rings, the
+ *  way the SVG fills it, so a hole (Lesotho in South Africa) is not in it.
+ *  Each ring is tested on its own side of the seam, like projectShapes
+ *  draws it: a tap at -179.9 finds a ring stored around +179.9. */
+export function inShape(s: MapShape, lon: number, lat: number): boolean {
+  let inside = false
+  s.rings.forEach((r, ri) => {
+    const x = s.mids[ri] + wrapLon(lon - s.mids[ri])
+    for (let i = 0, j = r.length - 2; i < r.length; j = i, i += 2) {
+      const xi = r[i], yi = r[i + 1], xj = r[j], yj = r[j + 1]
+      if ((yi > lat) !== (yj > lat) && x < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) inside = !inside
+    }
+  })
+  return inside
+}
+
+/** The shape under a tap (a UN member before neutral land, should two
+ *  overlap), or null for the sea. */
+export function shapeAt(shapes: MapShape[], lat: number, lon: number): MapShape | null {
+  let neutral: MapShape | null = null
+  for (const s of shapes) {
+    if (!inShape(s, lon, lat)) continue
+    if (s.iso) return s
+    neutral ??= s
+  }
+  return neutral
+}
+
+/** What a tap reports to record_geo_country_round: a UN member's alpha-2,
+ *  a neutral shape's alpha-3 (Kosovo is 'KOS'), or null for the sea. */
+export const tapCode = (s: MapShape | null) => (s ? s.iso ?? s.a3 : null)
+
+// ── Shades ───────────────────────────────────────────────────────────────────
+//
+// A political map: UN members in a few muted tones, so neighbours are easy
+// to tell apart, with no two that share a border in the same tone. Borders
+// come from the shapes themselves (Natural Earth's neighbours share their
+// border points exactly), and the tones are given by DSATUR graph colouring,
+// most-constrained country first, ties by code, each taking the least-used
+// tone its neighbours leave free: deterministic, and five tones are plenty
+// (supabase/geography/pin-country-check.mts checks that no neighbours
+// match). Neutral land stays one darker tone; the lit,
+// right and wrong colours are bright, so none of them is mistaken for a shade.
+
+export const LAND_SHADES = ['#334a63', '#3d5653', '#4b4462', '#55503b', '#56404b']
+export const NEUTRAL_FILL = '#222a36'
+
+/** a3 → which neighbours share a border point. */
+export function shapeNeighbours(shapes: MapShape[]): Map<string, Set<string>> {
+  const at = new Map<string, string[]>()
+  for (const s of shapes) {
+    if (!s.iso) continue
+    for (const r of s.rings) for (let i = 0; i < r.length; i += 2) {
+      const k = `${r[i].toFixed(2)},${r[i + 1].toFixed(2)}`
+      const list = at.get(k)
+      if (!list) at.set(k, [s.a3])
+      else if (!list.includes(s.a3)) list.push(s.a3)
+    }
+  }
+  const adj = new Map<string, Set<string>>()
+  for (const s of shapes) if (s.iso) adj.set(s.a3, new Set())
+  for (const list of at.values()) {
+    if (list.length < 2) continue
+    for (const a of list) for (const b of list) if (a !== b) adj.get(a)!.add(b)
+  }
+  return adj
+}
+
+const shadeCache = new WeakMap<MapShape[], Map<string, number>>()
+/** a3 → index into LAND_SHADES for every UN member. */
+export function landShades(shapes: MapShape[]): Map<string, number> {
+  const hit = shadeCache.get(shapes)
+  if (hit) return hit
+  const adj = shapeNeighbours(shapes)
+  const out = new Map<string, number>()
+  const todo = new Set([...adj.keys()].sort())
+  while (todo.size) {
+    let best = '', bestSat = -1, bestDeg = -1
+    for (const a of todo) {
+      const sat = new Set([...adj.get(a)!].filter(b => out.has(b)).map(b => out.get(b))).size
+      const deg = adj.get(a)!.size
+      if (sat > bestSat || (sat === bestSat && deg > bestDeg)) { best = a; bestSat = sat; bestDeg = deg }
+    }
+    // Of the tones no neighbour has, the one used least so far, so islands
+    // and other loners spread over all the tones instead of all taking the first.
+    const used = new Set([...adj.get(best)!].map(b => out.get(b)))
+    const count = LAND_SHADES.map((_, i) => [...out.values()].filter(v => v === i).length)
+    let c = -1
+    for (let i = 0; i < LAND_SHADES.length; i++) if (!used.has(i) && (c < 0 || count[i] < count[c])) c = i
+    out.set(best, c < 0 ? 0 : c)
+    todo.delete(best)
+  }
+  shadeCache.set(shapes, out)
+  return out
+}
+
+/** A circle of `km` around a point on the globe, for drawing a tiny
+ *  country's ring at its true size. */
+export function geoCircle(c: { lat: number; lon: number }, km: number, n = 48): { lat: number; lon: number }[] {
+  const D2R = Math.PI / 180, d = km / 6371
+  const la = c.lat * D2R, lo = c.lon * D2R
+  const out: { lat: number; lon: number }[] = []
+  for (let i = 0; i <= n; i++) {
+    const b = (2 * Math.PI * i) / n
+    const lat2 = Math.asin(Math.sin(la) * Math.cos(d) + Math.cos(la) * Math.sin(d) * Math.cos(b))
+    const lon2 = lo + Math.atan2(Math.sin(b) * Math.sin(d) * Math.cos(la), Math.cos(d) - Math.sin(la) * Math.sin(lat2))
+    out.push({ lat: lat2 / D2R, lon: lon2 / D2R })
+  }
+  return out
 }
