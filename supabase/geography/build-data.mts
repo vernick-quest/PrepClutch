@@ -140,7 +140,7 @@ const out = `// ── Geography data: the 193 UN member states ─────�
 //                     America and the Caribbean) and South. Russia is Europe,
 //                     Turkey and the Caucasus are Asia. alsoContinent is never
 //                     offered as a wrong answer.
-//   Names             Plain names kids use: China, Ivory Coast, Czechia (Czech Republic),
+//   Names             Plain names kids use (official short names with the familiar one in brackets where they differ): China, Ivory Coast, Czechia (Czech Republic), Türkiye (Turkey),
 //                     Turkey, Micronesia, Bahamas, Gambia. Sentences add
 //                     "the" where English needs it (lib/geo.ts THE).
 //

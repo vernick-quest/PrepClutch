@@ -25,7 +25,7 @@
 //                     America and the Caribbean) and South. Russia is Europe,
 //                     Turkey and the Caucasus are Asia. alsoContinent is never
 //                     offered as a wrong answer.
-//   Names             Plain names kids use: China, Ivory Coast, Czechia (Czech Republic),
+//   Names             Plain names kids use (official short names with the familiar one in brackets where they differ): China, Ivory Coast, Czechia (Czech Republic), Türkiye (Turkey),
 //                     Turkey, Micronesia, Bahamas, Gambia. Sentences add
 //                     "the" where English needs it (lib/geo.ts THE).
 //
@@ -149,7 +149,7 @@ export const COUNTRIES: Country[] = [
   {"iso":"TJ","iso3":"TJK","name":"Tajikistan","continent":"as","capitals":[{"name":"Dushanbe","lat":38.57,"lon":68.79}],"languages":["Tajik"],"notWrong":["Persian","Russian"],"currencies":[{"code":"TJS","short":"Somoni","name":"Tajikistani somoni"}],"wikidata":"Q863"},
   {"iso":"TH","iso3":"THA","name":"Thailand","continent":"as","capitals":[{"name":"Bangkok","lat":13.75,"lon":100.52}],"languages":["Thai"],"notWrong":[],"currencies":[{"code":"THB","short":"Baht","name":"Thai baht"}],"wikidata":"Q869"},
   {"iso":"TL","iso3":"TLS","name":"Timor-Leste","continent":"as","capitals":[{"name":"Dili","lat":-8.55,"lon":125.58}],"languages":["Tetum","Portuguese"],"notWrong":["English","Indonesian"],"currencies":[{"code":"USD","short":"Dollar","name":"US dollar"}],"alsoContinent":["oc"],"wikidata":"Q574"},
-  {"iso":"TR","iso3":"TUR","name":"Turkey","continent":"as","capitals":[{"name":"Ankara","lat":39.94,"lon":32.84}],"languages":["Turkish"],"notWrong":["Kurdish"],"currencies":[{"code":"TRY","short":"Lira","name":"Turkish lira"}],"alsoContinent":["eu"],"wikidata":"Q43"},
+  {"iso":"TR","iso3":"TUR","name":"Türkiye (Turkey)","continent":"as","capitals":[{"name":"Ankara","lat":39.94,"lon":32.84}],"languages":["Turkish"],"notWrong":["Kurdish"],"currencies":[{"code":"TRY","short":"Lira","name":"Turkish lira"}],"alsoContinent":["eu"],"wikidata":"Q43"},
   {"iso":"TM","iso3":"TKM","name":"Turkmenistan","continent":"as","capitals":[{"name":"Ashgabat","lat":37.95,"lon":58.38}],"languages":["Turkmen"],"notWrong":["Russian"],"currencies":[{"code":"TMT","short":"Manat","name":"Turkmenistan manat"}],"wikidata":"Q874"},
   {"iso":"AE","iso3":"ARE","name":"United Arab Emirates","continent":"as","capitals":[{"name":"Abu Dhabi","lat":24.45,"lon":54.4}],"languages":["Arabic"],"notWrong":["English"],"currencies":[{"code":"AED","short":"Dirham","name":"UAE dirham"}],"wikidata":"Q878"},
   {"iso":"UZ","iso3":"UZB","name":"Uzbekistan","continent":"as","capitals":[{"name":"Tashkent","lat":41.31,"lon":69.28}],"languages":["Uzbek"],"notWrong":["Karakalpak","Russian","Tajik"],"currencies":[{"code":"UZS","short":"Som","name":"Uzbekistani som"}],"wikidata":"Q265"},

@@ -148,7 +148,7 @@ export const ROWS: Row[] = [
   ['TJ', 'Tajikistan', 'as', ['Dushanbe'], ['Tajik'], ['Russian', 'Persian'], [['TJS', 'Somoni', 'Tajikistani somoni']]],
   ['TH', 'Thailand', 'as', ['Bangkok'], ['Thai'], [], [['THB', 'Baht', 'Thai baht']]],
   ['TL', 'Timor-Leste', 'as', ['Dili'], ['Tetum', 'Portuguese'], ['Indonesian', 'English'], [USD]],
-  ['TR', 'Turkey', 'as', ['Ankara'], ['Turkish'], ['Kurdish'], [['TRY', 'Lira', 'Turkish lira']]],
+  ['TR', 'Türkiye (Turkey)', 'as', ['Ankara'], ['Turkish'], ['Kurdish'], [['TRY', 'Lira', 'Turkish lira']]],
   ['TM', 'Turkmenistan', 'as', ['Ashgabat'], ['Turkmen'], ['Russian'], [['TMT', 'Manat', 'Turkmenistan manat']]],
   ['AE', 'United Arab Emirates', 'as', ['Abu Dhabi'], ['Arabic'], ['English'], [['AED', 'Dirham', 'UAE dirham']]],
   ['UZ', 'Uzbekistan', 'as', ['Tashkent'], ['Uzbek'], ['Karakalpak', 'Russian', 'Tajik'], [['UZS', 'Som', 'Uzbekistani som']]],
