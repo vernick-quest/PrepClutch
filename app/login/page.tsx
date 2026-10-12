@@ -48,9 +48,11 @@ function LoginContent() {
           <p className="text-zinc-400 text-lg">
             {forMath
               ? 'Times tables, fractions and decimals. Get fast. Beat your friends.'
-              : 'HSPT prep and Math Facts. Beat your class. Earn your rank.'}
+              : 'Learning through play.'}
           </p>
-          {forMath && <p className="text-zinc-600 text-sm mt-1">by PrepClutch</p>}
+          {forMath
+            ? <p className="text-zinc-600 text-sm mt-1">by PrepClutch · Learning through play</p>
+            : <p className="text-zinc-500 text-sm mt-1">HSPT prep and Math Facts. Earn points, collect badges, beat your class.</p>}
         </div>
 
         {/* Feature pills */}
@@ -94,7 +96,7 @@ function LoginContent() {
         <p className="mt-6 text-center text-zinc-600 text-sm">
           {forMath
             ? 'Already here for HSPT prep? It\u2019s the same sign-in.'
-            : 'Used in classrooms to prepare for the HSPT entrance exam.'}
+            : 'Used in classrooms for HSPT prep and math practice.'}
         </p>
 
         <p className="mt-4 text-center text-zinc-700 text-xs">

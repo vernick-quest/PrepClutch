@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "PrepClutch — HSPT prep & Math Facts",
-  description: "Gamified HSPT practice and math facts, with leaderboards, badges and instant feedback.",
+  title: "PrepClutch — Learning through play",
+  description: "Learning through play: HSPT prep and Math Facts, with points, badges, leaderboards and instant feedback.",
 };
 
 export default function RootLayout({
