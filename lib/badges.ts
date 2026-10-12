@@ -148,12 +148,14 @@ export function sectionMasteryThreshold(key: string): number {
 // Math Facts badges read as ladders, not by rarity: the Calcupede 10 → 864,
 // then the times tables 1 → 12, then the rest. Rarity order would interleave
 // "Master of the 1s" with "10 cards mastered".
-const FACTS_GROUPS = ['mastered', 'table', 'missing', 'all', 'perfect']
+const FACTS_GROUPS = ['mastered', 'table', 'missing', 'all', 'equiv', 'fdp', 'perfect']
 function factsOrder(key: string): [number, number] | null {
   const m = /^facts_([a-z]+)(?:_(\w+))?$/.exec(key)
   if (!m) return null
   const n = Number(m[2])
-  return [FACTS_GROUPS.indexOf(m[1]), Number.isFinite(n) ? n : m[2] === 'div' ? 1 : 0]
+  // facts_equiv_25 before facts_equiv_all; facts_all_mul before facts_all_div.
+  const rung = Number.isFinite(n) ? n : m[2] === 'all' ? Infinity : m[2] === 'div' ? 1 : 0
+  return [FACTS_GROUPS.indexOf(m[1]), rung]
 }
 
 function sectionMasteryOrder(key: string): number {

@@ -2,8 +2,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { MAX_FACT_POINTS, FORM_POINTS, allCards } from '@/lib/math-facts'
-import { loadFactHistory } from '@/lib/math-history'
+import { MAX_FACT_POINTS, allCards } from '@/lib/math-facts'
+import { loadFactHistory, availableTopics } from '@/lib/math-history'
 import MathStart from '@/components/math/MathStart'
 import FactGrid from '@/components/math/FactGrid'
 import { MATH_FACTS_CATEGORY, compareBadges } from '@/lib/badges'
@@ -81,6 +81,7 @@ export default async function MathHomePage() {
     )
   }
 
+  const topics = await availableTopics(supabase)
   const hasClass = (profile.class_code ?? '').trim() !== ''
   const [{ data: global }, { data: klass }] = await Promise.all([
     supabase.from('math_leaderboard_view').select('*').gt('points', 0)
@@ -103,7 +104,7 @@ export default async function MathHomePage() {
   const defs = ((badgeDefs ?? []) as { key: string; label: string; icon_emoji: string; rarity: string }[])
     .slice().sort(compareBadges)
 
-  const points = allCards().reduce((s, c) => s + (rows.get(c.key)?.fluent_at ? FORM_POINTS[c.form] : 0), 0)
+  const points = allCards().reduce((s, c) => s + (rows.get(c.key)?.fluent_at ? c.points : 0), 0)
   const fluent = [...rows.values()].filter(r => r.fluent_at).length
   const history = Object.fromEntries(rows)
 
@@ -115,7 +116,8 @@ export default async function MathHomePage() {
           <div>
             <h1 className="text-3xl font-black text-white">🧮 Math Facts</h1>
             <p className="text-zinc-400 text-sm mt-1">
-              Multiplication and division, 1 to 12. A card is mastered when you get it right <em>fast</em>.
+              Times tables, equivalent fractions, and fractions, decimals &amp; percents. A card is
+              mastered when you get it right <em>fast</em>.
             </p>
           </div>
           <div className="text-right">
@@ -150,11 +152,11 @@ export default async function MathHomePage() {
         )}
 
         <div className="grid lg:grid-cols-2 gap-6">
-          <div className="space-y-6">
-            <MathStart />
-            <FactGrid history={history} />
+          <div className="space-y-6 min-w-0">
+            <MathStart topics={topics} />
+            <FactGrid history={history} topics={topics} />
           </div>
-          <div className="space-y-8">
+          <div className="space-y-8 min-w-0">
             {hasClass && <Board title="🏆 Class" rows={(klass ?? []) as LbRow[]} me={user.id} />}
             <Board title="🌍 Global" rows={(global ?? []) as LbRow[]} me={user.id} />
           </div>

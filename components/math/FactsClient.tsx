@@ -12,15 +12,17 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { FORM_POINTS, FORM_TARGET_MS, SESSION_SIZE, parseFactKey } from '@/lib/math-facts'
-import type { FactCard } from '@/lib/math-facts'
+import { SESSION_SIZE, parseFactKey, isCorrect, isFrac, isPct } from '@/lib/math-facts'
+import type { FactCard, Tok } from '@/lib/math-facts'
 
 interface Shown { card: FactCard; retry: boolean }
 interface Result { card: FactCard; correct: boolean; ms: number }
 interface Badge { key: string; label: string; icon_emoji: string; description: string }
 type Feedback = { kind: 'fast' | 'slow' | 'wrong'; ms: number; given: string } | null
 
-const MAX_DIGITS = 3
+// 6 covers 0.375 and 37.5, and leaves room for four-digit mental math.
+const MAX_CHARS = 6
+const SYMBOLS = new Set(['×', '÷', '='])
 
 export default function FactsClient({ deck }: { deck: FactCard[] }) {
   const router = useRouter()
@@ -68,8 +70,8 @@ export default function FactsClient({ deck }: { deck: FactCard[] }) {
     if (!current || feedback || given === '' || answered.current) return
     answered.current = true
     const ms = Math.round(performance.now() - shownAt.current)
-    const correct = Number(given) === current.card.answer
-    const fast = correct && ms <= FORM_TARGET_MS[current.card.form]
+    const correct = isCorrect(current.card, given)
+    const fast = correct && ms <= current.card.targetMs
 
     if (!current.retry) {
       setResults(r => [...r, { card: current.card, correct, ms }])
@@ -87,7 +89,11 @@ export default function FactsClient({ deck }: { deck: FactCard[] }) {
     if (k === 'enter') return submit(input)
     if (k === 'back')  return setInput(s => s.slice(0, -1))
     if (k === 'skip')  return submit('-1')
-    setInput(s => (s.length >= MAX_DIGITS ? s : (s === '0' ? k : s + k)))
+    setInput(s => {
+      if (s.length >= MAX_CHARS) return s
+      if (k === '.') return s.includes('.') ? s : (s === '' ? '0.' : s + '.')
+      return s === '0' ? k : s + k
+    })
   }, [feedback, input, submit])
 
   useEffect(() => {
@@ -95,6 +101,7 @@ export default function FactsClient({ deck }: { deck: FactCard[] }) {
     // keypad button still has focus, typing a stray digit into the next card.
     function onKey(e: KeyboardEvent) {
       const k = /^[0-9]$/.test(e.key) ? e.key
+        : e.key === '.' || e.key === ',' ? '.'
         : e.key === 'Backspace' ? 'back' : e.key === 'Enter' ? 'enter' : null
       if (!k) return
       e.preventDefault()
@@ -111,7 +118,7 @@ export default function FactsClient({ deck }: { deck: FactCard[] }) {
     if (!done || pending > 0 || awarded.current) return
     awarded.current = true
     const perfect = results.length >= SESSION_SIZE &&
-      results.every(r => r.correct && r.ms <= FORM_TARGET_MS[r.card.form])
+      results.every(r => r.correct && r.ms <= r.card.targetMs)
     void (async () => {
       const supabase = createClient()
       const { data: keys, error } = await supabase.rpc('award_fact_badges', { p_perfect_round: perfect })
@@ -127,10 +134,10 @@ export default function FactsClient({ deck }: { deck: FactCard[] }) {
   // ── Summary ────────────────────────────────────────────────────────────────
   if (done) {
     const correct = results.filter(r => r.correct).length
-    const fast    = results.filter(r => r.correct && r.ms <= FORM_TARGET_MS[r.card.form]).length
+    const fast    = results.filter(r => r.correct && r.ms <= r.card.targetMs).length
     const missed  = results.filter(r => !r.correct)
-    const slow    = results.filter(r => r.correct && r.ms > FORM_TARGET_MS[r.card.form])
-    const earned  = newlyFluent.reduce((s, k) => s + (FORM_POINTS[parseFactKey(k)?.form ?? 'c']), 0)
+    const slow    = results.filter(r => r.correct && r.ms > r.card.targetMs)
+    const earned  = newlyFluent.reduce((s, k) => s + (parseFactKey(k)?.points ?? 0), 0)
 
     return (
       <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center px-4 py-10">
@@ -224,13 +231,26 @@ export default function FactsClient({ deck }: { deck: FactCard[] }) {
 
   // ── Card ───────────────────────────────────────────────────────────────────
   const card = current.card
-  const target = FORM_TARGET_MS[card.form]
-  const blankText = feedback ? (feedback.kind === 'wrong' ? String(card.answer) : feedback.given) : (input || '?')
+  const target = card.targetMs
+  const blankText = feedback ? (feedback.kind === 'wrong' ? card.answer : feedback.given) : (input || '?')
   // Once answered the blank always shows the right answer, so it is green.
   const blankColor = feedback ? 'text-emerald-300 border-emerald-400/60' : 'text-amber-300 border-amber-400/60'
+  // Underlined on its own; boxed inside a fraction, where an underline would
+  // sit on the fraction bar and read as a second bar.
+  const blank = (inFrac: boolean) => (
+    <span className={`inline-block min-w-[1.4em] px-1 text-center ${
+      inFrac ? 'border-[3px] rounded-lg py-0.5' : 'border-b-4 pb-1'
+    } ${blankColor}`}>{blankText}</span>
+  )
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] flex flex-col">
+    // Exactly one screen tall (dvh tracks the phone's visible area, address bar
+    // included), so the keypad is always on screen with no scrolling. The
+    // equation area absorbs whatever height is left; keys shrink on short phones.
+    <div
+      className="h-[100dvh] overflow-hidden bg-[#0a0a0f] flex flex-col"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+    >
       <div className="sticky top-0 z-30 border-b border-white/5 bg-[#0a0a0f]/90 backdrop-blur-sm">
         <div className="max-w-xl mx-auto px-4 py-3 flex items-center gap-4">
           <Link href="/math" className="text-zinc-500 hover:text-white text-sm transition-colors shrink-0">← Exit</Link>
@@ -241,27 +261,23 @@ export default function FactsClient({ deck }: { deck: FactCard[] }) {
         </div>
       </div>
 
-      <div className="flex-1 max-w-xl mx-auto w-full px-4 py-6 flex flex-col">
-        <div className="flex items-center justify-between text-xs mb-6">
+      <div className="flex-1 min-h-0 max-w-xl mx-auto w-full px-4 pt-3 pb-3 flex flex-col">
+        <div className="flex items-center justify-between text-xs mb-2">
           <span className="text-zinc-500">
-            {current.retry ? '🔁 Practice — not scored' : card.form === 'c' ? 'Solve it' : 'Find the missing number'}
+            {current.retry ? '🔁 Practice — not scored' : card.hint}
           </span>
           <span className="text-zinc-500">Aim for under {target / 1000}s</span>
         </div>
 
         {/* Equation */}
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex-1 min-h-0 flex items-center justify-center">
           <div className="flex items-center gap-3 sm:gap-4 text-4xl sm:text-6xl font-black text-white tabular-nums">
-            {card.parts.map((p, i) => p === null ? (
-              <span key={i} className={`min-w-[1.6em] text-center border-b-4 pb-1 ${blankColor}`}>{blankText}</span>
-            ) : (
-              <span key={i} className={typeof p === 'string' ? 'text-zinc-500' : ''}>{p}</span>
-            ))}
+            {card.parts.map((p, i) => <Token key={i} t={p} blank={blank} />)}
           </div>
         </div>
 
         {/* Feedback line — fixed height so the keypad never jumps */}
-        <div className="h-10 flex items-center justify-center text-sm font-bold">
+        <div className="h-10 flex items-center justify-center text-center text-xs sm:text-sm font-bold leading-tight">
           {feedback?.kind === 'fast'  && <span className="text-emerald-300">⚡ {(feedback.ms / 1000).toFixed(1)}s</span>}
           {feedback?.kind === 'slow'  && <span className="text-amber-300">✓ Right — {(feedback.ms / 1000).toFixed(1)}s. Under {target / 1000}s to master it.</span>}
           {feedback?.kind === 'wrong' && (
@@ -272,25 +288,26 @@ export default function FactsClient({ deck }: { deck: FactCard[] }) {
         </div>
 
         {/* Keypad */}
-        <div className="grid grid-cols-3 gap-2.5 mt-2">
+        <div className="grid grid-cols-3 gap-2 mt-1">
           {['1','2','3','4','5','6','7','8','9'].map(d => (
             <Key key={d} onClick={() => press(d)}>{d}</Key>
           ))}
-          <Key onClick={() => press('back')} muted>⌫</Key>
+          <Key onClick={() => press('.')}>.</Key>
           <Key onClick={() => press('0')}>0</Key>
-          <button
-            onMouseDown={e => e.preventDefault()}
-            onClick={() => press('enter')}
-            disabled={!!feedback || input === ''}
-            className="h-16 rounded-2xl bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-black text-2xl font-black transition-colors"
-          >
-            ✓
-          </button>
+          <Key onClick={() => press('back')} muted>⌫</Key>
         </div>
+        <button
+          onMouseDown={e => e.preventDefault()}
+          onClick={() => press('enter')}
+          disabled={!!feedback || input === ''}
+          className="mt-2 h-[clamp(2.75rem,8dvh,3.5rem)] w-full rounded-2xl bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-black text-2xl font-black transition-colors"
+        >
+          ✓
+        </button>
         <button
           onClick={() => press('skip')}
           disabled={!!feedback}
-          className="mt-3 text-xs text-zinc-600 hover:text-zinc-400 disabled:opacity-0 transition-colors"
+          className="mt-1.5 py-1 text-xs text-zinc-600 hover:text-zinc-400 disabled:opacity-0 transition-colors"
         >
           I don&rsquo;t know — show me
         </button>
@@ -299,13 +316,32 @@ export default function FactsClient({ deck }: { deck: FactCard[] }) {
   )
 }
 
+// One piece of the equation. Fractions stack; a percent keeps its % sign
+// tight against the number (or the blank).
+function Token({ t, blank }: { t: Tok; blank: (inFrac: boolean) => React.ReactNode }) {
+  if (t === null) return <>{blank(false)}</>
+  if (isPct(t)) {
+    return <span className="whitespace-nowrap">{t.pct === null ? blank(false) : t.pct}<span className="text-zinc-400">%</span></span>
+  }
+  if (isFrac(t)) {
+    return (
+      <span className="inline-flex flex-col items-center leading-none text-[0.8em]">
+        <span>{t.n === null ? blank(true) : t.n}</span>
+        <span className="block w-full min-w-[1.2em] border-t-[3px] border-white/80 my-1.5" />
+        <span>{t.d === null ? blank(true) : t.d}</span>
+      </span>
+    )
+  }
+  return <span className={typeof t === 'string' && SYMBOLS.has(t) ? 'text-zinc-500' : ''}>{t}</span>
+}
+
 function Key({ children, onClick, muted }: { children: React.ReactNode; onClick: () => void; muted?: boolean }) {
   return (
     <button
       // Keep focus off the keypad so the keyboard Enter can't re-press it.
       onMouseDown={e => e.preventDefault()}
       onClick={onClick}
-      className={`h-16 rounded-2xl border text-2xl font-bold transition-colors active:scale-[0.97] ${
+      className={`h-[clamp(2.75rem,9dvh,4rem)] rounded-2xl border text-2xl font-bold transition-colors active:scale-[0.97] ${
         muted ? 'bg-white/3 border-white/8 text-zinc-400 hover:bg-white/8'
               : 'bg-white/5 border-white/10 text-white hover:bg-white/10'
       }`}

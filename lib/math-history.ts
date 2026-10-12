@@ -1,4 +1,14 @@
-import type { FactHistoryRow } from '@/lib/math-facts'
+import type { FactHistoryRow, Topic } from '@/lib/math-facts'
+
+// Topics the database can score. Migration 064 adds `topic` to the catalogue
+// and loads the fraction and decimal cards; until it is applied only times
+// tables exist there, and offering the others would mean every answer is
+// refused as an unknown card. Applying 064 turns them on, no redeploy needed.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function availableTopics(supabase: any): Promise<Topic[]> {
+  const { data, error } = await supabase.from('math_fact_cards').select('topic').neq('topic', 'times').limit(1)
+  return error || !data?.length ? ['times'] : ['times', 'equiv', 'fdp']
+}
 
 // Reads a student's Math Facts history. `ready: false` means the table is not
 // there yet (migration 062 unapplied) or could not be read. Migrations are
