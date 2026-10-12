@@ -164,7 +164,7 @@ export const ROWS: Row[] = [
   ['BA', 'Bosnia and Herzegovina', 'eu', ['Sarajevo'], ['Bosnian', 'Croatian', 'Serbian'], ['Montenegrin'], [['BAM', 'Convertible mark', 'Bosnia and Herzegovina convertible mark']]],
   ['BG', 'Bulgaria', 'eu', ['Sofia'], ['Bulgarian'], ['Turkish'], [EUR, ['BGN', 'Lev', 'Bulgarian lev (replaced by the euro in 2026)']]],
   ['HR', 'Croatia', 'eu', ['Zagreb'], ['Croatian'], ['Serbian', 'Bosnian', 'Montenegrin', 'Italian', 'Hungarian', 'Czech', 'Slovak'], [EUR]],
-  ['CZ', 'Czech Republic', 'eu', ['Prague'], ['Czech'], ['Slovak'], [['CZK', 'Koruna', 'Czech koruna']]],
+  ['CZ', 'Czechia (Czech Republic)', 'eu', ['Prague'], ['Czech'], ['Slovak'], [['CZK', 'Koruna', 'Czech koruna']]],
   ['DK', 'Denmark', 'eu', ['Copenhagen'], ['Danish'], ['German', 'Faroese', 'Greenlandic'], [['DKK', 'Krone', 'Danish krone']]],
   ['EE', 'Estonia', 'eu', ['Tallinn'], ['Estonian'], [], [EUR]],
   ['FI', 'Finland', 'eu', ['Helsinki'], ['Finnish', 'Swedish'], ['Sámi'], [EUR]],

@@ -25,7 +25,7 @@
 //                     America and the Caribbean) and South. Russia is Europe,
 //                     Turkey and the Caucasus are Asia. alsoContinent is never
 //                     offered as a wrong answer.
-//   Names             Plain names kids use: China, Ivory Coast, Czech Republic,
+//   Names             Plain names kids use: China, Ivory Coast, Czechia (Czech Republic),
 //                     Turkey, Micronesia, Bahamas, Gambia. Sentences add
 //                     "the" where English needs it (lib/geo.ts THE).
 //
@@ -163,7 +163,7 @@ export const COUNTRIES: Country[] = [
   {"iso":"BA","iso3":"BIH","name":"Bosnia and Herzegovina","continent":"eu","capitals":[{"name":"Sarajevo","lat":43.86,"lon":18.41}],"languages":["Bosnian","Croatian","Serbian"],"notWrong":["Montenegrin"],"currencies":[{"code":"BAM","short":"Convertible mark","name":"Bosnia and Herzegovina convertible mark"}],"wikidata":"Q225"},
   {"iso":"BG","iso3":"BGR","name":"Bulgaria","continent":"eu","capitals":[{"name":"Sofia","lat":42.7,"lon":23.32}],"languages":["Bulgarian"],"notWrong":["Turkish"],"currencies":[{"code":"EUR","short":"Euro","name":"euro"},{"code":"BGN","short":"Lev","name":"Bulgarian lev (replaced by the euro in 2026)"}],"wikidata":"Q219"},
   {"iso":"HR","iso3":"HRV","name":"Croatia","continent":"eu","capitals":[{"name":"Zagreb","lat":45.81,"lon":15.98}],"languages":["Croatian"],"notWrong":["Bosnian","Czech","Hungarian","Italian","Montenegrin","Serbian","Slovak"],"currencies":[{"code":"EUR","short":"Euro","name":"euro"}],"wikidata":"Q224"},
-  {"iso":"CZ","iso3":"CZE","name":"Czech Republic","continent":"eu","capitals":[{"name":"Prague","lat":50.09,"lon":14.42}],"languages":["Czech"],"notWrong":["Slovak"],"currencies":[{"code":"CZK","short":"Koruna","name":"Czech koruna"}],"wikidata":"Q213"},
+  {"iso":"CZ","iso3":"CZE","name":"Czechia (Czech Republic)","continent":"eu","capitals":[{"name":"Prague","lat":50.09,"lon":14.42}],"languages":["Czech"],"notWrong":["Slovak"],"currencies":[{"code":"CZK","short":"Koruna","name":"Czech koruna"}],"wikidata":"Q213"},
   {"iso":"DK","iso3":"DNK","name":"Denmark","continent":"eu","capitals":[{"name":"Copenhagen","lat":55.68,"lon":12.57}],"languages":["Danish"],"notWrong":["Faroese","German","Greenlandic"],"currencies":[{"code":"DKK","short":"Krone","name":"Danish krone"}],"wikidata":"Q35"},
   {"iso":"EE","iso3":"EST","name":"Estonia","continent":"eu","capitals":[{"name":"Tallinn","lat":59.44,"lon":24.75}],"languages":["Estonian"],"notWrong":[],"currencies":[{"code":"EUR","short":"Euro","name":"euro"}],"wikidata":"Q191"},
   {"iso":"FI","iso3":"FIN","name":"Finland","continent":"eu","capitals":[{"name":"Helsinki","lat":60.17,"lon":24.94}],"languages":["Finnish","Swedish"],"notWrong":["Sámi"],"currencies":[{"code":"EUR","short":"Euro","name":"euro"}],"wikidata":"Q33"},

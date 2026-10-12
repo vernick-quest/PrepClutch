@@ -3,7 +3,7 @@
 -- Phase 2 of Geography (069 is phase 1 and must be applied first). Additive:
 -- nothing here changes or removes an existing card, history row or award.
 --
---   geo_cards                 + 193 "Name that country" cards, kind
+--   geo_cards                 + 175 "Name that country" cards, kind
 --                             'shape', one per UN member, 15 Explorer
 --                             Points each, mastered within 8 s
 --                             + 147 "Which country is Rio de Janeiro in?"
@@ -12,7 +12,7 @@
 --                             mastered within 7 s. Inserted only: the
 --                             069 cards are not touched.
 --   badges                    + Shape Spotter (25 shapes), Map Master (all
---                             193), City Hopper (25 cities), Globetrotter
+--                             175), City Hopper (25 cities), Globetrotter
 --                             (all 147)
 --   award_geo_badges_for      069's function copied exactly, with the shapes
 --                             and cities rungs added to its two card-type
@@ -65,7 +65,6 @@ INSERT INTO geo_cards (card_key, iso, kind, continent, points, target_ms) VALUES
 ('shape:cd', 'CD', 'shape', 'af', 15, 8000),
 ('shape:ci', 'CI', 'shape', 'af', 15, 8000),
 ('shape:dj', 'DJ', 'shape', 'af', 15, 8000),
-('shape:eg', 'EG', 'shape', 'af', 15, 8000),
 ('shape:gq', 'GQ', 'shape', 'af', 15, 8000),
 ('shape:er', 'ER', 'shape', 'af', 15, 8000),
 ('shape:sz', 'SZ', 'shape', 'af', 15, 8000),
@@ -84,7 +83,6 @@ INSERT INTO geo_cards (card_key, iso, kind, continent, points, target_ms) VALUES
 ('shape:ml', 'ML', 'shape', 'af', 15, 8000),
 ('shape:mr', 'MR', 'shape', 'af', 15, 8000),
 ('shape:mu', 'MU', 'shape', 'af', 15, 8000),
-('shape:ma', 'MA', 'shape', 'af', 15, 8000),
 ('shape:mz', 'MZ', 'shape', 'af', 15, 8000),
 ('shape:na', 'NA', 'shape', 'af', 15, 8000),
 ('shape:ne', 'NE', 'shape', 'af', 15, 8000),
@@ -94,10 +92,7 @@ INSERT INTO geo_cards (card_key, iso, kind, continent, points, target_ms) VALUES
 ('shape:sn', 'SN', 'shape', 'af', 15, 8000),
 ('shape:sc', 'SC', 'shape', 'af', 15, 8000),
 ('shape:sl', 'SL', 'shape', 'af', 15, 8000),
-('shape:so', 'SO', 'shape', 'af', 15, 8000),
 ('shape:za', 'ZA', 'shape', 'af', 15, 8000),
-('shape:ss', 'SS', 'shape', 'af', 15, 8000),
-('shape:sd', 'SD', 'shape', 'af', 15, 8000),
 ('shape:tz', 'TZ', 'shape', 'af', 15, 8000),
 ('shape:tg', 'TG', 'shape', 'af', 15, 8000),
 ('shape:tn', 'TN', 'shape', 'af', 15, 8000),
@@ -112,15 +107,9 @@ INSERT INTO geo_cards (card_key, iso, kind, continent, points, target_ms) VALUES
 ('shape:bt', 'BT', 'shape', 'as', 15, 8000),
 ('shape:bn', 'BN', 'shape', 'as', 15, 8000),
 ('shape:kh', 'KH', 'shape', 'as', 15, 8000),
-('shape:cn', 'CN', 'shape', 'as', 15, 8000),
-('shape:cy', 'CY', 'shape', 'as', 15, 8000),
-('shape:ge', 'GE', 'shape', 'as', 15, 8000),
-('shape:in', 'IN', 'shape', 'as', 15, 8000),
 ('shape:id', 'ID', 'shape', 'as', 15, 8000),
 ('shape:ir', 'IR', 'shape', 'as', 15, 8000),
 ('shape:iq', 'IQ', 'shape', 'as', 15, 8000),
-('shape:il', 'IL', 'shape', 'as', 15, 8000),
-('shape:jp', 'JP', 'shape', 'as', 15, 8000),
 ('shape:jo', 'JO', 'shape', 'as', 15, 8000),
 ('shape:kz', 'KZ', 'shape', 'as', 15, 8000),
 ('shape:kw', 'KW', 'shape', 'as', 15, 8000),
@@ -134,7 +123,6 @@ INSERT INTO geo_cards (card_key, iso, kind, continent, points, target_ms) VALUES
 ('shape:np', 'NP', 'shape', 'as', 15, 8000),
 ('shape:kp', 'KP', 'shape', 'as', 15, 8000),
 ('shape:om', 'OM', 'shape', 'as', 15, 8000),
-('shape:pk', 'PK', 'shape', 'as', 15, 8000),
 ('shape:ph', 'PH', 'shape', 'as', 15, 8000),
 ('shape:qa', 'QA', 'shape', 'as', 15, 8000),
 ('shape:sa', 'SA', 'shape', 'as', 15, 8000),
@@ -175,7 +163,6 @@ INSERT INTO geo_cards (card_key, iso, kind, continent, points, target_ms) VALUES
 ('shape:lt', 'LT', 'shape', 'eu', 15, 8000),
 ('shape:lu', 'LU', 'shape', 'eu', 15, 8000),
 ('shape:mt', 'MT', 'shape', 'eu', 15, 8000),
-('shape:md', 'MD', 'shape', 'eu', 15, 8000),
 ('shape:mc', 'MC', 'shape', 'eu', 15, 8000),
 ('shape:me', 'ME', 'shape', 'eu', 15, 8000),
 ('shape:nl', 'NL', 'shape', 'eu', 15, 8000),
@@ -184,15 +171,12 @@ INSERT INTO geo_cards (card_key, iso, kind, continent, points, target_ms) VALUES
 ('shape:pl', 'PL', 'shape', 'eu', 15, 8000),
 ('shape:pt', 'PT', 'shape', 'eu', 15, 8000),
 ('shape:ro', 'RO', 'shape', 'eu', 15, 8000),
-('shape:ru', 'RU', 'shape', 'eu', 15, 8000),
 ('shape:sm', 'SM', 'shape', 'eu', 15, 8000),
-('shape:rs', 'RS', 'shape', 'eu', 15, 8000),
 ('shape:sk', 'SK', 'shape', 'eu', 15, 8000),
 ('shape:si', 'SI', 'shape', 'eu', 15, 8000),
 ('shape:es', 'ES', 'shape', 'eu', 15, 8000),
 ('shape:se', 'SE', 'shape', 'eu', 15, 8000),
 ('shape:ch', 'CH', 'shape', 'eu', 15, 8000),
-('shape:ua', 'UA', 'shape', 'eu', 15, 8000),
 ('shape:gb', 'GB', 'shape', 'eu', 15, 8000),
 ('shape:ag', 'AG', 'shape', 'na', 15, 8000),
 ('shape:bs', 'BS', 'shape', 'na', 15, 8000),
@@ -223,12 +207,10 @@ INSERT INTO geo_cards (card_key, iso, kind, continent, points, target_ms) VALUES
 ('shape:cl', 'CL', 'shape', 'sa', 15, 8000),
 ('shape:co', 'CO', 'shape', 'sa', 15, 8000),
 ('shape:ec', 'EC', 'shape', 'sa', 15, 8000),
-('shape:gy', 'GY', 'shape', 'sa', 15, 8000),
 ('shape:py', 'PY', 'shape', 'sa', 15, 8000),
 ('shape:pe', 'PE', 'shape', 'sa', 15, 8000),
 ('shape:sr', 'SR', 'shape', 'sa', 15, 8000),
 ('shape:uy', 'UY', 'shape', 'sa', 15, 8000),
-('shape:ve', 'VE', 'shape', 'sa', 15, 8000),
 ('shape:au', 'AU', 'shape', 'oc', 15, 8000),
 ('shape:fj', 'FJ', 'shape', 'oc', 15, 8000),
 ('shape:ki', 'KI', 'shape', 'oc', 15, 8000),
@@ -403,8 +385,8 @@ INSERT INTO achievement_definitions (key, label, icon_emoji, description, rarity
 ('geo_shapes_25', 'Shape Spotter', '🧩', '25 Name that country cards mastered.', 'Uncommon', 'Shape Spotter', 'Geography',
  'Twenty-five countries named from their outline alone. The Spotter sees a boot and says Italy, sees a long thin ribbon and says Chile, and is now looking suspiciously at clouds.', 25),
 
-('geo_shapes_all', 'Map Master', '🗺️👑', 'All 193 Name that country cards mastered.', 'Legendary', 'Map Master', 'Geography',
- 'Every country on Earth, named from its shape on the map, from Russia down to Tuvalu. The Map Master could draw the world from memory and would only argue a little about the borders.', 193),
+('geo_shapes_all', 'Map Master', '🗺️👑', 'All 175 Name that country cards mastered.', 'Legendary', 'Map Master', 'Geography',
+ 'Every country on Earth, named from its shape on the map, from Russia down to Tuvalu. The Map Master could draw the world from memory and would only argue a little about the borders.', 175),
 
 ('geo_cities_25', 'City Hopper', '🏙️', '25 city cards mastered.', 'Uncommon', 'City Hopper', 'Geography',
  'Twenty-five famous cities, each put in the right country. The Hopper has ridden a gondola in Venice, a tram in Melbourne and a cable car in San Francisco, all before lunch.', 25),
@@ -419,12 +401,12 @@ ON CONFLICT (key) DO UPDATE SET
   lore = EXCLUDED.lore, threshold = EXCLUDED.threshold;
 
 -- Every-card badges now count the shape and city cards too.
-UPDATE achievement_definitions SET description = 'Every one of the 1305 Geography cards mastered.', threshold = 1305 WHERE key = 'geo_mastered_all';
-UPDATE achievement_definitions SET description = 'All 342 Africa cards mastered.', threshold = 342 WHERE key = 'geo_continent_af';
-UPDATE achievement_definitions SET description = 'All 313 Asia cards mastered.', threshold = 313 WHERE key = 'geo_continent_as';
-UPDATE achievement_definitions SET description = 'All 295 Europe cards mastered.', threshold = 295 WHERE key = 'geo_continent_eu';
+UPDATE achievement_definitions SET description = 'Every one of the 1287 Geography cards mastered.', threshold = 1287 WHERE key = 'geo_mastered_all';
+UPDATE achievement_definitions SET description = 'All 337 Africa cards mastered.', threshold = 337 WHERE key = 'geo_continent_af';
+UPDATE achievement_definitions SET description = 'All 306 Asia cards mastered.', threshold = 306 WHERE key = 'geo_continent_as';
+UPDATE achievement_definitions SET description = 'All 291 Europe cards mastered.', threshold = 291 WHERE key = 'geo_continent_eu';
 UPDATE achievement_definitions SET description = 'All 168 North America cards mastered.', threshold = 168 WHERE key = 'geo_continent_na';
-UPDATE achievement_definitions SET description = 'All 90 South America cards mastered.', threshold = 90 WHERE key = 'geo_continent_sa';
+UPDATE achievement_definitions SET description = 'All 88 South America cards mastered.', threshold = 88 WHERE key = 'geo_continent_sa';
 UPDATE achievement_definitions SET description = 'All 97 Oceania cards mastered.', threshold = 97 WHERE key = 'geo_continent_oc';
 
 
@@ -982,8 +964,8 @@ GRANT SELECT ON geo_pin_leaderboard_view TO authenticated;
 
 -- ── Verification ─────────────────────────────────────────────────────────────
 --
--- Expected: cards 1305, shape_cards 193, city_cards 147,
---           phase1_cards 965, phase1_points 9650, max_points 14015,
+-- Expected: cards 1287, shape_cards 175, city_cards 147,
+--           phase1_cards 965, phase1_points 9650, max_points 13745,
 --           orphan_history 0, geo_badges 23, pin_places 340,
 --           pin_cities 147, pin_rounds_table 1,
 --           helper_callable_by_students false,

@@ -224,13 +224,29 @@ function makeCityCard(city: City): GeoCard {
   }
 }
 
+// Robert, 2026-10-12: "if places are disputed, just remove the question."
+// Natural Earth draws borders as controlled on the ground, so for these
+// countries the outline itself takes a side in a sovereignty dispute (Crimea
+// and the Kurils with Russia, the Golan with Israel, Kashmir split along
+// control lines, Somaliland inside Somalia, Kosovo cut from Serbia, Western
+// Sahara cut from Morocco, Abkhazia and South Ossetia, Transnistria,
+// Essequibo, Abyei, Halaib). Their 'Name that country' card is left out; their
+// capital, flag and continent cards stay. Checked with a point-in-shape test
+// on the map asset, see the 2026-10-12 commit.
+export const SHAPE_DISPUTED = new Set([
+  'IL', 'RU', 'UA', 'RS', 'MA', 'SO', 'CY', 'IN', 'PK', 'CN', 'JP',
+  'GE', 'MD', 'GY', 'VE', 'SD', 'SS', 'EG',
+])
+
 let ALL: GeoCard[] | null = null
 /** Every card of every kind, including any the catalogue may not have yet:
  *  the country cards in country order, then one card per city. */
 export function allGeoCards(): GeoCard[] {
   if (ALL) return ALL
   return (ALL = [
-    ...COUNTRIES.flatMap(c => COUNTRY_KINDS.filter(k => KINDS.includes(k)).map(k => makeCard(c, k))),
+    ...COUNTRIES.flatMap(c => COUNTRY_KINDS.filter(k => KINDS.includes(k))
+      .filter(k => !(k === 'shape' && SHAPE_DISPUTED.has(c.iso)))
+      .map(k => makeCard(c, k))),
     ...(KINDS.includes('city') ? CITIES.map(makeCityCard) : []),
   ])
 }

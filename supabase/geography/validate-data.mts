@@ -158,6 +158,7 @@ function validateCards(): string[] {
         break
       }
       case 'shape':
+        if (geo.SHAPE_DISPUTED.has(c.iso)) p.push(`${card.key}: ${c.name}'s outline is disputed, it must have no shape card`)
         for (const o of wrong) if ((md.ENCLOSED_BY[c.iso] ?? []).includes(o.value)) p.push(`${card.key}: ${o.value} surrounds ${c.name} on the map`)
         if (card.map !== c.iso) p.push(`${card.key}: map shows ${card.map}`)
         break

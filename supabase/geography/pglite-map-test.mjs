@@ -118,7 +118,7 @@ const SHAPES = geo.geoCards(['shape']).length, CITIES = geo.geoCards(['city']).l
 const PLACES = geo.pinPlaces(), PIN_CITIES = PLACES.filter(p => p.kind === 'city').length
 const expect = { cards: ALL_CARDS, shape_cards: SHAPES, city_cards: CITIES, phase1_cards: P1_CARDS, phase1_points: P1_POINTS, max_points: ALL_POINTS, orphan_history: 0,
   geo_badges: ALL_BADGES, pin_places: PLACES.length, pin_cities: PIN_CITIES, pin_rounds_table: 1, helper_callable_by_students: false, pin_record_callable_by_anon: false, pin_insert_by_students: false }
-check(`derived: ${SHAPES} shapes, ${CITIES} cities (= ${geo.CITIES.length} in lib/geo-cities.ts), ${PLACES.length} pin places`, CITIES === geo.CITIES.length && PIN_CITIES === CITIES && SHAPES === geo.COUNTRIES.length && CITIES > 0)
+check(`derived: ${SHAPES} shapes, ${CITIES} cities (= ${geo.CITIES.length} in lib/geo-cities.ts), ${PLACES.length} pin places`, CITIES === geo.CITIES.length && PIN_CITIES === CITIES && SHAPES === geo.COUNTRIES.length - geo.SHAPE_DISPUTED.size && geo.SHAPE_DISPUTED.size > 0 && CITIES > 0)
 check('first run: verification as expected', Object.entries(expect).every(([k, v]) => v1[k] === v), JSON.stringify(expect))
 res = await db.exec('BEGIN;\n' + SQL + '\nCOMMIT;')
 check('re-run: identical verification', JSON.stringify(res.at(-2).rows[0]) === JSON.stringify(v1))
