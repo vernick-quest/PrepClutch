@@ -6,6 +6,7 @@ import { MAX_FACT_POINTS, FORM_POINTS, allCards } from '@/lib/math-facts'
 import { loadFactHistory } from '@/lib/math-history'
 import MathStart from '@/components/math/MathStart'
 import FactGrid from '@/components/math/FactGrid'
+import { MATH_FACTS_CATEGORY, compareBadges } from '@/lib/badges'
 
 export const dynamic = 'force-dynamic'
 
@@ -90,6 +91,18 @@ export default async function MathHomePage() {
       : Promise.resolve({ data: null }),
   ])
 
+  // Math Facts badges (migration 063). Empty before it is applied, and the row
+  // simply does not render.
+  const [{ data: badgeDefs }, { data: myBadges }] = await Promise.all([
+    supabase.from('achievement_definitions').select('key, label, icon_emoji, rarity')
+      .eq('category', MATH_FACTS_CATEGORY),
+    supabase.from('user_achievements').select('achievement_key').eq('user_id', user.id)
+      .like('achievement_key', 'facts_%'),
+  ])
+  const heldKeys = new Set((myBadges ?? []).map((b: { achievement_key: string }) => b.achievement_key))
+  const defs = ((badgeDefs ?? []) as { key: string; label: string; icon_emoji: string; rarity: string }[])
+    .slice().sort(compareBadges)
+
   const points = allCards().reduce((s, c) => s + (rows.get(c.key)?.fluent_at ? FORM_POINTS[c.form] : 0), 0)
   const fluent = [...rows.values()].filter(r => r.fluent_at).length
   const history = Object.fromEntries(rows)
@@ -112,6 +125,29 @@ export default async function MathHomePage() {
             <p className="text-xs text-zinc-500">Fact Points · {fluent} of {allCards().length} cards mastered</p>
           </div>
         </div>
+
+        {defs.length > 0 && (
+          <Link
+            href="/bestiary"
+            className="block rounded-2xl border border-violet-500/20 bg-violet-500/5 hover:border-violet-500/40 px-4 py-3 transition-colors"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-bold text-violet-200">🏅 Math Facts badges</span>
+              <span className="text-xs text-zinc-400">{heldKeys.size} / {defs.length} · see all →</span>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {defs.map(d => (
+                <span
+                  key={d.key}
+                  title={heldKeys.has(d.key) ? d.label : `${d.label} (not yet)`}
+                  className={`text-xl ${heldKeys.has(d.key) ? '' : 'grayscale opacity-25'}`}
+                >
+                  {d.icon_emoji}
+                </span>
+              ))}
+            </div>
+          </Link>
+        )}
 
         <div className="grid lg:grid-cols-2 gap-6">
           <div className="space-y-6">

@@ -67,6 +67,7 @@ export function evaluateBadges(stats: BadgeStats): string[] {
 // section-complete; tier 5 is now an honest waypoint. Migration 057 rewords it.
 
 export const SECTION_MASTERY_CATEGORY = 'Section Mastery'
+export const MATH_FACTS_CATEGORY = 'Math Facts'
 
 /**
  * True when every question in a section has been answered correctly at least
@@ -144,6 +145,17 @@ export function sectionMasteryThreshold(key: string): number {
 
 /** Position of a section-mastery key's section, or -1. Groups a section's
  *  six tiers together so one row shows one bicep growing. */
+// Math Facts badges read as ladders, not by rarity: the Calcupede 10 → 864,
+// then the times tables 1 → 12, then the rest. Rarity order would interleave
+// "Master of the 1s" with "10 cards mastered".
+const FACTS_GROUPS = ['mastered', 'table', 'missing', 'all', 'perfect']
+function factsOrder(key: string): [number, number] | null {
+  const m = /^facts_([a-z]+)(?:_(\w+))?$/.exec(key)
+  if (!m) return null
+  const n = Number(m[2])
+  return [FACTS_GROUPS.indexOf(m[1]), Number.isFinite(n) ? n : m[2] === 'div' ? 1 : 0]
+}
+
 function sectionMasteryOrder(key: string): number {
   const match = /^mastery_([a-z]+)_\d+$/.exec(key)
   if (!match) return -1
@@ -198,6 +210,10 @@ export function compareBadges(
   a: { key: string; rarity: string; label: string },
   b: { key: string; rarity: string; label: string },
 ): number {
+  const factsA = factsOrder(a.key)
+  const factsB = factsOrder(b.key)
+  if (factsA && factsB) return factsA[0] - factsB[0] || factsA[1] - factsB[1]
+
   const secA = sectionMasteryOrder(a.key)
   const secB = sectionMasteryOrder(b.key)
   if (secA >= 0 && secB >= 0) {

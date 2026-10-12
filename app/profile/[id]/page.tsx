@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import Footer from '@/components/ui/Footer'
 import AttemptReview from '@/components/quiz/AttemptReview'
-import { SECTION_MASTERY_CATEGORY, badgeEmojiStyle, sectionMasteryTier, compareBadges, isSectionComplete } from '@/lib/badges'
+import { SECTION_MASTERY_CATEGORY, MATH_FACTS_CATEGORY, badgeEmojiStyle, sectionMasteryTier, compareBadges, isSectionComplete } from '@/lib/badges'
 import type { Section, QuizAnswer } from '@/types/database'
 
 export const dynamic = 'force-dynamic'
@@ -87,7 +87,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
   const totalAttempts = attempts?.length ?? 0
   const earnedKeys = new Set(userAchievements?.map(a => a.achievement_key) ?? [])
   const displayAvatarUrl = (profile as Record<string, unknown>).avatar_url as string | null
-  const badgeCategories = ['First Completion', 'Perfect Score', 'Speed', 'Combo', 'Milestone', SECTION_MASTERY_CATEGORY]
+  const badgeCategories = ['First Completion', 'Perfect Score', 'Speed', 'Combo', 'Milestone', SECTION_MASTERY_CATEGORY, MATH_FACTS_CATEGORY]
 
   return (
     <div className="min-h-screen bg-[#0a0a0f]">

@@ -12,11 +12,12 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { FORM_POINTS, FORM_TARGET_MS, parseFactKey } from '@/lib/math-facts'
+import { FORM_POINTS, FORM_TARGET_MS, SESSION_SIZE, parseFactKey } from '@/lib/math-facts'
 import type { FactCard } from '@/lib/math-facts'
 
 interface Shown { card: FactCard; retry: boolean }
 interface Result { card: FactCard; correct: boolean; ms: number }
+interface Badge { key: string; label: string; icon_emoji: string; description: string }
 type Feedback = { kind: 'fast' | 'slow' | 'wrong'; ms: number; given: string } | null
 
 const MAX_DIGITS = 3
@@ -31,6 +32,8 @@ export default function FactsClient({ deck }: { deck: FactCard[] }) {
   const [newlyFluent, setNewlyFluent] = useState<string[]>([])
   const [saveError, setSaveError]     = useState(false)
   const [pending, setPending]   = useState(0)
+  const [badges, setBadges]     = useState<Badge[]>([])
+  const awarded = useRef(false)
   const shownAt = useRef(0)
   // Two Enter presses can land before React re-renders with `feedback` set;
   // the ref stops the second one recording the same card twice.
@@ -101,6 +104,26 @@ export default function FactsClient({ deck }: { deck: FactCard[] }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [press])
 
+  // Badges, once every answer has saved: they are computed in SQL from the
+  // saved history, so asking earlier would miss what the last card earned.
+  // Fails soft — before migration 063 the round still ends normally.
+  useEffect(() => {
+    if (!done || pending > 0 || awarded.current) return
+    awarded.current = true
+    const perfect = results.length >= SESSION_SIZE &&
+      results.every(r => r.correct && r.ms <= FORM_TARGET_MS[r.card.form])
+    void (async () => {
+      const supabase = createClient()
+      const { data: keys, error } = await supabase.rpc('award_fact_badges', { p_perfect_round: perfect })
+      if (error || !Array.isArray(keys) || keys.length === 0) return
+      const { data: defs } = await supabase
+        .from('achievement_definitions')
+        .select('key, label, icon_emoji, description')
+        .in('key', keys as string[])
+      if (defs) setBadges(defs as Badge[])
+    })()
+  }, [done, pending, results])
+
   // ── Summary ────────────────────────────────────────────────────────────────
   if (done) {
     const correct = results.filter(r => r.correct).length
@@ -130,6 +153,26 @@ export default function FactsClient({ deck }: { deck: FactCard[] }) {
               </>
             )}
           </div>
+
+          {badges.length > 0 && (
+            <div className="rounded-2xl border border-violet-500/30 bg-violet-500/10 p-4 text-left">
+              <p className="text-xs font-bold uppercase tracking-wide text-violet-300 mb-3">
+                🏅 New badge{badges.length === 1 ? '' : 's'}
+              </p>
+              <div className="space-y-2.5">
+                {badges.map(b => (
+                  <div key={b.key} className="flex items-center gap-3">
+                    <span className="text-3xl">{b.icon_emoji}</span>
+                    <div>
+                      <p className="font-bold text-white">{b.label}</p>
+                      <p className="text-xs text-zinc-400">{b.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <Link href="/bestiary" className="block mt-3 text-xs text-violet-300 hover:text-violet-200">See all your badges →</Link>
+            </div>
+          )}
 
           {saveError && (
             <p className="text-sm text-rose-300 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3">
