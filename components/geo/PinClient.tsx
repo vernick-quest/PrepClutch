@@ -180,7 +180,9 @@ export default function PinClient({ places, continent, level, canSave }: {
   // ── A place ────────────────────────────────────────────────────────────────
   const target = { lat: place.lat, lon: place.lon }
   return (
-    <div className="h-[100dvh] overflow-hidden bg-[#0a0a0f] flex flex-col" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+    // Fixed to the viewport so the top bar can't slide under an iPhone's
+    // status bar (see GeoClient), and so dragging the map never scrolls the page.
+    <div className="fixed inset-0 overflow-hidden bg-[#0a0a0f] flex flex-col" style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
       <div className="border-b border-white/5 bg-[#0a0a0f]/90">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-4">
           <Link href="/geo" className="text-zinc-500 hover:text-white text-sm transition-colors shrink-0">← Exit</Link>

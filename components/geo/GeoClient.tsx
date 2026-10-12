@@ -275,8 +275,11 @@ export default function GeoClient({ deck, deckId }: {
     // four choices are always on screen with no scrolling. The question area
     // absorbs whatever height is left.
     <div
-      className="h-[100dvh] overflow-hidden bg-[#0a0a0f] flex flex-col"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      // Fixed to the viewport (not just 100dvh tall): iPhone Safari can scroll
+      // the document a little as its toolbar collapses, which slides the top
+      // bar under the status bar. Same treatment as the Math Facts screens.
+      className="fixed inset-0 overflow-hidden bg-[#0a0a0f] flex flex-col"
+      style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <div className="border-b border-white/5 bg-[#0a0a0f]/90">
         <div className="max-w-xl mx-auto px-4 py-3 flex items-center gap-4">
