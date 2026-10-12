@@ -1,4 +1,4 @@
--- NNN — Geography: country cards, Explorer Points, badges, round history
+-- 069 — Geography: country cards, Explorer Points, badges, round history
 --
 -- A separate track at prepclutch.com/geo, built the same way as Math Facts
 -- (062-068) but in its own tables. Nothing here reads or writes questions,
@@ -25,7 +25,7 @@
 -- Additive. Re-running is harmless: the catalogue and badge definitions
 -- upsert, awards ignore duplicates, nothing is ever deleted.
 -- Generated: do not edit by hand. Change lib/geo.ts or
--- supabase/geography/NNN.template.sql, then run
+-- supabase/geography/069.template.sql, then run
 --   node supabase/geography/cards.mts
 -- The generator refuses to write if any string literal contains a semicolon,
 -- a dollar sign or a double dash (the Supabase editor misparses those).

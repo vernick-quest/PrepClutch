@@ -1,4 +1,4 @@
-// PGlite run of supabase/migrations/NNN_geography.sql against a stub of the
+// PGlite run of supabase/migrations/069_geography.sql against a stub of the
 // Supabase schema it touches (auth.users, auth.uid(), profiles with is_admin,
 // achievement_definitions, user_achievements, roles anon and authenticated,
 // and Supabase's default grants to both on every new table and function).
@@ -16,9 +16,9 @@
 import { PGlite } from '@electric-sql/pglite'
 import fs from 'node:fs'
 
-const REPO = process.env.REPO ?? '/Users/robert/PrepClutch-worktrees/geography'
+const REPO = process.env.REPO ?? '/Users/robert/PrepClutch'
 await import(`${REPO}/supabase/geography/ts-resolve.mts`)
-const SQL = fs.readFileSync(`${REPO}/supabase/migrations/NNN_geography.sql`, 'utf8')
+const SQL = fs.readFileSync(`${REPO}/supabase/migrations/069_geography.sql`, 'utf8')
 const geo = await import(`${REPO}/lib/geo.ts`)
 
 const A = '11111111-1111-1111-1111-111111111111'   // student

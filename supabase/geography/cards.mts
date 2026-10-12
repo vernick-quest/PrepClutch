@@ -1,5 +1,5 @@
-// Generates supabase/migrations/NNN_geography.sql from lib/geo.ts (the one
-// definition of the card set) and NNN.template.sql. Run:
+// Generates supabase/migrations/069_geography.sql from lib/geo.ts (the one
+// definition of the card set) and 069.template.sql. Run:
 //
 //   node supabase/geography/cards.mts
 //
@@ -115,7 +115,7 @@ const cards = geo.allGeoCards()
 const rows = cards.map(c => `(${[q(c.key), q(c.iso), q(c.kind), q(c.continent), c.points, c.targetMs].join(', ')})`)
 
 const arr = (xs: string[]) => `ARRAY[${xs.map(q).join(', ')}]`
-let sql = fs.readFileSync(path.join(here, 'NNN.template.sql'), 'utf8')
+let sql = fs.readFileSync(path.join(here, '069.template.sql'), 'utf8')
   .replace('__ROWS__', rows.join(',\n'))
   .replace('__BADGE_ROWS__', badgeRows)
   .replace('__LADDER__', LADDER.map(l => l[0]).join(', '))
@@ -141,6 +141,6 @@ if (risky.length) {
   process.exit(1)
 }
 
-const out = path.join(root, 'supabase/migrations/NNN_geography.sql')
+const out = path.join(root, 'supabase/migrations/069_geography.sql')
 fs.writeFileSync(out, sql)
 console.log(`wrote ${path.relative(root, out)}: ${cards.length} cards, ${B.length} badges, max ${geo.MAX_GEO_POINTS} Explorer Points`)
