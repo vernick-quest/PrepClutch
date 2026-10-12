@@ -131,7 +131,7 @@ export default function PinClient({ places, continent, level, canSave }: {
       <div className="flex-1 min-h-0 max-w-3xl mx-auto w-full px-3 pt-2 pb-3 flex flex-col gap-2">
         <div className="flex items-end gap-3 min-w-0 px-1">
           <div className="w-0 flex-1">
-            <h1 className="text-xl sm:text-2xl font-black text-white leading-tight truncate">📍 Find {place.name}</h1>
+            <h1 className="text-xl sm:text-2xl font-black text-white leading-tight line-clamp-2">📍 Find {place.name}</h1>
             <p className="text-xs text-zinc-400 truncate">{place.where}</p>
           </div>
           <span className="shrink-0 text-[11px] text-zinc-500">{CONTINENT_EMOJI[continent]} Level {level}</span>

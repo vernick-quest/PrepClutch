@@ -150,7 +150,10 @@ export function fromSvg(x: number, y: number, lon0: number): { lat: number; lon:
 /** The view that shows `box`, widened to the container's shape (w / h).
  *  Centred on the box's middle meridian unless `lon0` is given (a second,
  *  larger box drawn in the same projection, e.g. how far a map may pan). */
-export function fitView(box: Box, aspect: number, pad = 0.04, lon0 = wrapLon((box.w + box.e) / 2)): View {
+/** `crop` above 1 lets a box wider than the screen lose up to that share of
+ *  its width (centred) instead of letterboxing: a portrait phone showed
+ *  Europe in the top half with Africa below it. The rest is a pan away. */
+export function fitView(box: Box, aspect: number, pad = 0.04, lon0 = wrapLon((box.w + box.e) / 2), crop = 1): View {
   const half = (box.e - box.w) / 2
   const off = wrapLon((box.w + box.e) / 2 - lon0)
   let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity
@@ -170,7 +173,7 @@ export function fitView(box: Box, aspect: number, pad = 0.04, lon0 = wrapLon((bo
   let w = (x1 - x0) * (1 + 2 * pad), h = (y1 - y0) * (1 + 2 * pad)
   const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2
   if (w / h < aspect) w = h * aspect
-  else h = w / aspect
+  else { w = Math.max(w / crop, h * aspect); h = w / aspect }
   return { lon0, x: cx - w / 2, y: cy - h / 2, w, h }
 }
 

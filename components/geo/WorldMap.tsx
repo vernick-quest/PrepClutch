@@ -53,6 +53,7 @@ export function useWorldMap(need = true): { shapes: MapShape[] | null; failed: b
 const MAX_ZOOM = 12
 const TAP_SLOP = 8          // px a finger may move and still be a tap
 const TAP_MS = 700
+const PIN_CROP = 1.6
 
 interface Zoom { k: number; cx: number; cy: number }
 
@@ -91,7 +92,9 @@ export default function WorldMap({
 
   const lon0 = wrapLon((box.w + box.e) / 2)
   const projected = useMemo(() => projectShapes(shapes, lon0), [shapes, lon0])
-  const base = useMemo(() => (size ? fitView(box, size.w / size.h) : null), [box, size])
+  // With bounds to pan within (Pin the map), a portrait phone crops the box's
+  // sides rather than shrinking it to the screen's width.
+  const base = useMemo(() => (size ? fitView(box, size.w / size.h, 0.04, undefined, bounds ? PIN_CROP : 1) : null), [box, size, bounds])
   // How far the map may pan and zoom out: the bounds, drawn around the same
   // meridian as the box. Without bounds, the box itself (zoom 1 is the floor).
   const outer = useMemo(() => (size && base ? (bounds ? fitView(bounds, size.w / size.h, 0.04, lon0) : base) : null), [bounds, size, base, lon0])

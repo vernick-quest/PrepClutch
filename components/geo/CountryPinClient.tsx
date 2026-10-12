@@ -169,7 +169,7 @@ export default function CountryPinClient({ countries, names, continent, level, c
       <div className="flex-1 min-h-0 max-w-3xl mx-auto w-full px-3 pt-2 pb-3 flex flex-col gap-2">
         <div className="flex items-end gap-3 min-w-0 px-1">
           <div className="w-0 flex-1">
-            <h1 className="text-xl sm:text-2xl font-black text-white leading-tight truncate">🗺️ Tap {country.name}</h1>
+            <h1 className="text-xl sm:text-2xl font-black text-white leading-tight line-clamp-2">🗺️ Tap {country.name}</h1>
             <p className="text-xs text-zinc-400 truncate">
               {country.tiny ? 'It’s tiny: a tap close to it counts. Pinch or + to zoom.' : 'Tap anywhere inside it.'}
             </p>
