@@ -96,7 +96,7 @@ passage into two in the quiz UI. 035-038 are independent of the others.
 
 | 065 | profiles.home_track: HSPT or Math Facts, chosen at sign-up | migration | ✅ |
 
-| 066 | Rename Flawless Twenty → Flawless Ten (rounds are now 10 cards) | migration | ⏳ |
+| 066 | Rename Flawless Twenty → Flawless Ten (rounds are now 10 cards) | migration | ✅ |
 
 Next free number: **067**
 
