@@ -161,12 +161,23 @@ export default function FactGrid({ history, topics = ['times', 'equiv', 'fdp'], 
             <span className="font-bold text-white">{mastered}</span> of {states.length} mastered
           </p>
         </div>
-        {!readOnly && <Link
-          href={deckHref({ ...BASE, ...current.deck })}
-          className="shrink-0 flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-black font-bold px-5 py-3 rounded-xl transition-colors"
-        >
-          ▶ Play
-        </Link>}
+        {!readOnly && (
+          <div className="shrink-0 flex items-center gap-2">
+            {/* Learn: the same cards, untimed, with the steps. */}
+            <Link
+              href={deckHref({ ...BASE, ...current.deck }).replace('/math/play', '/math/learn')}
+              className="flex items-center gap-1.5 border border-sky-500/40 bg-sky-500/10 hover:bg-sky-500/20 text-sky-200 font-bold px-3.5 py-3 rounded-xl transition-colors"
+            >
+              📖 Learn
+            </Link>
+            <Link
+              href={deckHref({ ...BASE, ...current.deck })}
+              className="flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-black font-bold px-5 py-3 rounded-xl transition-colors"
+            >
+              ▶ Play
+            </Link>
+          </div>
+        )}
       </div>
 
       <div className="overflow-x-auto">{table}</div>

@@ -12,17 +12,16 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { SESSION_SIZE, parseFactKey, isCorrect, isFrac, isPct } from '@/lib/math-facts'
-import type { FactCard, Tok } from '@/lib/math-facts'
+import { SESSION_SIZE, parseFactKey, isCorrect } from '@/lib/math-facts'
+import type { FactCard } from '@/lib/math-facts'
+import { Equation, Keypad, typeKey } from '@/components/math/Equation'
+import { stepsForKey } from '@/lib/math-steps'
 
 interface Shown { card: FactCard; retry: boolean }
 interface Result { card: FactCard; correct: boolean; ms: number; given: string }
 interface Badge { key: string; label: string; icon_emoji: string; description: string }
 type Feedback = { kind: 'fast' | 'slow' | 'wrong'; ms: number; given: string } | null
 
-// 6 covers 0.375 and 37.5, and leaves room for four-digit mental math.
-const MAX_CHARS = 6
-const SYMBOLS = new Set(['×', '÷', '='])
 
 export default function FactsClient({ deck, deckId }: {
   deck: FactCard[]
@@ -91,13 +90,8 @@ export default function FactsClient({ deck, deckId }: {
   const press = useCallback((k: string) => {
     if (feedback) return
     if (k === 'enter') return submit(input)
-    if (k === 'back')  return setInput(s => s.slice(0, -1))
     if (k === 'skip')  return submit('-1')
-    setInput(s => {
-      if (s.length >= MAX_CHARS) return s
-      if (k === '.') return s.includes('.') ? s : (s === '' ? '0.' : s + '.')
-      return s === '0' ? k : s + k
-    })
+    setInput(s => typeKey(s, k))
   }, [feedback, input, submit])
 
   useEffect(() => {
@@ -206,10 +200,17 @@ export default function FactsClient({ deck, deckId }: {
 
           {missed.length > 0 && (
             <div className="text-left rounded-2xl border border-white/10 bg-white/3 p-4">
-              <p className="text-xs font-bold uppercase tracking-wide text-rose-300 mb-2">Practice these</p>
-              <div className="flex flex-wrap gap-2">
+              <p className="text-xs font-bold uppercase tracking-wide text-rose-300 mb-2">Practice these · tap for how</p>
+              <div className="space-y-1.5">
                 {missed.map(r => (
-                  <span key={r.card.key} className="font-mono text-sm text-white bg-white/5 rounded-lg px-2 py-1">{r.card.full}</span>
+                  <details key={r.card.key} className="rounded-lg bg-white/5">
+                    <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden px-2 py-1.5 font-mono text-sm text-white">
+                      {r.card.full} <span className="text-zinc-500 text-xs">· how?</span>
+                    </summary>
+                    <ol className="px-3 pb-2 space-y-1 text-xs text-zinc-300 list-decimal list-inside">
+                      {stepsForKey(r.card.key).map((step, i) => <li key={i}>{step}</li>)}
+                    </ol>
+                  </details>
                 ))}
               </div>
             </div>
@@ -250,15 +251,6 @@ export default function FactsClient({ deck, deckId }: {
   const card = current.card
   const target = card.targetMs
   const blankText = feedback ? (feedback.kind === 'wrong' ? card.answer : feedback.given) : (input || '?')
-  // Once answered the blank always shows the right answer, so it is green.
-  const blankColor = feedback ? 'text-emerald-300 border-emerald-400/60' : 'text-amber-300 border-amber-400/60'
-  // Underlined on its own; boxed inside a fraction, where an underline would
-  // sit on the fraction bar and read as a second bar.
-  const blank = (inFrac: boolean) => (
-    <span className={`inline-block min-w-[1.4em] px-1 text-center ${
-      inFrac ? 'border-[3px] rounded-lg py-0.5' : 'border-b-4 pb-1'
-    } ${blankColor}`}>{blankText}</span>
-  )
 
   return (
     // Exactly one screen tall (dvh tracks the phone's visible area, address bar
@@ -288,9 +280,7 @@ export default function FactsClient({ deck, deckId }: {
 
         {/* Equation */}
         <div className="flex-1 min-h-0 flex items-center justify-center">
-          <div className="flex items-center gap-3 sm:gap-4 text-4xl sm:text-6xl font-black text-white tabular-nums">
-            {card.parts.map((p, i) => <Token key={i} t={p} blank={blank} />)}
-          </div>
+          <Equation card={card} blankText={blankText} done={!!feedback} />
         </div>
 
         {/* Feedback line — fixed height so the keypad never jumps */}
@@ -304,23 +294,7 @@ export default function FactsClient({ deck, deckId }: {
           )}
         </div>
 
-        {/* Keypad */}
-        <div className="grid grid-cols-3 gap-2 mt-1">
-          {['1','2','3','4','5','6','7','8','9'].map(d => (
-            <Key key={d} onClick={() => press(d)}>{d}</Key>
-          ))}
-          <Key onClick={() => press('.')}>.</Key>
-          <Key onClick={() => press('0')}>0</Key>
-          <Key onClick={() => press('back')} muted>⌫</Key>
-        </div>
-        <button
-          onMouseDown={e => e.preventDefault()}
-          onClick={() => press('enter')}
-          disabled={!!feedback || input === ''}
-          className="mt-2 h-[clamp(2.75rem,8dvh,3.5rem)] w-full rounded-2xl bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-black text-2xl font-black transition-colors"
-        >
-          ✓
-        </button>
+        <Keypad onPress={press} canSubmit={input !== ''} disabled={!!feedback} />
         <button
           onClick={() => press('skip')}
           disabled={!!feedback}
@@ -330,40 +304,5 @@ export default function FactsClient({ deck, deckId }: {
         </button>
       </div>
     </div>
-  )
-}
-
-// One piece of the equation. Fractions stack; a percent keeps its % sign
-// tight against the number (or the blank).
-function Token({ t, blank }: { t: Tok; blank: (inFrac: boolean) => React.ReactNode }) {
-  if (t === null) return <>{blank(false)}</>
-  if (isPct(t)) {
-    return <span className="whitespace-nowrap">{t.pct === null ? blank(false) : t.pct}<span className="text-zinc-400">%</span></span>
-  }
-  if (isFrac(t)) {
-    return (
-      <span className="inline-flex flex-col items-center leading-none text-[0.8em]">
-        <span>{t.n === null ? blank(true) : t.n}</span>
-        <span className="block w-full min-w-[1.2em] border-t-[3px] border-white/80 my-1.5" />
-        <span>{t.d === null ? blank(true) : t.d}</span>
-      </span>
-    )
-  }
-  return <span className={typeof t === 'string' && SYMBOLS.has(t) ? 'text-zinc-500' : ''}>{t}</span>
-}
-
-function Key({ children, onClick, muted }: { children: React.ReactNode; onClick: () => void; muted?: boolean }) {
-  return (
-    <button
-      // Keep focus off the keypad so the keyboard Enter can't re-press it.
-      onMouseDown={e => e.preventDefault()}
-      onClick={onClick}
-      className={`h-[clamp(2.75rem,9dvh,4rem)] rounded-2xl border text-2xl font-bold transition-colors active:scale-[0.97] ${
-        muted ? 'bg-white/3 border-white/8 text-zinc-400 hover:bg-white/8'
-              : 'bg-white/5 border-white/10 text-white hover:bg-white/10'
-      }`}
-    >
-      {children}
-    </button>
   )
 }
