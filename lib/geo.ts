@@ -29,83 +29,14 @@
 
 import { COUNTRIES, LOOKALIKE_FLAGS } from './geo-data'
 import type { Country, Continent } from './geo-data'
+import {
+  CONTINENTS, CONTINENT_LABEL, KINDS, GROUP_KINDS, KIND_SCORE, SESSION_SIZE, geoKey, geoCardState,
+} from './geo-meta'
+import type { GeoKind, GeoOption, GeoCard, DeckOptions, GeoHistoryRow, GeoCardState, MapCountry } from './geo-meta'
 
-export type { Country, Continent }
+export * from './geo-meta'
+export type { Country }
 export { COUNTRIES }
-
-export const SESSION_SIZE = 10
-
-export const CONTINENTS: Continent[] = ['af', 'as', 'eu', 'na', 'sa', 'oc']
-export const CONTINENT_LABEL: Record<Continent, string> = {
-  af: 'Africa', as: 'Asia', eu: 'Europe', na: 'North America', sa: 'South America', oc: 'Oceania',
-}
-export const CONTINENT_SHORT: Record<Continent, string> = {
-  af: 'Africa', as: 'Asia', eu: 'Europe', na: 'N. America', sa: 'S. America', oc: 'Oceania',
-}
-export const CONTINENT_EMOJI: Record<Continent, string> = {
-  af: '🌍', as: '🌏', eu: '🌍', na: '🌎', sa: '🌎', oc: '🌏',
-}
-
-export type GeoKind = 'cap' | 'capr' | 'flag' | 'flagr' | 'cur' | 'lang' | 'cont'
-export const KINDS: GeoKind[] = ['cap', 'capr', 'flag', 'flagr', 'cur', 'lang', 'cont']
-
-/** The groups a student can pick to play. One group = one or two kinds. */
-export type KindGroup = 'all' | 'capitals' | 'flags' | 'money' | 'languages' | 'continents'
-export const GROUPS: KindGroup[] = ['all', 'capitals', 'flags', 'money', 'languages', 'continents']
-export const GROUP_KINDS: Record<KindGroup, GeoKind[]> = {
-  all: KINDS, capitals: ['cap', 'capr'], flags: ['flag', 'flagr'],
-  money: ['cur'], languages: ['lang'], continents: ['cont'],
-}
-export const GROUP_LABEL: Record<KindGroup, string> = {
-  all: 'Everything', capitals: 'Capitals', flags: 'Flags', money: 'Money',
-  languages: 'Languages', continents: 'Continents',
-}
-export const GROUP_EMOJI: Record<KindGroup, string> = {
-  all: '✨', capitals: '🏛️', flags: '🚩', money: '🪙', languages: '💬', continents: '🗺️',
-}
-
-export const KIND_SCORE: Record<GeoKind, { points: number; targetMs: number }> = {
-  cont:  { points: 5,  targetMs: 6000 },
-  flag:  { points: 10, targetMs: 6000 },
-  capr:  { points: 10, targetMs: 7000 },
-  flagr: { points: 10, targetMs: 7000 },
-  cap:   { points: 15, targetMs: 7000 },
-  lang:  { points: 15, targetMs: 8000 },
-  cur:   { points: 15, targetMs: 8000 },
-}
-export const KIND_LABEL: Record<GeoKind, string> = {
-  cap: 'Country → capital', capr: 'Capital → country', flag: 'Flag → country', flagr: 'Country → flag',
-  cur: 'Currency', lang: 'Language', cont: 'Continent',
-}
-
-export interface GeoOption {
-  /** What is compared: an ISO code, a currency code, a name. */
-  value: string
-  /** What the button says. Flag options show the flag instead. */
-  label: string
-  /** ISO code of a flag to draw on the button. */
-  flag?: string
-}
-
-export interface GeoCard {
-  key:       string
-  iso:       string
-  kind:      GeoKind
-  continent: Continent
-  points:    number
-  targetMs:  number
-  /** The question. */
-  prompt:    string
-  /** ISO code of a big flag shown with the question (flag cards). */
-  flag?:     string
-  answer:    string
-  /** The right option first, then three wrong ones. Shuffle before showing. */
-  options:   GeoOption[]
-  /** The fact in one sentence, for feedback and round history. */
-  full:      string
-}
-
-export const geoKey = (kind: GeoKind, iso: string) => `${kind}:${iso.toLowerCase()}`
 
 // ── Deterministic choice ─────────────────────────────────────────────────────
 
@@ -261,52 +192,17 @@ export const GEO_CARD_COUNT = COUNTRIES.length * KINDS.length
 
 export function countryByIso(iso: string): Country | undefined { return byIso.get(iso.toUpperCase()) }
 
-// ── Session options ──────────────────────────────────────────────────────────
-
-export interface DeckOptions {
-  continent: Continent | 'all'
-  group:     KindGroup
+/** The map's tiles: just what a tile needs, so the page can pass it to the
+ *  client without the rest of the data. */
+export function mapCountries(): MapCountry[] {
+  return COUNTRIES.map(c => ({ iso: c.iso, name: c.name, continent: c.continent, capital: c.capitals[0].name }))
 }
 
-export function parseDeckOptions(p: { c?: string; k?: string }): DeckOptions {
-  const continent = (CONTINENTS as string[]).includes(p.c ?? '') ? p.c as Continent : 'all'
-  const group = (GROUPS as string[]).includes(p.k ?? '') ? p.k as KindGroup : 'all'
-  return { continent, group }
-}
-
-export function deckHref(o: DeckOptions): string {
-  const q = new URLSearchParams()
-  if (o.continent !== 'all') q.set('c', o.continent)
-  if (o.group !== 'all') q.set('k', o.group)
-  const s = q.toString()
-  return s ? `/geo/play?${s}` : '/geo/play'
-}
-
-/** Round-history label, e.g. "af:capitals". */
-export const deckId = (o: DeckOptions) => `${o.continent}:${o.group}`
+// ── Rounds ───────────────────────────────────────────────────────────────────
 
 export function deckPool(o: DeckOptions): GeoCard[] {
   const kinds = GROUP_KINDS[o.group]
   return allGeoCards().filter(c => (o.continent === 'all' || c.continent === o.continent) && kinds.includes(c.kind))
-}
-
-// ── Per-student history ──────────────────────────────────────────────────────
-
-export interface GeoHistoryRow {
-  card_key:      string
-  times_correct: number
-  times_wrong:   number
-  best_ms:       number | null
-  fluent_at:     string | null
-}
-
-/** Same states, and so the same map colours, as Math Facts. */
-export type GeoCardState = 'unseen' | 'struggling' | 'learning' | 'fluent'
-
-export function geoCardState(h: GeoHistoryRow | undefined): GeoCardState {
-  if (!h) return 'unseen'
-  if (h.fluent_at) return 'fluent'
-  return h.times_wrong > 0 ? 'struggling' : 'learning'
 }
 
 function shuffle<T>(xs: T[]): T[] { return shuffleWith(xs, Math.random) }
