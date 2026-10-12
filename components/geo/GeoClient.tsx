@@ -8,6 +8,10 @@
 // mid-round loses nothing, and a missed card shows its answer and comes back
 // once at the end for practice, unscored, because picking an answer you were
 // just shown is not recall.
+//
+// "Name that country" cards show the map (components/geo/WorldMap.tsx). A
+// round with any of them loads the map before the first card, so the clock
+// never runs while the map downloads.
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
@@ -16,6 +20,7 @@ import { createClient } from '@/lib/supabase/client'
 import { SESSION_SIZE, KIND_LABEL, flagSrc } from '@/lib/geo-meta'
 import type { GeoCard } from '@/lib/geo-meta'
 import Flag from '@/components/geo/Flag'
+import WorldMap, { useWorldMap } from '@/components/geo/WorldMap'
 
 interface Shown { card: GeoCard; retry: boolean }
 interface Result { card: GeoCard; correct: boolean; ms: number; given: string }
@@ -46,6 +51,9 @@ export default function GeoClient({ deck, deckId }: {
 
   const current = queue[idx]
   const done = idx >= queue.length
+  const needsMap = deck.some(c => c.map)
+  const { shapes, failed: mapFailed } = useWorldMap(needsMap)
+  const mapReady = !needsMap || !!shapes
   const pointsOf = useCallback((key: string) => deck.find(c => c.key === key)?.points ?? 0, [deck])
 
   // Load every flag in the round up front, so a flag still downloading never
@@ -58,7 +66,7 @@ export default function GeoClient({ deck, deckId }: {
     }
   }, [deck])
 
-  useEffect(() => { shownAt.current = performance.now(); answered.current = false }, [idx])
+  useEffect(() => { shownAt.current = performance.now(); answered.current = false }, [idx, mapReady])
 
   const save = useCallback(async (card: GeoCard, correct: boolean, ms: number) => {
     setPending(n => n + 1)
@@ -80,7 +88,7 @@ export default function GeoClient({ deck, deckId }: {
   }, [])
 
   const choose = useCallback((given: string) => {
-    if (!current || feedback || answered.current) return
+    if (!current || feedback || answered.current || !mapReady) return
     answered.current = true
     const ms = Math.round(performance.now() - shownAt.current)
     const correct = given === current.card.answer
@@ -95,7 +103,7 @@ export default function GeoClient({ deck, deckId }: {
     }
     setFeedback({ kind: !correct ? 'wrong' : fast ? 'fast' : 'slow', ms, given })
     setTimeout(advance, !correct ? 2600 : fast ? 700 : 1500)
-  }, [current, feedback, save, advance])
+  }, [current, feedback, save, advance, mapReady])
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -238,8 +246,22 @@ export default function GeoClient({ deck, deckId }: {
     )
   }
 
+  // ── Waiting for the map ────────────────────────────────────────────────────
+  if (!mapReady) {
+    return (
+      <div className="h-[100dvh] bg-[#0a0a0f] flex flex-col items-center justify-center gap-4 px-4 text-center">
+        <p className="text-5xl">{mapFailed ? '🗺️' : '🌍'}</p>
+        <p className="text-white font-bold">{mapFailed ? 'The map didn’t load.' : 'Loading the map…'}</p>
+        {mapFailed && (
+          <Link href="/geo" className="text-sky-300 hover:text-sky-200 text-sm">← Geography home</Link>
+        )}
+      </div>
+    )
+  }
+
   // ── Card ───────────────────────────────────────────────────────────────────
   const card = current.card
+  const zoom = card.map ? shapes?.find(s => s.iso === card.map)?.zoom : undefined
   const flags = card.kind === 'flagr'
   const tone = (value: string) => {
     if (!feedback) return 'bg-white/5 border-white/10 text-white hover:bg-white/10 hover:border-white/25'
@@ -280,7 +302,14 @@ export default function GeoClient({ deck, deckId }: {
                     className="max-h-full w-auto max-w-[80%] rounded-md shadow-lg ring-1 ring-white/10" />
             </div>
           )}
-          <h1 className={`font-black text-white leading-tight ${card.flag ? 'text-xl sm:text-2xl' : 'text-2xl sm:text-3xl'}`}>
+          {shapes && zoom && (
+            <div className="relative min-h-0 flex-1 w-full rounded-xl overflow-hidden ring-1 ring-white/10">
+              <div className="absolute inset-0">
+                <WorldMap shapes={shapes} box={zoom} highlight={card.map} label="A map with one country highlighted" />
+              </div>
+            </div>
+          )}
+          <h1 className={`font-black text-white leading-tight ${card.flag || card.map ? 'text-xl sm:text-2xl' : 'text-2xl sm:text-3xl'}`}>
             {card.prompt}
           </h1>
         </div>

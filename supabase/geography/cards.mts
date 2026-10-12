@@ -16,6 +16,12 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const geo = await import('../../lib/geo.ts')
+// 069 is the phase-1 catalogue: exactly the kinds it shipped with. Shape
+// cards (and anything later) belong to later migrations, so regenerating 069
+// must reproduce it byte for byte.
+const KINDS = geo.KINDS_069
+const CARDS = geo.geoCards(KINDS)
+const MAX_POINTS = geo.maxGeoPoints(KINDS)
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const root = path.resolve(here, '../..')
@@ -27,7 +33,7 @@ const RISKY = /;|\$|--/
 // [key, label, emoji, description, rarity, creature, lore, threshold]
 type Badge = [string, string, string, string, string, string, string, number]
 const CAT = 'Geography'
-const ALL = geo.GEO_CARD_COUNT
+const ALL = CARDS.length
 const B: Badge[] = []
 
 // The Globe Turtle grows a bigger shell with every card mastered.
@@ -60,7 +66,7 @@ const CONTINENT_BADGES: Record<string, [string, string, string, string]> = {
 }
 for (const ct of geo.CONTINENTS) {
   const [label, emoji, rarity, lore] = CONTINENT_BADGES[ct]
-  const n = geo.allGeoCards().filter(c => c.continent === ct).length
+  const n = CARDS.filter(c => c.continent === ct).length
   B.push([`geo_continent_${ct}`, label, emoji, `All ${n} ${geo.CONTINENT_LABEL[ct]} cards mastered.`, rarity, label.split(' of ')[0], lore, n])
 }
 
@@ -111,7 +117,7 @@ if (new Set(keys).size !== keys.length) { console.error('duplicate badge keys');
 const badgeRows = B.map(([k, l, e, d, r, c, lo, t]) =>
   `(${q(k)}, ${q(l)}, ${q(e)}, ${q(d)}, ${q(r)}, ${q(c)}, ${q(CAT)},\n ${q(lo)}, ${t})`).join(',\n\n')
 
-const cards = geo.allGeoCards()
+const cards = CARDS
 const rows = cards.map(c => `(${[q(c.key), q(c.iso), q(c.kind), q(c.continent), c.points, c.targetMs].join(', ')})`)
 
 const arr = (xs: string[]) => `ARRAY[${xs.map(q).join(', ')}]`
@@ -123,7 +129,7 @@ let sql = fs.readFileSync(path.join(here, '069.template.sql'), 'utf8')
   .replace('__GROUP_STEPS__', GROUP_BADGES.map(([g]) => `(${q(g)}, ${arr(geo.GROUP_KINDS[g as keyof typeof geo.GROUP_KINDS])}, 25)`).join(', '))
   .replace('__GROUP_ALL__', GROUP_BADGES.map(([g]) => `(${q(g)}, ${arr(geo.GROUP_KINDS[g as keyof typeof geo.GROUP_KINDS])})`).join(', '))
   .replaceAll('__CARDS__', String(cards.length))
-  .replaceAll('__MAXPTS__', String(geo.MAX_GEO_POINTS))
+  .replaceAll('__MAXPTS__', String(MAX_POINTS))
   .replaceAll('__BADGES__', String(B.length))
 
 if (/__[A-Z_]+__/.test(sql)) { console.error('unfilled placeholder', sql.match(/__[A-Z_]+__/)![0]); process.exit(1) }
@@ -143,4 +149,4 @@ if (risky.length) {
 
 const out = path.join(root, 'supabase/migrations/069_geography.sql')
 fs.writeFileSync(out, sql)
-console.log(`wrote ${path.relative(root, out)}: ${cards.length} cards, ${B.length} badges, max ${geo.MAX_GEO_POINTS} Explorer Points`)
+console.log(`wrote ${path.relative(root, out)}: ${cards.length} cards, ${B.length} badges, max ${MAX_POINTS} Explorer Points`)

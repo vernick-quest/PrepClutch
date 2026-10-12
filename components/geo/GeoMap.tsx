@@ -3,10 +3,11 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import {
-  CONTINENTS, CONTINENT_LABEL, CONTINENT_SHORT, CONTINENT_EMOJI, GROUPS, GROUP_KINDS, GROUP_LABEL,
-  GROUP_EMOJI, KINDS, KIND_LABEL, geoKey, geoCardState, deckHref,
+  CONTINENTS, CONTINENT_LABEL, CONTINENT_SHORT, CONTINENT_EMOJI, GROUPS, GROUP_LABEL,
+  GROUP_EMOJI, KINDS_069, KIND_LABEL, geoKey, geoCardState, deckHref, groupKinds,
 } from '@/lib/geo-meta'
-import type { Continent, KindGroup, GeoHistoryRow, GeoCardState, MapCountry } from '@/lib/geo-meta'
+import type { Continent, KindGroup, GeoHistoryRow, GeoCardState, GeoKind, MapCountry } from '@/lib/geo-meta'
+import { pinHref } from '@/lib/geo-pin'
 import { cellTone, CELL_CLASS } from '@/components/math/cells'
 import Flag from '@/components/geo/Flag'
 
@@ -18,6 +19,10 @@ import Flag from '@/components/geo/Flag'
 // World shows one bar per continent. A continent shows one flag tile per
 // country, coloured by that country's cards of the chosen type. Tiles wrap,
 // so the map fits a 375px phone and a half-width desktop column alike.
+//
+// `kinds` are the card kinds the catalogue has (availableGeoKinds): the
+// Shapes chip appears once the map migration is applied. 📍 Pin opens Pin
+// the map on the chosen continent (or its continent picker, from World).
 
 type Tab = Continent | 'all'
 const TABS: Tab[] = ['all', ...CONTINENTS]
@@ -26,18 +31,21 @@ const TONE_BAR: Record<string, string> = {
   solid: 'bg-emerald-500/80', some: 'bg-emerald-500/35', slow: 'bg-amber-500/50', missed: 'bg-rose-500/50', new: 'bg-white/5',
 }
 
-export default function GeoMap({ history, countries, readOnly = false }: {
+export default function GeoMap({ history, countries, readOnly = false, kinds: available = KINDS_069 }: {
   history: Record<string, GeoHistoryRow>
   countries: MapCountry[]
   /** Someone else's map (an admin viewing a student): no Play button. */
   readOnly?: boolean
+  /** The card kinds the catalogue has. */
+  kinds?: GeoKind[]
 }) {
   const [tab, setTab] = useState<Tab>('all')
   const [group, setGroup] = useState<KindGroup>('all')
   const [picked, setPicked] = useState<string | null>(null)
 
-  const kinds = GROUP_KINDS[group]
-  const st = (iso: string, kind: (typeof KINDS)[number]): GeoCardState => geoCardState(history[geoKey(kind, iso)])
+  const groups = GROUPS.filter(g => groupKinds(g, available).length > 0)
+  const kinds = groupKinds(group, available)
+  const st = (iso: string, kind: GeoKind): GeoCardState => geoCardState(history[geoKey(kind, iso)])
   const statesOf = (iso: string) => kinds.map(k => st(iso, k))
   const inTab = countries.filter(c => tab === 'all' || c.continent === tab)
   const all = inTab.flatMap(c => statesOf(c.iso))
@@ -65,7 +73,7 @@ export default function GeoMap({ history, countries, readOnly = false }: {
 
       {/* Card types */}
       <div className="flex flex-wrap gap-1.5 mt-2 mb-4">
-        {GROUPS.map(g => (
+        {groups.map(g => (
           <button
             key={g}
             onClick={() => setGroup(g)}
@@ -89,12 +97,23 @@ export default function GeoMap({ history, countries, readOnly = false }: {
             <span className="font-bold text-white">{mastered}</span> of {all.length} cards mastered
           </p>
         </div>
-        {!readOnly && <Link
-          href={deckHref({ continent: tab, group })}
-          className="shrink-0 flex items-center gap-2 bg-sky-500 hover:bg-sky-400 text-black font-bold px-5 py-3 rounded-xl transition-colors"
-        >
-          ▶ Play
-        </Link>}
+        {!readOnly && (
+          <div className="shrink-0 flex items-center gap-1.5">
+            <Link
+              href={tab === 'all' ? '/geo/pin' : pinHref(tab, 1)}
+              title="Pin the map: find capitals on the map"
+              className="flex items-center bg-white/5 border border-white/15 hover:border-white/30 text-white font-bold px-3 py-3 rounded-xl transition-colors"
+            >
+              📍 Pin
+            </Link>
+            <Link
+              href={deckHref({ continent: tab, group })}
+              className="flex items-center gap-2 bg-sky-500 hover:bg-sky-400 text-black font-bold px-4 sm:px-5 py-3 rounded-xl transition-colors"
+            >
+              ▶ Play
+            </Link>
+          </div>
+        )}
       </div>
 
       {tab === 'all' ? (
@@ -144,7 +163,7 @@ export default function GeoMap({ history, countries, readOnly = false }: {
               <>
                 <p className="font-bold text-white">{pickedCountry.name} <span className="font-normal text-zinc-400">· capital {pickedCountry.capital}</span></p>
                 <div className="flex flex-wrap gap-1 mt-1.5">
-                  {KINDS.map(k => (
+                  {available.map(k => (
                     <span key={k} className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${CELL_CLASS[cellTone([st(pickedCountry.iso, k)])]}`}>
                       {KIND_LABEL[k]}
                     </span>

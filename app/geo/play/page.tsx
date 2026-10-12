@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { buildDeck, parseDeckOptions, deckId } from '@/lib/geo'
-import { loadGeoHistory } from '@/lib/geo-history'
+import { loadGeoHistory, availableGeoKinds } from '@/lib/geo-history'
 import GeoClient from '@/components/geo/GeoClient'
 import { loginUrl } from '@/lib/tracks'
 
@@ -19,8 +19,10 @@ export default async function GeoPlayPage({ searchParams }: Props) {
   const { ready, rows } = await loadGeoHistory(supabase, user.id)
   if (!ready) redirect('/geo')
 
+  // Only kinds the catalogue has: a shape card before the map migration
+  // would be refused when saved.
   const opts = parseDeckOptions(await searchParams)
-  const deck = buildDeck(opts, rows)
+  const deck = buildDeck(opts, rows, await availableGeoKinds(supabase))
   if (deck.length === 0) redirect('/geo')
 
   // A new deck is a new session: remount so "Play again" starts clean.

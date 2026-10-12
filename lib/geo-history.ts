@@ -1,4 +1,21 @@
-import type { GeoHistoryRow } from '@/lib/geo-meta'
+import { KINDS, KINDS_069 } from '@/lib/geo-meta'
+import type { GeoHistoryRow, GeoKind } from '@/lib/geo-meta'
+
+// The card kinds the catalogue has. Shape cards (Name that country) arrive
+// with the map migration, applied by hand after 069; until then they are not
+// offered, counted or shown, exactly like availableTopics in math-history.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function availableGeoKinds(supabase: any): Promise<GeoKind[]> {
+  const { data, error } = await supabase.from('geo_cards').select('card_key').eq('kind', 'shape').limit(1)
+  return error || !data?.length ? KINDS_069 : KINDS
+}
+
+/** Whether Pin the map rounds can be saved (the map migration is applied). */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function pinReady(supabase: any): Promise<boolean> {
+  const { error } = await supabase.from('geo_pin_rounds').select('id').limit(1)
+  return !error
+}
 
 // Reads a student's Geography history. `ready: false` means the table is not
 // there yet (the Geography migration is not applied) or could not be read.

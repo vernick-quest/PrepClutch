@@ -13,7 +13,7 @@ import MathRounds from '@/components/math/MathRounds'
 import { loadFactHistory, loadRounds, availableTopics } from '@/lib/math-history'
 import GeoMap from '@/components/geo/GeoMap'
 import GeoRounds from '@/components/geo/GeoRounds'
-import { loadGeoHistory, loadGeoRounds } from '@/lib/geo-history'
+import { loadGeoHistory, loadGeoRounds, availableGeoKinds } from '@/lib/geo-history'
 import { mapCountries } from '@/lib/geo'
 
 export const dynamic = 'force-dynamic'
@@ -69,7 +69,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
   // Same for Geography (its migration gives admins read access). Before that
   // migration is applied, ready is false and the section does not render.
   const geo = viewerIsAdmin
-    ? await Promise.all([loadGeoHistory(supabase, id), loadGeoRounds(supabase, id)])
+    ? await Promise.all([loadGeoHistory(supabase, id), loadGeoRounds(supabase, id), availableGeoKinds(supabase)])
     : null
 
   const { data: attempts } = await supabase
@@ -264,7 +264,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
           <div className="space-y-4">
             <h3 className="text-xl font-bold text-white">🌍 Geography</h3>
             <div className="grid lg:grid-cols-2 gap-4">
-              <GeoMap history={Object.fromEntries(geo[0].rows)} countries={mapCountries()} readOnly />
+              <GeoMap history={Object.fromEntries(geo[0].rows)} countries={mapCountries()} kinds={geo[2]} readOnly />
               <GeoRounds rounds={geo[1]} title="📋 Their recent rounds" empty="No Geography rounds yet." />
             </div>
           </div>

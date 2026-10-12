@@ -187,11 +187,11 @@ export function mathFactsGroup(key: string): (typeof MATH_FACTS_GROUPS)[number] 
 // Geography badges read as ladders too, grouped under three headings:
 //   Overall     Globe Turtle 10 → all, then Perfect Passport
 //   Continents  Africa, Asia, Europe, North America, South America, Oceania
-//   Card types  capitals, flags, money, languages, continents: 25 then all
+//   Card types  capitals, flags, money, languages, continents, shapes: 25 then all
 export const GEOGRAPHY_GROUPS = ['Overall', 'Continents', 'Card types'] as const
 
 const GEO_CONTINENT_ORDER = ['af', 'as', 'eu', 'na', 'sa', 'oc']
-const GEO_TYPE_ORDER = ['capitals', 'flags', 'money', 'languages', 'continents']
+const GEO_TYPE_ORDER = ['capitals', 'flags', 'money', 'languages', 'continents', 'shapes']
 
 function geoOrder(key: string): [number, number] | null {
   const m = /^geo_([a-z]+)_(\w+)$/.exec(key)

@@ -19,23 +19,29 @@ export const CONTINENT_EMOJI: Record<Continent, string> = {
   af: '🌍', as: '🌏', eu: '🌍', na: '🌎', sa: '🌎', oc: '🌏',
 }
 
-export type GeoKind = 'cap' | 'capr' | 'flag' | 'flagr' | 'cur' | 'lang' | 'cont'
-export const KINDS: GeoKind[] = ['cap', 'capr', 'flag', 'flagr', 'cur', 'lang', 'cont']
+export type GeoKind = 'cap' | 'capr' | 'flag' | 'flagr' | 'cur' | 'lang' | 'cont' | 'shape'
+export const KINDS: GeoKind[] = ['cap', 'capr', 'flag', 'flagr', 'cur', 'lang', 'cont', 'shape']
+/** The kinds migration 069 loaded. 'shape' (Name that country, on the map)
+ *  arrives with the map migration; until it is applied the catalogue has no
+ *  shape cards and pages offer only these (see availableGeoKinds). */
+export const KINDS_069: GeoKind[] = ['cap', 'capr', 'flag', 'flagr', 'cur', 'lang', 'cont']
 
 /** The groups a student can pick to play. One group = one or two kinds. */
-export type KindGroup = 'all' | 'capitals' | 'flags' | 'money' | 'languages' | 'continents'
-export const GROUPS: KindGroup[] = ['all', 'capitals', 'flags', 'money', 'languages', 'continents']
+export type KindGroup = 'all' | 'capitals' | 'flags' | 'money' | 'languages' | 'continents' | 'shapes'
+export const GROUPS: KindGroup[] = ['all', 'capitals', 'flags', 'money', 'languages', 'continents', 'shapes']
 export const GROUP_KINDS: Record<KindGroup, GeoKind[]> = {
   all: KINDS, capitals: ['cap', 'capr'], flags: ['flag', 'flagr'],
-  money: ['cur'], languages: ['lang'], continents: ['cont'],
+  money: ['cur'], languages: ['lang'], continents: ['cont'], shapes: ['shape'],
 }
 export const GROUP_LABEL: Record<KindGroup, string> = {
   all: 'Everything', capitals: 'Capitals', flags: 'Flags', money: 'Money',
-  languages: 'Languages', continents: 'Continents',
+  languages: 'Languages', continents: 'Continents', shapes: 'Shapes',
 }
 export const GROUP_EMOJI: Record<KindGroup, string> = {
-  all: '✨', capitals: '🏛️', flags: '🚩', money: '🪙', languages: '💬', continents: '🗺️',
+  all: '✨', capitals: '🏛️', flags: '🚩', money: '🪙', languages: '💬', continents: '🗺️', shapes: '🧩',
 }
+/** A group's kinds that the catalogue has (empty = do not offer the group). */
+export const groupKinds = (g: KindGroup, available: GeoKind[]) => GROUP_KINDS[g].filter(k => available.includes(k))
 
 export const KIND_SCORE: Record<GeoKind, { points: number; targetMs: number }> = {
   cont:  { points: 5,  targetMs: 6000 },
@@ -45,10 +51,13 @@ export const KIND_SCORE: Record<GeoKind, { points: number; targetMs: number }> =
   cap:   { points: 15, targetMs: 7000 },
   lang:  { points: 15, targetMs: 8000 },
   cur:   { points: 15, targetMs: 8000 },
+  // Naming a highlighted country is a real map skill, worth a capital. The
+  // extra second is for taking in the map before the four names.
+  shape: { points: 15, targetMs: 8000 },
 }
 export const KIND_LABEL: Record<GeoKind, string> = {
   cap: 'Capital', capr: 'Capital → country', flag: 'Flag', flagr: 'Find the flag',
-  cur: 'Currency', lang: 'Language', cont: 'Continent',
+  cur: 'Currency', lang: 'Language', cont: 'Continent', shape: 'Name that country',
 }
 
 export interface GeoOption {
@@ -71,6 +80,8 @@ export interface GeoCard {
   prompt:    string
   /** ISO code of a big flag shown with the question (flag cards). */
   flag?:     string
+  /** ISO code of a country shown highlighted on the map (shape cards). */
+  map?:      string
   answer:    string
   /** The right option first, then three wrong ones. Shuffle before showing. */
   options:   GeoOption[]
