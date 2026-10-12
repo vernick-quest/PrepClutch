@@ -5,6 +5,7 @@ import { learnDeck } from '@/lib/math-steps'
 import { loadFactHistory, availableTopics } from '@/lib/math-history'
 import { loginUrl } from '@/lib/tracks'
 import LearnClient from '@/components/math/LearnClient'
+import RoundGuard from '@/components/ui/RoundGuard'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,5 +28,5 @@ export default async function MathLearnPage({ searchParams }: Props) {
   if (deck.length === 0) redirect('/math')
 
   const playHref = `/math/play?${new URLSearchParams(Object.entries(params).filter(([, v]) => v) as [string, string][])}`
-  return <LearnClient key={deck.map(c => c.key).join()} deck={deck} playHref={playHref} />
+  return <RoundGuard round={crypto.randomUUID()} home="/math"><LearnClient key={deck.map(c => c.key).join()} deck={deck} playHref={playHref} /></RoundGuard>
 }

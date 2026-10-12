@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { buildDeck, parseDeckOptions } from '@/lib/math-facts'
 import { loadFactHistory, availableTopics } from '@/lib/math-history'
 import FactsClient from '@/components/math/FactsClient'
+import RoundGuard from '@/components/ui/RoundGuard'
 import { loginUrl } from '@/lib/tracks'
 
 export const dynamic = 'force-dynamic'
@@ -29,5 +30,5 @@ export default async function MathPlayPage({ searchParams }: Props) {
     ? `${opts.op === 'mixed' ? 'times' : opts.op}${opts.tables.length === 1 ? `:${opts.tables[0]}` : ''}`
     : opts.topic
 
-  return <FactsClient key={deck.map(c => c.key).join()} deck={deck} deckId={deckId} />
+  return <RoundGuard round={crypto.randomUUID()} home="/math"><FactsClient key={deck.map(c => c.key).join()} deck={deck} deckId={deckId} /></RoundGuard>
 }

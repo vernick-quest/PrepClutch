@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { buildDeck, parseDeckOptions, deckId } from '@/lib/geo'
 import { loadGeoHistory, availableGeoKinds } from '@/lib/geo-history'
 import GeoClient from '@/components/geo/GeoClient'
+import RoundGuard from '@/components/ui/RoundGuard'
 import { loginUrl } from '@/lib/tracks'
 
 export const dynamic = 'force-dynamic'
@@ -26,5 +27,5 @@ export default async function GeoPlayPage({ searchParams }: Props) {
   if (deck.length === 0) redirect('/geo')
 
   // A new deck is a new session: remount so "Play again" starts clean.
-  return <GeoClient key={deck.map(c => c.key).join()} deck={deck} deckId={deckId(opts)} />
+  return <RoundGuard round={crypto.randomUUID()} home="/geo"><GeoClient key={deck.map(c => c.key).join()} deck={deck} deckId={deckId(opts)} /></RoundGuard>
 }

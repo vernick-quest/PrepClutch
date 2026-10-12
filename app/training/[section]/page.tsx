@@ -3,6 +3,7 @@ import { redirect, notFound } from 'next/navigation'
 import { SECTIONS } from '@/lib/constants'
 import { masteredCounts } from '@/lib/mastered-review'
 import TrainingClient from '@/components/training/TrainingClient'
+import RoundGuard from '@/components/ui/RoundGuard'
 import type { TrainingQuestion } from '@/components/training/TrainingClient'
 import type { Section } from '@/types/database'
 import { loginUrl } from '@/lib/tracks'
@@ -44,5 +45,9 @@ export default async function TrainingPage({ params }: Props) {
   const counts = await masteredCounts(supabase, user.id, section).catch(() => null)
   const mastered = counts ? counts[1] + counts[2] + counts[3] : 0
 
-  return <TrainingClient section={section as Section} questions={questions} mastered={mastered} />
+  return (
+    <RoundGuard round={crypto.randomUUID()} home="/hspt">
+      <TrainingClient section={section as Section} questions={questions} mastered={mastered} />
+    </RoundGuard>
+  )
 }

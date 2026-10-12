@@ -8,6 +8,7 @@ import type { Continent } from '@/lib/geo-meta'
 import { PIN_LEVELS, PIN_LEVEL_LABEL, pinHref } from '@/lib/geo-pin'
 import type { PinLevel } from '@/lib/geo-pin'
 import PinClient from '@/components/geo/PinClient'
+import RoundGuard from '@/components/ui/RoundGuard'
 import TopBar from '@/components/ui/TopBar'
 import { loginUrl } from '@/lib/tracks'
 
@@ -59,5 +60,9 @@ export default async function GeoPinPage({ searchParams }: Props) {
   const places = buildPinRound(continent, level)
   const canSave = await pinReady(supabase)
   // A new round is a new session: remount so "Play again" starts clean.
-  return <PinClient key={places.map(x => x.key).join()} places={places} continent={continent} level={level} canSave={canSave} />
+  return (
+    <RoundGuard round={crypto.randomUUID()} home="/geo">
+      <PinClient key={places.map(x => x.key).join()} places={places} continent={continent} level={level} canSave={canSave} />
+    </RoundGuard>
+  )
 }

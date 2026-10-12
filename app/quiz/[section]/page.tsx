@@ -6,6 +6,7 @@ import { hasExamColumn } from '@/lib/exam-scope'
 import QuizClient from '@/components/quiz/QuizClient'
 import ReadingQuizClient from '@/components/quiz/ReadingQuizClient'
 import FullTestClient from '@/components/quiz/FullTestClient'
+import RoundGuard from '@/components/ui/RoundGuard'
 import type { FullTestBlock } from '@/components/quiz/FullTestClient'
 import { buildPassagesFromRows, PASSAGES_PER_SESSION, MAX_QUESTIONS_PER_PASSAGE, VOCAB_PER_SESSION } from '@/lib/reading-passages'
 import type { ReadingPassage, ReadingQuestionRow } from '@/lib/reading-passages'
@@ -50,11 +51,13 @@ export default async function QuizPage({ params }: Props) {
     )
 
     return (
-      <ReadingQuizClient
-        passages={passages}
-        userId={user.id}
-        masteredIds={masteredIds}
-      />
+      <RoundGuard round={crypto.randomUUID()} home="/hspt">
+        <ReadingQuizClient
+          passages={passages}
+          userId={user.id}
+          masteredIds={masteredIds}
+        />
+      </RoundGuard>
     )
   }
 
@@ -83,7 +86,7 @@ export default async function QuizPage({ params }: Props) {
     )
     const masteredIds = await fetchMasteredIds(supabase, user.id, allIds)
 
-    return <FullTestClient blocks={blocks} userId={user.id} masteredIds={masteredIds} />
+    return <RoundGuard round={crypto.randomUUID()} home="/hspt"><FullTestClient blocks={blocks} userId={user.id} masteredIds={masteredIds} /></RoundGuard>
   }
 
   const questions: Question[] = await selectSectionQuestions(supabase, user.id, section)
@@ -93,12 +96,14 @@ export default async function QuizPage({ params }: Props) {
   const masteredIds = await fetchMasteredIds(supabase, user.id, questions.map(q => q.id))
 
   return (
-    <QuizClient
-      section={section as Section | 'full'}
-      questions={questions}
-      userId={user.id}
-      masteredIds={masteredIds}
-    />
+    <RoundGuard round={crypto.randomUUID()} home="/hspt">
+      <QuizClient
+        section={section as Section | 'full'}
+        questions={questions}
+        userId={user.id}
+        masteredIds={masteredIds}
+      />
+    </RoundGuard>
   )
 }
 
