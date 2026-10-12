@@ -68,6 +68,7 @@ export function evaluateBadges(stats: BadgeStats): string[] {
 
 export const SECTION_MASTERY_CATEGORY = 'Section Mastery'
 export const MATH_FACTS_CATEGORY = 'Math Facts'
+export const GEOGRAPHY_CATEGORY = 'Geography'
 
 /**
  * True when every question in a section has been answered correctly at least
@@ -183,6 +184,33 @@ export function mathFactsGroup(key: string): (typeof MATH_FACTS_GROUPS)[number] 
   return MATH_FACTS_GROUPS[Math.min(Math.floor((o?.[0] ?? 0) / 1000), MATH_FACTS_GROUPS.length - 1)]
 }
 
+// Geography badges read as ladders too, grouped under three headings:
+//   Overall     Globe Turtle 10 → all, then Perfect Passport
+//   Continents  Africa, Asia, Europe, North America, South America, Oceania
+//   Card types  capitals, flags, money, languages, continents: 25 then all
+export const GEOGRAPHY_GROUPS = ['Overall', 'Continents', 'Card types'] as const
+
+const GEO_CONTINENT_ORDER = ['af', 'as', 'eu', 'na', 'sa', 'oc']
+const GEO_TYPE_ORDER = ['capitals', 'flags', 'money', 'languages', 'continents']
+
+function geoOrder(key: string): [number, number] | null {
+  const m = /^geo_([a-z]+)_(\w+)$/.exec(key)
+  if (!m) return null
+  const [, kind, rest] = m
+  const n = rest === 'all' ? Infinity : Number(rest)
+  if (kind === 'mastered') return [0, n]
+  if (kind === 'perfect')  return [100, 0]
+  if (kind === 'continent') return [1000 + GEO_CONTINENT_ORDER.indexOf(rest), 0]
+  const t = GEO_TYPE_ORDER.indexOf(kind)
+  return t >= 0 ? [2000 + t * 10, n] : [9000, 0]
+}
+
+/** Which profile heading a Geography badge sits under. */
+export function geographyGroup(key: string): (typeof GEOGRAPHY_GROUPS)[number] {
+  const o = geoOrder(key)?.[0] ?? 0
+  return GEOGRAPHY_GROUPS[Math.min(Math.floor(o / 1000), GEOGRAPHY_GROUPS.length - 1)]
+}
+
 function sectionMasteryOrder(key: string): number {
   const match = /^mastery_([a-z]+)_\d+$/.exec(key)
   if (!match) return -1
@@ -240,6 +268,10 @@ export function compareBadges(
   const factsA = factsOrder(a.key)
   const factsB = factsOrder(b.key)
   if (factsA && factsB) return factsA[0] - factsB[0] || factsA[1] - factsB[1]
+
+  const geoA = geoOrder(a.key)
+  const geoB = geoOrder(b.key)
+  if (geoA && geoB) return geoA[0] - geoB[0] || geoA[1] - geoB[1] || a.label.localeCompare(b.label)
 
   const secA = sectionMasteryOrder(a.key)
   const secB = sectionMasteryOrder(b.key)

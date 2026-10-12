@@ -1,6 +1,6 @@
-// ── Tracks: HSPT prep and Math Facts ─────────────────────────────────────────
+// ── Tracks: HSPT prep, Math Facts and Geography ──────────────────────────────
 //
-// PrepClutch is two things behind one login. A student picks one at sign-up
+// PrepClutch is several things behind one login. A student picks one at sign-up
 // (profiles.home_track, migration 065) and lands there on every later sign-in;
 // the TrackSwitcher in each top bar moves between them at any time.
 //
@@ -8,9 +8,9 @@
 // used to be bounced through Google and dropped on the HSPT dashboard with no
 // visible way back.
 
-export type Track = 'hspt' | 'math'
+export type Track = 'hspt' | 'math' | 'geo'
 
-export const TRACK_HOME: Record<Track, string> = { hspt: '/hspt', math: '/math' }
+export const TRACK_HOME: Record<Track, string> = { hspt: '/hspt', math: '/math', geo: '/geo' }
 
 const NEXT_KEY = 'prepclutch:next'
 
@@ -26,7 +26,12 @@ const under = (path: string, root: string) =>
   path === root || path.startsWith(root + '/') || path.startsWith(root + '?')
 
 /** The track a path belongs to, if it clearly belongs to one. Profiles, the
- *  Bestiary and admin belong to both, so they return null. */
+ *  Bestiary and admin belong to every track, so they return null.
+ *
+ *  /geo also returns null, on purpose: sign-up offers HSPT or Math Facts as
+ *  a home track (profiles.home_track allows only those two), so a /geo link
+ *  is treated like a hub link. Onboarding pre-picks nothing and still
+ *  follows the link to /geo afterwards. */
 export function trackOf(path: string | null): Track | null {
   if (!path) return null
   if (under(path, '/math')) return 'math'

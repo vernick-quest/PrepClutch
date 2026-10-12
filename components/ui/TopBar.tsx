@@ -18,7 +18,9 @@ export default function TopBar({ current, profile, isAdmin = false }: {
     >
       <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-          <Link href="/" className="text-lg sm:text-xl font-black shrink-0" aria-label="PrepClutch home">
+          {/* text-base under 380px: with three tracks in the switcher, a 360px
+              phone has no room for the larger logo. */}
+          <Link href="/" className="text-base min-[380px]:text-lg sm:text-xl font-black shrink-0" aria-label="PrepClutch home">
             <span className="text-amber-400">Prep</span><span className="text-white">Clutch</span>
           </Link>
           <TrackSwitcher current={current} />

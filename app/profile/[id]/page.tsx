@@ -5,12 +5,16 @@ import Link from 'next/link'
 import Image from 'next/image'
 import Footer from '@/components/ui/Footer'
 import AttemptReview from '@/components/quiz/AttemptReview'
-import { SECTION_MASTERY_CATEGORY, MATH_FACTS_CATEGORY, badgeEmojiStyle, sectionMasteryTier, compareBadges, isSectionComplete } from '@/lib/badges'
+import { SECTION_MASTERY_CATEGORY, MATH_FACTS_CATEGORY, GEOGRAPHY_CATEGORY, badgeEmojiStyle, sectionMasteryTier, compareBadges, isSectionComplete } from '@/lib/badges'
 import type { Section, QuizAnswer } from '@/types/database'
 import { loginUrl } from '@/lib/tracks'
 import FactGrid from '@/components/math/FactGrid'
 import MathRounds from '@/components/math/MathRounds'
 import { loadFactHistory, loadRounds, availableTopics } from '@/lib/math-history'
+import GeoMap from '@/components/geo/GeoMap'
+import GeoRounds from '@/components/geo/GeoRounds'
+import { loadGeoHistory, loadGeoRounds } from '@/lib/geo-history'
+import { mapCountries } from '@/lib/geo'
 
 export const dynamic = 'force-dynamic'
 
@@ -62,6 +66,11 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
   const math = viewerIsAdmin
     ? await Promise.all([loadFactHistory(supabase, id), loadRounds(supabase, id), availableTopics(supabase)])
     : null
+  // Same for Geography (its migration gives admins read access). Before that
+  // migration is applied, ready is false and the section does not render.
+  const geo = viewerIsAdmin
+    ? await Promise.all([loadGeoHistory(supabase, id), loadGeoRounds(supabase, id)])
+    : null
 
   const { data: attempts } = await supabase
     .from('quiz_attempts')
@@ -97,7 +106,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
   const totalAttempts = attempts?.length ?? 0
   const earnedKeys = new Set(userAchievements?.map(a => a.achievement_key) ?? [])
   const displayAvatarUrl = (profile as Record<string, unknown>).avatar_url as string | null
-  const badgeCategories = ['First Completion', 'Perfect Score', 'Speed', 'Combo', 'Milestone', SECTION_MASTERY_CATEGORY, MATH_FACTS_CATEGORY]
+  const badgeCategories = ['First Completion', 'Perfect Score', 'Speed', 'Combo', 'Milestone', SECTION_MASTERY_CATEGORY, MATH_FACTS_CATEGORY, GEOGRAPHY_CATEGORY]
 
   return (
     <div className="min-h-screen bg-[#0a0a0f]">
@@ -246,6 +255,17 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
             <div className="grid lg:grid-cols-2 gap-4">
               <FactGrid history={Object.fromEntries(math[0].rows)} topics={math[2]} readOnly />
               <MathRounds rounds={math[1]} title="📋 Their recent rounds" empty="No Math Facts rounds yet." />
+            </div>
+          </div>
+        )}
+
+        {/* Geography, admins only */}
+        {geo && geo[0].ready && (
+          <div className="space-y-4">
+            <h3 className="text-xl font-bold text-white">🌍 Geography</h3>
+            <div className="grid lg:grid-cols-2 gap-4">
+              <GeoMap history={Object.fromEntries(geo[0].rows)} countries={mapCountries()} readOnly />
+              <GeoRounds rounds={geo[1]} title="📋 Their recent rounds" empty="No Geography rounds yet." />
             </div>
           </div>
         )}

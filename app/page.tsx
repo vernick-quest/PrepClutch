@@ -27,11 +27,13 @@ export default async function HubPage() {
   const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
   if (!profile) redirect('/onboarding')
 
-  // Points for each card. Either read can fail softly: a card without its
-  // number still works.
-  const [{ data: hspt }, { data: math }] = await Promise.all([
+  // Points for each card. Any read can fail softly: a card without its
+  // number still works (geo_leaderboard_view does not exist until the
+  // Geography migration is applied).
+  const [{ data: hspt }, { data: math }, { data: geo }] = await Promise.all([
     supabase.from('leaderboard_view').select('aggregate_score').eq('user_id', user.id).maybeSingle(),
     supabase.from('math_leaderboard_view').select('points, fluent').eq('user_id', user.id).maybeSingle(),
+    supabase.from('geo_leaderboard_view').select('points, fluent').eq('user_id', user.id).maybeSingle(),
   ])
 
   const subjects: Subject[] = [
@@ -46,6 +48,12 @@ export default async function HubPage() {
       blurb: 'Times tables, equivalent fractions, and fractions, decimals & percents. Get them right, then get them fast.',
       stat: math ? `${math.points.toLocaleString()} Fact Points · ${math.fluent} cards mastered` : undefined,
       accent: 'from-emerald-500/15 border-emerald-500/30 hover:border-emerald-500/60',
+    },
+    {
+      href: '/geo', emoji: '🌍', title: 'Geography',
+      blurb: 'Capitals, flags, money, languages and continents for all 193 countries. Explore the world, one card at a time.',
+      stat: geo ? `${geo.points.toLocaleString()} Explorer Points · ${geo.fluent} cards mastered` : undefined,
+      accent: 'from-sky-500/15 border-sky-500/30 hover:border-sky-500/60',
     },
   ]
 
@@ -77,11 +85,11 @@ export default async function HubPage() {
           ))}
 
           {/* Where the next subject goes. */}
-          <div className="rounded-3xl border border-dashed border-white/10 p-6 sm:col-span-2 flex items-center gap-4">
-            <span className="text-3xl opacity-50">🌍</span>
+          <div className="rounded-3xl border border-dashed border-white/10 p-6 flex items-center gap-4">
+            <span className="text-3xl opacity-50">🔭</span>
             <div>
               <p className="font-bold text-zinc-400">More subjects on the way</p>
-              <p className="text-sm text-zinc-600">Geography and more, all with points, badges and leaderboards.</p>
+              <p className="text-sm text-zinc-600">All with points, badges and leaderboards.</p>
             </div>
           </div>
         </div>
