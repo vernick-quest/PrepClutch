@@ -15,8 +15,11 @@ export const CONTINENT_LABEL: Record<Continent, string> = {
 export const CONTINENT_SHORT: Record<Continent, string> = {
   af: 'Africa', as: 'Asia', eu: 'Europe', na: 'N. America', sa: 'S. America', oc: 'Oceania',
 }
+// Each continent's badge animal, not a globe: six globe emoji looked the same
+// at tab size. The same animals are the continent badges (Lion of Africa,
+// Panda of Asia, ...), so the tab a student plays points at the badge it earns.
 export const CONTINENT_EMOJI: Record<Continent, string> = {
-  af: '🌍', as: '🌏', eu: '🌍', na: '🌎', sa: '🌎', oc: '🌏',
+  af: '🦁', as: '🐼', eu: '🦔', na: '🦅', sa: '🦙', oc: '🦘',
 }
 
 export type GeoKind = 'cap' | 'capr' | 'flag' | 'flagr' | 'cur' | 'lang' | 'cont' | 'shape' | 'city'
