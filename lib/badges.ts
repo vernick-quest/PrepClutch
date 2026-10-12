@@ -148,14 +148,39 @@ export function sectionMasteryThreshold(key: string): number {
 // Math Facts badges read as ladders, not by rarity: the Calcupede 10 → 864,
 // then the times tables 1 → 12, then the rest. Rarity order would interleave
 // "Master of the 1s" with "10 cards mastered".
-const FACTS_GROUPS = ['mastered', 'table', 'missing', 'all', 'equiv', 'fdp', 'perfect']
+//
+// Grouped by fact-map tab, the same headings the profile shows:
+//   Overall   Calcupede ladder, missing numbers, Flawless Ten
+//   × / ÷     10 → half → all, then the per-table badges 1 → 12
+//   ½ / %     10 → 25 → half → all
+export const MATH_FACTS_GROUPS = ['Overall', '× Multiply', '÷ Divide', '½ Fractions', '% Decimals'] as const
+
 function factsOrder(key: string): [number, number] | null {
   const m = /^facts_([a-z]+)(?:_(\w+))?$/.exec(key)
   if (!m) return null
-  const n = Number(m[2])
-  // facts_equiv_25 before facts_equiv_all; facts_all_mul before facts_all_div.
-  const rung = Number.isFinite(n) ? n : m[2] === 'all' ? Infinity : m[2] === 'div' ? 1 : 0
-  return [FACTS_GROUPS.indexOf(m[1]), rung]
+  const [, kind, rest] = m
+  const n = Number(rest)
+  const g = (name: (typeof MATH_FACTS_GROUPS)[number]) => MATH_FACTS_GROUPS.indexOf(name) * 1000
+  switch (kind) {
+    case 'mastered': return [g('Overall'), n]
+    case 'missing':  return [g('Overall') + 100, n]
+    case 'perfect':  return [g('Overall') + 200, 0]
+    case 'mul':      return [g('× Multiply'), n]
+    case 'table':    return [g('× Multiply') + 100, n]
+    case 'div':      return [g('÷ Divide'), n]
+    case 'divtable': return [g('÷ Divide') + 100, n]
+    // facts_all_mul / facts_all_div close their own ladder (432 > 216).
+    case 'all':      return [g(rest === 'div' ? '÷ Divide' : '× Multiply'), 432]
+    case 'equiv':    return [g('½ Fractions'), Number.isFinite(n) ? n : Infinity]
+    case 'fdp':      return [g('% Decimals'),  Number.isFinite(n) ? n : Infinity]
+    default:         return [9000, 0]
+  }
+}
+
+/** Which profile heading a Math Facts badge sits under. */
+export function mathFactsGroup(key: string): (typeof MATH_FACTS_GROUPS)[number] {
+  const o = factsOrder(key)
+  return MATH_FACTS_GROUPS[Math.min(Math.floor((o?.[0] ?? 0) / 1000), MATH_FACTS_GROUPS.length - 1)]
 }
 
 function sectionMasteryOrder(key: string): number {

@@ -7,7 +7,7 @@ import Footer from '@/components/ui/Footer'
 import SignOutButton from '@/components/ui/SignOutButton'
 import ProfileActions from '@/components/profile/ProfileActions'
 import AttemptReview from '@/components/quiz/AttemptReview'
-import { isSectionComplete, compareBadges, MATH_FACTS_CATEGORY } from '@/lib/badges'
+import { isSectionComplete, compareBadges, MATH_FACTS_CATEGORY, MATH_FACTS_GROUPS, mathFactsGroup } from '@/lib/badges'
 import type { Section, QuizAnswer } from '@/types/database'
 import { loginUrl } from '@/lib/tracks'
 
@@ -219,8 +219,21 @@ export default async function ProfilePage() {
                 {mathBadges.filter(b => earnedKeys.has(b.key)).length} / {mathBadges.length}
               </span>
             </div>
+            {/* Under the same headings as the fact map's tabs. */}
+            <div className="space-y-5">
+            {MATH_FACTS_GROUPS.map(group => {
+              const inGroup = mathBadges.filter(b => mathFactsGroup(b.key) === group)
+              if (inGroup.length === 0) return null
+              return (
+                <div key={group}>
+                  <p className="text-xs font-bold uppercase tracking-wide text-zinc-400 mb-2">
+                    {group}
+                    <span className="ml-2 font-normal normal-case text-zinc-600">
+                      {inGroup.filter(b => earnedKeys.has(b.key)).length} / {inGroup.length}
+                    </span>
+                  </p>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
-              {mathBadges.map(b => {
+              {inGroup.map(b => {
                 const earned = earnedKeys.has(b.key)
                 return (
                   <div
@@ -237,6 +250,10 @@ export default async function ProfilePage() {
                   </div>
                 )
               })}
+            </div>
+                </div>
+              )
+            })}
             </div>
           </div>
         )}
