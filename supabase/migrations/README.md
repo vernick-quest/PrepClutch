@@ -100,7 +100,7 @@ passage into two in the quiz UI. 035-038 are independent of the others.
 
 | 067 | Math Facts badge ladders on every tab (+20: ×/÷ 10 & 216, ÷ tables 1-12, ½ 10 & 152, % 10 & 45) | migration | ✅ |
 
-| 068 | Math Facts round history (fact_rounds) + admins can read Math Facts | migration | ⏳ |
+| 068 | Math Facts round history (fact_rounds) + admins can read Math Facts | migration | ✅ |
 
 Next free number: **069**
 
