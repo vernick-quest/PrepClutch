@@ -89,8 +89,10 @@ passage into two in the quiz UI. 035-038 are independent of the others.
 | 058 | Split the question bank by exam (HSPT / SSAT) | migration | ⏳ |
 | 059 | Training questions table + 3-question verbal pilot | migration | ✅ |
 | 060 | Training: concept labels + full 75-question bank (base64 content) | migration | ✅ |
+| 061 | Class 36602 → LOS2027, student moves, classes.code to TEXT | migration | ✅ |
+| 062 | Math Facts: fact_history, record_fact_answer, math_leaderboard_view | migration | ✅ |
 
-Next free number: **061**
+Next free number: **063**
 
 **Why 039-043 failed:** they matched rows with `AND options = '[...]'::JSONB`, but
 migration 019 shuffled every question's options in production. The snapshot's
