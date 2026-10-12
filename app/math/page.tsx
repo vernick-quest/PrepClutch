@@ -5,7 +5,6 @@ import { createClient } from '@/lib/supabase/server'
 import { MAX_FACT_POINTS, allCards } from '@/lib/math-facts'
 import { loadFactHistory, availableTopics } from '@/lib/math-history'
 import MathStart from '@/components/math/MathStart'
-import type { TileProgress } from '@/components/math/MathStart'
 import TrackSwitcher from '@/components/ui/TrackSwitcher'
 import FactGrid from '@/components/math/FactGrid'
 import { MATH_FACTS_CATEGORY, compareBadges } from '@/lib/badges'
@@ -127,16 +126,6 @@ export default async function MathHomePage() {
   const points = allCards().reduce((s, c) => s + (rows.get(c.key)?.fluent_at ? c.points : 0), 0)
   const fluent = [...rows.values()].filter(r => r.fluent_at).length
 
-  // Mastered / total for each start tile: × and ÷ are separate tiles.
-  const progress: TileProgress = {
-    mul: { mastered: 0, total: 0 }, div: { mastered: 0, total: 0 },
-    equiv: { mastered: 0, total: 0 }, fdp: { mastered: 0, total: 0 },
-  }
-  for (const c of allCards()) {
-    const tile = progress[c.topic === 'times' ? c.op! : c.topic]
-    tile.total++
-    if (rows.get(c.key)?.fluent_at) tile.mastered++
-  }
   const history = Object.fromEntries(rows)
 
   return (
@@ -166,7 +155,7 @@ export default async function MathHomePage() {
 
         <div className="grid lg:grid-cols-2 gap-6">
           <div className="space-y-6 min-w-0">
-            <MathStart topics={topics} progress={progress} />
+            <MathStart topics={topics} history={history} />
             <FactGrid history={history} topics={topics} />
           </div>
           <div className="space-y-8 min-w-0">

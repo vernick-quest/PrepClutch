@@ -5,25 +5,13 @@ import {
   FACT_TABLES, EQUIV_BASES, EQUIV_MULTIPLIERS, EQUIV_FORMS, FDP_BASES, FDP_FORMS,
   factKey, cardState, makeFdpCard,
 } from '@/lib/math-facts'
-import type { FactOp, FactHistoryRow, CardState, Topic } from '@/lib/math-facts'
+import type { FactHistoryRow, CardState, Topic } from '@/lib/math-facts'
+import { cellTone, CELL_CLASS } from '@/components/math/cells'
+import type { MapTab } from '@/components/math/cells'
 
-type MapTab = FactOp | 'equiv' | 'fdp'
 const TABS: [MapTab, string][] = [['mul', '×'], ['div', '÷'], ['equiv', '½'], ['fdp', '%']]
 
-const RANK: Record<CardState, number> = { unseen: 0, struggling: 1, learning: 2, fluent: 3 }
-
-// One cell can stand for several cards (the three forms of 7 × 8, or the four
-// forms of ¾ ↔ 6/8). Every card mastered is solid green, some is pale green,
-// none but answered right is amber, missed is red, never seen is blank.
-function cellStyle(states: CardState[]): string {
-  const fluent = states.filter(s => s === 'fluent').length
-  if (fluent === states.length) return 'bg-emerald-500/70 text-white'
-  if (fluent > 0)               return 'bg-emerald-500/25 text-emerald-100'
-  const worst = states.filter(s => s !== 'unseen').sort((x, y) => RANK[x] - RANK[y])[0]
-  if (worst === 'struggling') return 'bg-rose-500/30 text-rose-100'
-  if (worst === 'learning')   return 'bg-amber-500/25 text-amber-100'
-  return 'bg-white/3 text-zinc-600'
-}
+const cellStyle = (states: CardState[]) => CELL_CLASS[cellTone(states)]
 
 // Two-line headings keep the table inside a 375px phone.
 const FDP_HEAD: Record<string, [string, string]> = {
