@@ -3,12 +3,16 @@
 import { createClient } from '@/lib/supabase/client'
 import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
+import { safeNext, trackOf, rememberNext } from '@/lib/tracks'
 
 function LoginContent() {
   const searchParams = useSearchParams()
   const error = searchParams.get('error')
+  const next = safeNext(searchParams.get('next'))
+  const forMath = trackOf(next) === 'math'
 
   async function signInWithGoogle() {
+    rememberNext(next)
     const supabase = createClient()
     await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -31,19 +35,30 @@ function LoginContent() {
       <div className="relative z-10 w-full max-w-md">
         {/* Logo / Title */}
         <div className="text-center mb-10">
-          <div className="text-6xl mb-4">🎓</div>
+          {/* A link to Math Facts gets a Math Facts welcome, so a friend sent
+              to /math knows they are in the right place. */}
+          <div className="text-6xl mb-4">{forMath ? '🧮' : '🎓'}</div>
           <h1 className="text-5xl font-black tracking-tight mb-2">
-            <span className="text-amber-400">HSPT</span>
-            <span className="text-white"> Prep</span>
+            {forMath ? (
+              <><span className="text-amber-400">Math</span><span className="text-white"> Facts</span></>
+            ) : (
+              <><span className="text-amber-400">Prep</span><span className="text-white">Clutch</span></>
+            )}
           </h1>
           <p className="text-zinc-400 text-lg">
-            Master the HSPT. Beat your class. Earn your rank.
+            {forMath
+              ? 'Times tables, fractions and decimals. Get fast. Beat your friends.'
+              : 'HSPT prep and Math Facts. Beat your class. Earn your rank.'}
           </p>
+          {forMath && <p className="text-zinc-600 text-sm mt-1">by PrepClutch</p>}
         </div>
 
         {/* Feature pills */}
         <div className="flex flex-wrap justify-center gap-2 mb-10">
-          {['📚 5 Sections', '🏆 Leaderboard', '⚡ XP & Achievements', '⏱️ Timed Practice'].map(f => (
+          {(forMath
+            ? ['✖️ Times tables', '½ Fractions', '% Decimals & percents', '🏆 Leaderboard']
+            : ['🎓 HSPT: 5 sections', '🧮 Math Facts', '🏆 Leaderboards', '⚡ Badges']
+          ).map(f => (
             <span key={f} className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-sm text-zinc-300">
               {f}
             </span>
@@ -77,7 +92,9 @@ function LoginContent() {
         </div>
 
         <p className="mt-6 text-center text-zinc-600 text-sm">
-          Used in classrooms nationwide to prepare for the HSPT entrance exam.
+          {forMath
+            ? 'Already here for HSPT prep? It\u2019s the same sign-in.'
+            : 'Used in classrooms to prepare for the HSPT entrance exam.'}
         </p>
 
         <p className="mt-4 text-center text-zinc-700 text-xs">

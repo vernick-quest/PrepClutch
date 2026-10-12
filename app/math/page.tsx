@@ -5,8 +5,10 @@ import { createClient } from '@/lib/supabase/server'
 import { MAX_FACT_POINTS, allCards } from '@/lib/math-facts'
 import { loadFactHistory, availableTopics } from '@/lib/math-history'
 import MathStart from '@/components/math/MathStart'
+import TrackSwitcher from '@/components/ui/TrackSwitcher'
 import FactGrid from '@/components/math/FactGrid'
 import { MATH_FACTS_CATEGORY, compareBadges } from '@/lib/badges'
+import { loginUrl } from '@/lib/tracks'
 
 export const dynamic = 'force-dynamic'
 
@@ -55,16 +57,33 @@ function Board({ title, rows, me }: { title: string; rows: LbRow[]; me: string }
 export default async function MathHomePage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  if (!user) redirect(loginUrl('/math'))
 
-  const { data: profile } = await supabase.from('profiles').select('class_code').eq('id', user.id).single()
+  const { data: profile } = await supabase.from('profiles')
+    .select('class_code, display_name, avatar_color, avatar_url').eq('id', user.id).single()
   if (!profile) redirect('/onboarding')
 
   const { ready, rows } = await loadFactHistory(supabase, user.id)
 
+  // Same shape as the HSPT dashboard's bar, so the switch reads as one site.
   const header = (
-    <div className="flex items-center justify-between">
-      <Link href="/" className="text-zinc-500 hover:text-white text-sm transition-colors">← PrepClutch</Link>
+    <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center gap-3">
+        <Link href="/" className="text-xl font-black hidden sm:block">
+          <span className="text-amber-400">Prep</span><span className="text-white">Clutch</span>
+        </Link>
+        <TrackSwitcher current="math" />
+      </div>
+      <Link href="/profile" className="shrink-0 hover:opacity-80 transition-opacity">
+        {profile.avatar_url ? (
+          <Image src={profile.avatar_url} alt={profile.display_name} width={36} height={36} className="rounded-full" />
+        ) : (
+          <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white"
+               style={{ backgroundColor: profile.avatar_color }}>
+            {profile.display_name?.[0]?.toUpperCase()}
+          </div>
+        )}
+      </Link>
     </div>
   )
 

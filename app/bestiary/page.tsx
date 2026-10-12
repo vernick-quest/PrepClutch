@@ -2,13 +2,14 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import BestiaryClient from '@/components/challenge/BestiaryClient'
+import { loginUrl } from '@/lib/tracks'
 
 export const dynamic = 'force-dynamic'
 
 export default async function BestiaryPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  if (!user) redirect(loginUrl('/bestiary'))
 
   const { data: profile } = await supabase
     .from('profiles')

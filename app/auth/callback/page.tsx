@@ -3,6 +3,7 @@
 import { useEffect, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
+import { takeNext, TRACK_HOME } from '@/lib/tracks'
 
 function CallbackHandler() {
   const router = useRouter()
@@ -48,9 +49,12 @@ function CallbackHandler() {
       }
 
       // Save Google avatar on first login
+      // '*' so home_track is read once migration 065 adds it, and nothing
+      // errors before it does. A failed select here would look like "no
+      // profile" and send an existing student back through onboarding.
       const { data: profile } = await supabase
         .from('profiles')
-        .select('id, avatar_url')
+        .select('*')
         .eq('id', user.id)
         .single()
 
@@ -60,7 +64,10 @@ function CallbackHandler() {
         await supabase.from('profiles').update({ avatar_url: googleAvatar }).eq('id', user.id)
       }
 
-      router.push(profile ? '/' : '/onboarding')
+      // New students: onboarding reads the remembered link itself, so leave it.
+      if (!profile) { router.push('/onboarding'); return }
+      const track = profile.home_track === 'math' ? 'math' : 'hspt'
+      router.push(takeNext() ?? TRACK_HOME[track])
     })
   }, [router, searchParams])
 

@@ -2,13 +2,14 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import AdminClassEditor from '@/components/admin/AdminClassEditor'
+import { loginUrl } from '@/lib/tracks'
 
 export const dynamic = 'force-dynamic'
 
 export default async function AdminPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  if (!user) redirect(loginUrl('/admin'))
 
   const { data: viewerProfile } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single()
   if (!(viewerProfile as Record<string, unknown>)?.is_admin) redirect('/')

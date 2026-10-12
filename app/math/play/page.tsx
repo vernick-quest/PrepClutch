@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { buildDeck, parseDeckOptions } from '@/lib/math-facts'
 import { loadFactHistory, availableTopics } from '@/lib/math-history'
 import FactsClient from '@/components/math/FactsClient'
+import { loginUrl } from '@/lib/tracks'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,7 +12,7 @@ interface Props { searchParams: Promise<{ op?: string; type?: string; t?: string
 export default async function MathPlayPage({ searchParams }: Props) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  if (!user) redirect(loginUrl('/math'))
 
   const { ready, rows } = await loadFactHistory(supabase, user.id)
   if (!ready) redirect('/math')

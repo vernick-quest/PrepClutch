@@ -9,6 +9,7 @@ import ProfileActions from '@/components/profile/ProfileActions'
 import AttemptReview from '@/components/quiz/AttemptReview'
 import { isSectionComplete } from '@/lib/badges'
 import type { Section, QuizAnswer } from '@/types/database'
+import { loginUrl } from '@/lib/tracks'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,7 +23,7 @@ function getAccentHex(accent: string): string {
 export default async function ProfilePage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  if (!user) redirect(loginUrl('/profile'))
 
   const { data: profile } = await supabase
     .from('profiles')

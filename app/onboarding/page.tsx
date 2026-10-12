@@ -1,9 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { AVATAR_COLORS, normalizeClassCode } from '@/lib/constants'
+import { peekNext, takeNext, trackOf, TRACK_HOME } from '@/lib/tracks'
+import type { Track } from '@/lib/tracks'
+
+const TRACK_CHOICES: { track: Track; emoji: string; title: string; blurb: string }[] = [
+  { track: 'math', emoji: '🧮', title: 'Math Facts', blurb: 'Times tables, fractions, decimals' },
+  { track: 'hspt', emoji: '🎓', title: 'HSPT prep',  blurb: 'High school placement test' },
+]
 
 export default function OnboardingPage() {
   const router = useRouter()
@@ -12,9 +19,23 @@ export default function OnboardingPage() {
   const [selectedColor, setSelectedColor] = useState(AVATAR_COLORS[0])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [track, setTrack] = useState<Track | null>(null)
+
+  // Arrived from a Math Facts or HSPT link? Pre-pick that track.
+  // sessionStorage only exists in the browser, so this has to happen after the
+  // first render.
+  useEffect(() => {
+    const fromLink = trackOf(peekNext())
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (fromLink) setTrack(fromLink)
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (!track) {
+      setError('Pick Math Facts or HSPT prep to start. You can switch any time.')
+      return
+    }
     if (!displayName.trim()) {
       setError('Please enter a display name.')
       return
@@ -57,7 +78,13 @@ export default function OnboardingPage() {
       return
     }
 
-    router.push('/')
+    // Saved separately from the insert: before migration 065 the column does
+    // not exist, and an unknown column would fail the whole profile insert.
+    await supabase.from('profiles').update({ home_track: track }).eq('id', user.id)
+
+    // Follow the link they came in on, unless it belongs to the other track.
+    const next = takeNext()
+    router.push(next && (trackOf(next) ?? track) === track ? next : TRACK_HOME[track])
   }
 
   return (
@@ -75,6 +102,31 @@ export default function OnboardingPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur-sm space-y-6">
+          {/* What they came for. Both live behind this one sign-in; the top bar
+              switches between them later. */}
+          <div>
+            <label className="block text-sm font-medium text-zinc-300 mb-3">What are you here for?</label>
+            <div className="grid grid-cols-2 gap-3">
+              {TRACK_CHOICES.map(c => (
+                <button
+                  key={c.track}
+                  type="button"
+                  onClick={() => setTrack(c.track)}
+                  className={`rounded-2xl border p-4 text-left transition-all ${
+                    track === c.track
+                      ? 'border-amber-500/60 bg-amber-500/10 ring-1 ring-amber-500/40'
+                      : 'border-white/10 bg-white/3 hover:border-white/25'
+                  }`}
+                >
+                  <span className="block text-3xl mb-1">{c.emoji}</span>
+                  <span className="block font-bold text-white">{c.title}</span>
+                  <span className="block text-xs text-zinc-400 mt-0.5">{c.blurb}</span>
+                </button>
+              ))}
+            </div>
+            <p className="mt-2 text-xs text-zinc-500">You can switch between them any time from the top bar.</p>
+          </div>
+
           {/* Avatar color picker */}
           <div>
             <label className="block text-sm font-medium text-zinc-300 mb-3">Choose your color</label>

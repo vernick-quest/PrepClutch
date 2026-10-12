@@ -10,6 +10,7 @@ import type { FullTestBlock } from '@/components/quiz/FullTestClient'
 import { buildPassagesFromRows, PASSAGES_PER_SESSION, MAX_QUESTIONS_PER_PASSAGE, VOCAB_PER_SESSION } from '@/lib/reading-passages'
 import type { ReadingPassage, ReadingQuestionRow } from '@/lib/reading-passages'
 import type { Section, Question } from '@/types/database'
+import { loginUrl } from '@/lib/tracks'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,7 +25,7 @@ export default async function QuizPage({ params }: Props) {
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  if (!user) redirect(loginUrl(`/quiz/${section}`))
 
   const { data: profile } = await supabase
     .from('profiles')

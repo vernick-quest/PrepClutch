@@ -7,6 +7,7 @@ import Footer from '@/components/ui/Footer'
 import AttemptReview from '@/components/quiz/AttemptReview'
 import { SECTION_MASTERY_CATEGORY, MATH_FACTS_CATEGORY, badgeEmojiStyle, sectionMasteryTier, compareBadges, isSectionComplete } from '@/lib/badges'
 import type { Section, QuizAnswer } from '@/types/database'
+import { loginUrl } from '@/lib/tracks'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,7 +32,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
   const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  if (!user) redirect(loginUrl(`/profile/${id}`))
 
   // Redirect to own profile page which has extra controls
   if (id === user.id) redirect('/profile')

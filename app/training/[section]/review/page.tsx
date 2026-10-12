@@ -5,6 +5,7 @@ import { SECTIONS, SECTION_CONFIG, DIFF_NAME } from '@/lib/constants'
 import { masteredCounts, masteredRound, REVIEW_ROUND } from '@/lib/mastered-review'
 import TrainingClient from '@/components/training/TrainingClient'
 import type { Section } from '@/types/database'
+import { loginUrl } from '@/lib/tracks'
 
 export const dynamic = 'force-dynamic'
 
@@ -30,7 +31,7 @@ export default async function ReviewPage({ params, searchParams }: Props) {
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  if (!user) redirect(loginUrl(`/training/${section}/review`))
 
   const difficulty = Number(level)
   if (difficulty === 1 || difficulty === 2 || difficulty === 3) {

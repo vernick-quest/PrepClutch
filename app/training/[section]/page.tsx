@@ -5,6 +5,7 @@ import { masteredCounts } from '@/lib/mastered-review'
 import TrainingClient from '@/components/training/TrainingClient'
 import type { TrainingQuestion } from '@/components/training/TrainingClient'
 import type { Section } from '@/types/database'
+import { loginUrl } from '@/lib/tracks'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,7 +17,7 @@ export default async function TrainingPage({ params }: Props) {
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  if (!user) redirect(loginUrl(`/training/${section}`))
 
   // Easiest first, then the authored order — two Mediums can be deliberately
   // sequenced so the first teaches the second.

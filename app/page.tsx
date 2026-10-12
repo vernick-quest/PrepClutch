@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import Footer from '@/components/ui/Footer'
 import { isSectionComplete } from '@/lib/badges'
+import TrackSwitcher from '@/components/ui/TrackSwitcher'
 import type { Section } from '@/types/database'
 
 export const dynamic = 'force-dynamic'
@@ -108,10 +109,13 @@ export default async function DashboardPage() {
       {/* Nav */}
       <nav className="border-b border-white/5 sticky top-0 z-50 bg-[#0a0a0f]/80 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="text-xl font-black">
-            <span className="text-amber-400">Prep</span>
-            <span className="text-white">Clutch</span>
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link href="/" className="text-xl font-black hidden sm:block">
+              <span className="text-amber-400">Prep</span>
+              <span className="text-white">Clutch</span>
+            </Link>
+            {mathFactsReady && <TrackSwitcher current="hspt" />}
+          </div>
           <div className="flex items-center gap-3">
             {isAdmin && (
               <Link href="/admin" className="text-xs bg-violet-500/20 border border-violet-500/30 text-violet-400 px-2 py-1 rounded-full font-mono hover:bg-violet-500/30 transition-colors">
