@@ -90,6 +90,8 @@ const GROUP_BADGES: [string, string, [string, string, string, string, string], [
 ]
 for (const [grp, word, first, last] of GROUP_BADGES) {
   const kinds = geo.GROUP_KINDS[grp as keyof typeof geo.GROUP_KINDS]
+  // Money and Languages are Expert kinds, not in the catalogue: no badges.
+  if (!kinds.every(k => geo.KINDS_069.includes(k))) continue
   const total = geo.COUNTRIES.length * kinds.length
   const both = kinds.length > 1 ? ', both ways round' : ''
   B.push([`geo_${grp}_25`, first[0], first[1], `25 ${word} cards mastered.`, first[2], first[3], first[4], 25])

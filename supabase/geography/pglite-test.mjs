@@ -23,6 +23,11 @@ const REPO = process.env.REPO ?? '/Users/robert/PrepClutch'
 await import(`${REPO}/supabase/geography/ts-resolve.mts`)
 const SQL = fs.readFileSync(`${REPO}/supabase/migrations/069_geography.sql`, 'utf8')
 const geo = await import(`${REPO}/lib/geo.ts`)
+// Expected sizes come from the card set itself, so dropping or adding a card
+// kind can't leave the test asserting stale numbers.
+const P1_CARDS  = geo.geoCards(geo.KINDS_069).length
+const P1_POINTS = geo.maxGeoPoints(geo.KINDS_069)
+const P1_BADGES = (SQL.match(/^\('geo_[a-z0-9_]+', /gm) ?? []).length
 
 const A = '11111111-1111-1111-1111-111111111111'   // student
 const B = '22222222-2222-2222-2222-222222222222'   // student who masters everything
@@ -80,8 +85,8 @@ const award = async (u, perfect = false) => {
 let res = await db.exec('BEGIN;\n' + SQL + '\nCOMMIT;')
 const v1 = res.at(-2).rows[0]
 console.log('verification (first run):', JSON.stringify(v1))
-check('first run: 1351 cards, 193 countries, 15440 points, 23 badges',
-  v1.cards === 1351 && v1.countries === 193 && v1.max_points === 15440 && v1.geo_badges === 23 && v1.orphan_history === 0)
+check(`first run: ${P1_CARDS} cards, 193 countries, ${P1_POINTS} points, ${P1_BADGES} badges`,
+  v1.cards === P1_CARDS && v1.countries === 193 && v1.max_points === P1_POINTS && v1.geo_badges === P1_BADGES && v1.orphan_history === 0)
 check('first run: helper not callable by students, record not by anon',
   v1.helper_callable_by_students === false && v1.record_callable_by_anon === false)
 check('first run: leaderboard has one row per profile', v1.leaderboard_rows === 4)
@@ -135,7 +140,9 @@ check('A still mastered after those attempts', (await fluentAt(A, 'cap:fr')).flu
 // ── 5. Badges ────────────────────────────────────────────────────────────────
 const cards = geo.geoCards(geo.KINDS_069)
 const oc = cards.filter(c => c.continent === 'oc')
-check('Oceania has 98 cards', oc.length === 98)
+// 14 Oceania countries x the 069 kinds, from the data, not a constant.
+const OC_EXPECTED = geo.COUNTRIES.filter(c => c.continent === 'oc').length * geo.KINDS_069.length
+check(`Oceania has ${OC_EXPECTED} cards`, oc.length === OC_EXPECTED)
 for (const c of oc.slice(1)) await answer(B, c.key, true, 1500)
 let got = await award(B)
 check('one card short of Oceania: no continent badge', !got.includes('geo_continent_oc'), got.join(' '))
@@ -157,10 +164,10 @@ check('all capital cards: Capital Crown', (await award(B)).includes('geo_capital
 for (const c of cards) await answer(B, c.key, true, 1500)
 got = await award(B)
 check('everything: all remaining badges, World Turtle included', got.includes('geo_mastered_all'), got.length + ' new')
-check('B holds all 23 geography badges', (await held(B)).length === 23)
+check(`B holds all ${P1_BADGES} geography badges`, (await held(B)).length === P1_BADGES)
 await answer(B, 'cap:fr', false, 9000)
-check('a miss after everything removes nothing', (await held(B)).length === 23 &&
-  (await db.query(`SELECT points FROM geo_leaderboard_view WHERE user_id = '${B}'`)).rows[0].points === 15440)
+check('a miss after everything removes nothing', (await held(B)).length === P1_BADGES &&
+  (await db.query(`SELECT points FROM geo_leaderboard_view WHERE user_id = '${B}'`)).rows[0].points === P1_POINTS)
 check('math badge untouched', (await db.query(`SELECT COUNT(*)::int n FROM user_achievements WHERE achievement_key = 'facts_mastered_10'`)).rows[0].n === 1)
 
 // Helper refused for students, wrapper allowed.
@@ -178,7 +185,7 @@ check('C has no badges before the re-run', (await held(C)).length === 0)
 res = await db.exec('BEGIN;\n' + SQL + '\nCOMMIT;')
 const c3 = await held(C)
 check('re-run backfills C: Llama of South America + ladder', c3.includes('geo_continent_sa') && c3.includes('geo_mastered_50') && !c3.includes('geo_mastered_100'), c3.join(' '))
-check('re-run leaves B with 23', (await held(B)).length === 23)
+check(`re-run leaves B with ${P1_BADGES}`, (await held(B)).length === P1_BADGES)
 
 // ── 7. Who can read what ─────────────────────────────────────────────────────
 await as(A)
@@ -209,7 +216,7 @@ err = ''
 try { await as(null, 'anon'); await db.query('SELECT * FROM geo_history') } catch (e) { err = e.message } finally { await su() }
 check('anon cannot read geo_history', /permission denied/.test(err), err)
 const lbSeen = await seen(A, 'SELECT user_id, points FROM geo_leaderboard_view ORDER BY points DESC')
-check('student reads the whole leaderboard', lbSeen.length === 4 && lbSeen[0].points === 15440)
+check('student reads the whole leaderboard', lbSeen.length === 4 && lbSeen[0].points === P1_POINTS)
 
 console.log(fails ? `\n${fails} FAILED` : '\nALL PASSED')
 process.exit(fails ? 1 : 0)

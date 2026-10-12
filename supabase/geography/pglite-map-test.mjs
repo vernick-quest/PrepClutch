@@ -105,14 +105,18 @@ const recordSrc069 = (await db.query(`SELECT prosrc FROM pg_proc WHERE proname =
 let res = await db.exec('BEGIN;\n' + SQL + '\nCOMMIT;')
 const v1 = res.at(-2).rows[0]
 console.log('verification (first run):', JSON.stringify(v1))
-const expect = { cards: 1544, shape_cards: 193, phase1_cards: 1351, phase1_points: 15440, max_points: 18335, orphan_history: 0,
-  geo_badges: 25, pin_places: 193, pin_rounds_table: 1, helper_callable_by_students: false, pin_record_callable_by_anon: false, pin_insert_by_students: false }
+const P1_CARDS = phase1.length, P1_POINTS = geo.maxGeoPoints(geo.KINDS_069)
+const ALL_CARDS = geo.allGeoCards().length, ALL_POINTS = geo.maxGeoPoints()
+const P1_BADGES = (fs.readFileSync(`${REPO}/supabase/migrations/069_geography.sql`, 'utf8').match(/^\('geo_[a-z0-9_]+', /gm) ?? []).length
+const ALL_BADGES = P1_BADGES + (SQL.match(/^\('geo_[a-z0-9_]+', /gm) ?? []).length
+const expect = { cards: ALL_CARDS, shape_cards: 193, phase1_cards: P1_CARDS, phase1_points: P1_POINTS, max_points: ALL_POINTS, orphan_history: 0,
+  geo_badges: ALL_BADGES, pin_places: 193, pin_rounds_table: 1, helper_callable_by_students: false, pin_record_callable_by_anon: false, pin_insert_by_students: false }
 check('first run: verification as expected', Object.entries(expect).every(([k, v]) => v1[k] === v), JSON.stringify(expect))
 res = await db.exec('BEGIN;\n' + SQL + '\nCOMMIT;')
 check('re-run: identical verification', JSON.stringify(res.at(-2).rows[0]) === JSON.stringify(v1))
 
 // ── 2. Nothing of 069's changed ──────────────────────────────────────────────
-check("069's 1351 cards byte-equal before and after (keys, points, targets)", (await snapCards()) === cardsBefore)
+check(`069's ${P1_CARDS} cards byte-equal before and after (keys, points, targets)`, (await snapCards()) === cardsBefore)
 check('existing geo_history untouched', (await snapHistory()) === historyBefore)
 check('C keeps exactly the badges it had', JSON.stringify(await held(C)) === JSON.stringify(cBadges))
 check('record_geo_answer unchanged', (await db.query(`SELECT prosrc FROM pg_proc WHERE proname = 'record_geo_answer'`)).rows[0].prosrc === recordSrc069)
@@ -126,7 +130,7 @@ check("award_geo_badges_for = 069's text plus exactly the two shapes rungs", reb
 const sqlCards = (await db.query('SELECT card_key, iso, kind, continent, points, target_ms FROM geo_cards ORDER BY card_key')).rows
 const tsCards = geo.allGeoCards().map(c => ({ card_key: c.key, iso: c.iso, kind: c.kind, continent: c.continent, points: c.points, target_ms: c.targetMs }))
   .sort((x, y) => (x.card_key < y.card_key ? -1 : 1))
-check('parity: 1544 cards, same keys, points and targets as lib/geo.ts', JSON.stringify(sqlCards) === JSON.stringify(tsCards), `${sqlCards.length} vs ${tsCards.length}`)
+check(`parity: ${ALL_CARDS} cards, same keys, points and targets as lib/geo.ts`, JSON.stringify(sqlCards) === JSON.stringify(tsCards), `${sqlCards.length} vs ${tsCards.length}`)
 const pinSql = (await db.query('SELECT iso, continent, tier, lat, lon FROM geo_pin_places ORDER BY iso')).rows
 const tiers = geo.pinTiers()
 const pinTs = geo.COUNTRIES.map(c => ({ iso: c.iso, continent: c.continent, tier: tiers.get(c.iso), lat: c.capitals[0].lat, lon: c.capitals[0].lon }))
@@ -159,16 +163,16 @@ got = await award(B)
 check('every card but one shape: no Map Master, no World Turtle', !got.includes('geo_shapes_all') && !got.includes('geo_mastered_all') &&
   !(await held(B)).includes('geo_mastered_all'), got.join(' '))
 const heldB = await held(B)
-check('…but the phase-1 type badges are all there', ['geo_capitals_all', 'geo_flags_all', 'geo_money_all', 'geo_languages_all', 'geo_continents_all'].every(k => heldB.includes(k)))
+check('…but the phase-1 type badges are all there', ['geo_capitals_all', 'geo_flags_all', 'geo_continents_all'].every(k => heldB.includes(k)))
 const lastCt = shapes.at(-1).continent
 check(`…and the continent missing that shape (${lastCt}) is not awarded`, !(await held(B)).includes(`geo_continent_${lastCt}`))
 await answer(B, shapes.at(-1).key, true, 1500)
 got = await award(B)
 check('last shape: Map Master, World Turtle and that continent', ['geo_shapes_all', 'geo_mastered_all', `geo_continent_${lastCt}`].every(k => got.includes(k)), got.join(' '))
-check('B holds all 25 Geography badges but Perfect Passport (24)', (await held(B)).length === 24, String((await held(B)).length))
+check(`B holds all ${ALL_BADGES} Geography badges but Perfect Passport (${ALL_BADGES - 1})`, (await held(B)).length === ALL_BADGES - 1, String((await held(B)).length))
 const defs = (await db.query(`SELECT key, description, threshold, category FROM achievement_definitions WHERE key IN ('geo_mastered_all', 'geo_continent_eu', 'geo_shapes_all', 'geo_shapes_25') ORDER BY key`)).rows
 check('descriptions and thresholds count shape cards', JSON.stringify(defs.map(d => [d.key, d.threshold, d.category])) ===
-  JSON.stringify([['geo_continent_eu', 344, 'Geography'], ['geo_mastered_all', 1544, 'Geography'], ['geo_shapes_25', 25, 'Geography'], ['geo_shapes_all', 193, 'Geography']]), JSON.stringify(defs))
+  JSON.stringify([['geo_continent_eu', geo.allGeoCards().filter(c => c.continent === 'eu').length, 'Geography'], ['geo_mastered_all', ALL_CARDS, 'Geography'], ['geo_shapes_25', 25, 'Geography'], ['geo_shapes_all', 193, 'Geography']]), JSON.stringify(defs))
 check('award_geo_badges_for refused under SET ROLE authenticated', /permission denied/.test(await refused(A, 'authenticated', `SELECT * FROM award_geo_badges_for('${A}', true)`)))
 check('award_geo_badges refused for anon', /permission denied/.test(await refused(null, 'anon', `SELECT * FROM award_geo_badges(true)`)))
 check('C still holds exactly its badges', JSON.stringify(await held(C)) === JSON.stringify(cBadges))
@@ -249,7 +253,7 @@ const pinBefore = JSON.stringify((await db.query('SELECT * FROM geo_pin_leaderbo
 await db.exec('BEGIN;\n' + SQL + '\nCOMMIT;')
 check('re-run after play: leaderboards unchanged', JSON.stringify((await db.query('SELECT * FROM geo_leaderboard_view ORDER BY user_id')).rows) === lbBefore &&
   JSON.stringify((await db.query('SELECT * FROM geo_pin_leaderboard_view ORDER BY user_id, deck')).rows) === pinBefore)
-check('re-run after play: B keeps 24 badges', (await held(B)).length === 24)
+check(`re-run after play: B keeps ${ALL_BADGES - 1} badges`, (await held(B)).length === ALL_BADGES - 1)
 
 console.log(fails ? `\n${fails} FAILED` : '\nALL PASSED')
 process.exit(fails ? 1 : 0)

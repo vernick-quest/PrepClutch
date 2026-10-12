@@ -51,7 +51,7 @@ export default async function HubPage() {
     },
     {
       href: '/geo', emoji: '🌍', title: 'Geography',
-      blurb: 'Capitals, flags, money, languages and continents for all 193 countries. Explore the world, one card at a time.',
+      blurb: 'Capitals, flags and continents for all 193 countries. Explore the world, one card at a time.',
       stat: geo ? `${geo.points.toLocaleString()} Explorer Points · ${geo.fluent} cards mastered` : undefined,
       accent: 'from-sky-500/15 border-sky-500/30 hover:border-sky-500/60',
     },

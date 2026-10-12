@@ -41,6 +41,9 @@ if (NEW_KINDS.join() !== 'shape') { console.error(`expected exactly the shape ki
 const shapes = geo.geoCards(['shape'])
 const all = geo.allGeoCards()
 const phase1 = geo.geoCards(geo.KINDS_069)
+// Phase-1 badge count, read from the generated 069 so it can't drift.
+const P1_BADGES = (fs.readFileSync(path.join(root, 'supabase/migrations/069_geography.sql'), 'utf8')
+  .match(/^\('geo_[a-z0-9_]+', /gm) ?? []).length
 const rows = shapes.map(c => `(${[q(c.key), q(c.iso), q(c.kind), q(c.continent), c.points, c.targetMs].join(', ')})`)
 
 // ── Badges ───────────────────────────────────────────────────────────────────
@@ -114,7 +117,7 @@ let sql = fs.readFileSync(path.join(here, '070.template.sql'), 'utf8')
   .replaceAll('__P1CARDS__', String(phase1.length))
   .replaceAll('__P1POINTS__', String(p1points))
   .replaceAll('__MAXPTS__', String(maxPts))
-  .replaceAll('__BADGES__', String(23 + B.length))
+  .replaceAll('__BADGES__', String(P1_BADGES + B.length))
 
 if (/__[A-Z0-9_]+__/.test(sql)) { console.error('unfilled placeholder', sql.match(/__[A-Z0-9_]+__/)![0]); process.exit(1) }
 if (process.argv.includes('--plant-raw')) sql += "\nSELECT 'planted; raw';\n"

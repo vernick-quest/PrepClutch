@@ -39,7 +39,7 @@ import { PIN_ROUND } from './geo-pin'
 import type { PinLevel, PinPlace } from './geo-pin'
 import type { Country, Continent } from './geo-data'
 import {
-  CONTINENTS, CONTINENT_LABEL, KINDS, GROUP_KINDS, KIND_SCORE, SESSION_SIZE, geoKey, geoCardState,
+  CONTINENTS, CONTINENT_LABEL, KINDS, EXPERT_KINDS, GROUP_KINDS, KIND_SCORE, SESSION_SIZE, geoKey, geoCardState,
 } from './geo-meta'
 import type { GeoKind, GeoOption, GeoCard, DeckOptions, GeoHistoryRow, GeoCardState, MapCountry } from './geo-meta'
 
@@ -200,6 +200,13 @@ export function allGeoCards(): GeoCard[] {
 }
 /** The cards of the given kinds, e.g. the ones the catalogue has. */
 export const geoCards = (kinds: GeoKind[]) => allGeoCards().filter(c => kinds.includes(c.kind))
+
+let EXPERT: GeoCard[] | null = null
+/** Currency and language cards. Built and validated so they are ready to
+ *  switch on as an Expert mode, but not in the catalogue (allGeoCards). */
+export function expertGeoCards(): GeoCard[] {
+  return (EXPERT ??= COUNTRIES.flatMap(c => EXPERT_KINDS.map(k => makeCard(c, k))))
+}
 
 const BY_KEY = new Map<string, GeoCard>()
 export function parseGeoKey(key: string): GeoCard | null {

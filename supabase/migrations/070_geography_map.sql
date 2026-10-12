@@ -254,13 +254,13 @@ ON CONFLICT (key) DO UPDATE SET
   lore = EXCLUDED.lore, threshold = EXCLUDED.threshold;
 
 -- Every-card badges now count the shape cards too.
-UPDATE achievement_definitions SET description = 'Every one of the 1544 Geography cards mastered.', threshold = 1544 WHERE key = 'geo_mastered_all';
-UPDATE achievement_definitions SET description = 'All 432 Africa cards mastered.', threshold = 432 WHERE key = 'geo_continent_af';
-UPDATE achievement_definitions SET description = 'All 376 Asia cards mastered.', threshold = 376 WHERE key = 'geo_continent_as';
-UPDATE achievement_definitions SET description = 'All 344 Europe cards mastered.', threshold = 344 WHERE key = 'geo_continent_eu';
-UPDATE achievement_definitions SET description = 'All 184 North America cards mastered.', threshold = 184 WHERE key = 'geo_continent_na';
-UPDATE achievement_definitions SET description = 'All 96 South America cards mastered.', threshold = 96 WHERE key = 'geo_continent_sa';
-UPDATE achievement_definitions SET description = 'All 112 Oceania cards mastered.', threshold = 112 WHERE key = 'geo_continent_oc';
+UPDATE achievement_definitions SET description = 'Every one of the 1158 Geography cards mastered.', threshold = 1158 WHERE key = 'geo_mastered_all';
+UPDATE achievement_definitions SET description = 'All 324 Africa cards mastered.', threshold = 324 WHERE key = 'geo_continent_af';
+UPDATE achievement_definitions SET description = 'All 282 Asia cards mastered.', threshold = 282 WHERE key = 'geo_continent_as';
+UPDATE achievement_definitions SET description = 'All 258 Europe cards mastered.', threshold = 258 WHERE key = 'geo_continent_eu';
+UPDATE achievement_definitions SET description = 'All 138 North America cards mastered.', threshold = 138 WHERE key = 'geo_continent_na';
+UPDATE achievement_definitions SET description = 'All 72 South America cards mastered.', threshold = 72 WHERE key = 'geo_continent_sa';
+UPDATE achievement_definitions SET description = 'All 84 Oceania cards mastered.', threshold = 84 WHERE key = 'geo_continent_oc';
 
 
 -- ── 3. Awarding: 069's function, plus the shapes rungs ───────────────────────
@@ -661,9 +661,9 @@ GRANT SELECT ON geo_pin_leaderboard_view TO authenticated;
 
 -- ── Verification ─────────────────────────────────────────────────────────────
 --
--- Expected: cards 1544, shape_cards 193, phase1_cards 1351,
---           phase1_points 15440, max_points 18335, orphan_history 0,
---           geo_badges 25, pin_places 193, pin_rounds_table 1,
+-- Expected: cards 1158, shape_cards 193, phase1_cards 965,
+--           phase1_points 9650, max_points 12545, orphan_history 0,
+--           geo_badges 21, pin_places 193, pin_rounds_table 1,
 --           helper_callable_by_students false,
 --           pin_record_callable_by_anon false, pin_insert_by_students false.
 

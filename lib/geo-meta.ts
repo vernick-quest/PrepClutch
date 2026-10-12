@@ -20,15 +20,19 @@ export const CONTINENT_EMOJI: Record<Continent, string> = {
 }
 
 export type GeoKind = 'cap' | 'capr' | 'flag' | 'flagr' | 'cur' | 'lang' | 'cont' | 'shape'
-export const KINDS: GeoKind[] = ['cap', 'capr', 'flag', 'flagr', 'cur', 'lang', 'cont', 'shape']
+// Currency and language cards ('cur', 'lang') are built and validated but NOT
+// in the catalogue: Robert judged them too hard for the age group. Their data
+// stays in lib/geo-data.ts so they can return later as an opt-in Expert mode.
+export const EXPERT_KINDS: GeoKind[] = ['cur', 'lang']
+export const KINDS: GeoKind[] = ['cap', 'capr', 'flag', 'flagr', 'cont', 'shape']
 /** The kinds migration 069 loaded. 'shape' (Name that country, on the map)
  *  arrives with the map migration; until it is applied the catalogue has no
  *  shape cards and pages offer only these (see availableGeoKinds). */
-export const KINDS_069: GeoKind[] = ['cap', 'capr', 'flag', 'flagr', 'cur', 'lang', 'cont']
+export const KINDS_069: GeoKind[] = ['cap', 'capr', 'flag', 'flagr', 'cont']
 
 /** The groups a student can pick to play. One group = one or two kinds. */
 export type KindGroup = 'all' | 'capitals' | 'flags' | 'money' | 'languages' | 'continents' | 'shapes'
-export const GROUPS: KindGroup[] = ['all', 'capitals', 'flags', 'money', 'languages', 'continents', 'shapes']
+export const GROUPS: KindGroup[] = ['all', 'capitals', 'flags', 'continents', 'shapes']
 export const GROUP_KINDS: Record<KindGroup, GeoKind[]> = {
   all: KINDS, capitals: ['cap', 'capr'], flags: ['flag', 'flagr'],
   money: ['cur'], languages: ['lang'], continents: ['cont'], shapes: ['shape'],

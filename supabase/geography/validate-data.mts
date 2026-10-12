@@ -116,8 +116,12 @@ function validateCountries(cs: Country[]): string[] {
  *  no wrong option that is actually right (or unfairly close). */
 function validateCards(): string[] {
   const p: string[] = []
-  const cards = geo.allGeoCards()
-  if (cards.length !== geo.geoCardCount()) p.push(`expected ${geo.geoCardCount()} cards, built ${cards.length}`)
+  const live = geo.allGeoCards()
+  if (live.length !== geo.geoCardCount()) p.push(`expected ${geo.geoCardCount()} cards, built ${live.length}`)
+  // Expert kinds (currency, language) are not in the catalogue but are still
+  // checked, so they are ready to switch on and their controls still bite.
+  const cards = [...live, ...geo.expertGeoCards()]
+  if (geo.expertGeoCards().length !== COUNTRIES.length * geo.EXPERT_KINDS.length) p.push('expert cards missing')
   const keys = new Set<string>()
   for (const card of cards) {
     if (keys.has(card.key)) p.push(`duplicate card key ${card.key}`)
@@ -211,7 +215,7 @@ const CARD_CORRUPTIONS: [string, string, (o: { value: string; label: string }) =
   ['Asia offered as WRONG for Russia',  'cont:ru', o => { o.value = 'as'; o.label = 'Asia' }],
 ]
 for (const [name, key, plant] of CARD_CORRUPTIONS) {
-  const card = geo.allGeoCards().find(c => c.key === key)!
+  const card = [...geo.allGeoCards(), ...geo.expertGeoCards()].find(c => c.key === key)!
   const saved = { ...card.options[3] }
   plant(card.options[3])
   const caught = validateCards()

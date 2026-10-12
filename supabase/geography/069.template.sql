@@ -4,9 +4,9 @@
 -- (062-068) but in its own tables. Nothing here reads or writes questions,
 -- Clutch Points, fact_history or any math table.
 --
---   geo_cards             the __CARDS__ cards: 193 UN member states x 7 kinds
+--   geo_cards             the __CARDS__ cards: 193 UN member states x 5 kinds
 --                         (capital, capital to country, flag, pick the flag,
---                         currency, language, continent), loaded from
+--                         continent), loaded from
 --                         lib/geo.ts, with points and target times
 --   geo_history           one row per student per card. A card is mastered
 --                         (fluent_at set) the first time it is answered right
