@@ -2,9 +2,11 @@
 
 // ── Pin the map ──────────────────────────────────────────────────────────────
 //
-// "Find Nairobi": tap the map where you think it is. The map draws the line
-// to the real place and the distance scores (lib/geo-pin.ts). Ten capitals
-// a round, one continent at a time. One screen tall like every round, so
+// "Find Nairobi" or "Find Rio de Janeiro": tap the map where you think it
+// is. The map draws the line to the real place and the distance scores
+// (lib/geo-pin.ts). Ten places a round, capitals and famous cities mixed,
+// one continent at a time. The line under the name always says which
+// country (lib/geo-pin.ts explains why). One screen tall like every round, so
 // nothing scrolls on a phone; pinch or +/- to zoom in for a precise pin.
 //
 // The whole round is saved at the end through record_geo_pin_round, which
@@ -80,7 +82,7 @@ export default function PinClient({ places, continent, level, canSave }: {
     void (async () => {
       const supabase = createClient()
       const p_pins = pins.map((p, i) => ({
-        i: places[i].iso,
+        i: places[i].key,
         lat: p.tap ? Math.round(p.tap.lat * 1e4) / 1e4 : null,
         lon: p.tap ? Math.round(p.tap.lon * 1e4) / 1e4 : null,
         ms: p.ms,
@@ -123,8 +125,8 @@ export default function PinClient({ places, continent, level, canSave }: {
             {places.map((pl, i) => {
               const p = pins[i]
               return (
-                <div key={pl.iso} className="flex items-center gap-3 text-sm min-w-0">
-                  <span className="w-0 flex-1 truncate text-white">{pl.capital} <span className="text-zinc-500">· {pl.country}</span></span>
+                <div key={pl.key} className="flex items-center gap-3 text-sm min-w-0">
+                  <span className="w-0 flex-1 truncate text-white">{pl.kind === 'city' ? '🏙️' : '🏛️'} {pl.name} <span className="text-zinc-500">· {pl.country}</span></span>
                   <span className="shrink-0 text-zinc-400 tabular-nums">{p?.km == null ? 'skipped' : `${fmtKm(p.km)} km`}</span>
                   <span className={`shrink-0 w-10 text-right font-bold tabular-nums ${p?.points ? 'text-emerald-300' : 'text-zinc-600'}`}>+{p?.points ?? 0}</span>
                 </div>
@@ -193,8 +195,8 @@ export default function PinClient({ places, continent, level, canSave }: {
       <div className="flex-1 min-h-0 max-w-3xl mx-auto w-full px-3 pt-2 pb-3 flex flex-col gap-2">
         <div className="flex items-end gap-3 min-w-0 px-1">
           <div className="w-0 flex-1">
-            <h1 className="text-xl sm:text-2xl font-black text-white leading-tight truncate">📍 Find {place.capital}</h1>
-            <p className="text-xs text-zinc-400 truncate">the capital of {place.country}</p>
+            <h1 className="text-xl sm:text-2xl font-black text-white leading-tight truncate">📍 Find {place.name}</h1>
+            <p className="text-xs text-zinc-400 truncate">{place.where}</p>
           </div>
           <span className="shrink-0 text-[11px] text-zinc-500">{CONTINENT_EMOJI[continent]} Level {level}</span>
         </div>

@@ -1,20 +1,33 @@
 import { KINDS, KINDS_069 } from '@/lib/geo-meta'
 import type { GeoHistoryRow, GeoKind } from '@/lib/geo-meta'
 
-// The card kinds the catalogue has. Shape cards (Name that country) arrive
-// with the map migration, applied by hand after 069; until then they are not
-// offered, counted or shown, exactly like availableTopics in math-history.
+// The card kinds the catalogue has. Shape cards (Name that country) and city
+// cards (Which country is Rio in?) arrive with the map migration (070),
+// applied by hand after 069; until then they are not offered, counted or
+// shown, exactly like availableTopics in math-history. Each later kind is
+// probed on its own, so a catalogue that has one but not the other (an
+// older draft of 070, say) offers only what it really has: a card the
+// catalogue lacks would be refused when saved.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function availableGeoKinds(supabase: any): Promise<GeoKind[]> {
-  const { data, error } = await supabase.from('geo_cards').select('card_key').eq('kind', 'shape').limit(1)
-  return error || !data?.length ? KINDS_069 : KINDS
+  const later = KINDS.filter(k => !KINDS_069.includes(k))
+  const found = await Promise.all(later.map(async k => {
+    const { data, error } = await supabase.from('geo_cards').select('card_key').eq('kind', k).limit(1)
+    return !error && data?.length ? k : null
+  }))
+  return KINDS.filter(k => KINDS_069.includes(k) || found.includes(k))
 }
 
-/** Whether Pin the map rounds can be saved (the map migration is applied). */
+/** Whether Pin the map rounds can be saved: the map migration is applied,
+ *  with its places keyed by place (capitals AND cities). Until then a round
+ *  still plays, it just is not saved. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function pinReady(supabase: any): Promise<boolean> {
-  const { error } = await supabase.from('geo_pin_rounds').select('id').limit(1)
-  return !error
+  const [rounds, places] = await Promise.all([
+    supabase.from('geo_pin_rounds').select('id').limit(1),
+    supabase.from('geo_pin_places').select('place_key').eq('kind', 'city').limit(1),
+  ])
+  return !rounds.error && !places.error && !!places.data?.length
 }
 
 // Reads a student's Geography history. `ready: false` means the table is not

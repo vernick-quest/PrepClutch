@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import {
   CONTINENTS, CONTINENT_LABEL, CONTINENT_SHORT, CONTINENT_EMOJI, GROUPS, GROUP_LABEL,
-  GROUP_EMOJI, KINDS_069, KIND_LABEL, geoKey, geoCardState, deckHref, groupKinds,
+  GROUP_EMOJI, KINDS_069, KIND_LABEL, geoCardState, deckHref, groupKinds, countryCardKeys,
 } from '@/lib/geo-meta'
 import type { Continent, KindGroup, GeoHistoryRow, GeoCardState, GeoKind, MapCountry } from '@/lib/geo-meta'
 import { pinHref } from '@/lib/geo-pin'
@@ -21,8 +21,11 @@ import Flag from '@/components/geo/Flag'
 // so the map fits a 375px phone and a half-width desktop column alike.
 //
 // `kinds` are the card kinds the catalogue has (availableGeoKinds): the
-// Shapes chip appears once the map migration is applied. 📍 Pin opens Pin
-// the map on the chosen continent (or its continent picker, from World).
+// Shapes and Cities chips appear once the map migration is applied. City
+// cards belong to their country's tile (most countries have none, so on
+// the Cities chip only countries with famous cities are shown); tapping a
+// tile lists them. 📍 Pin opens Pin the map on the chosen continent (or its
+// continent picker, from World).
 
 type Tab = Continent | 'all'
 const TABS: Tab[] = ['all', ...CONTINENTS]
@@ -45,12 +48,14 @@ export default function GeoMap({ history, countries, readOnly = false, kinds: av
 
   const groups = GROUPS.filter(g => groupKinds(g, available).length > 0)
   const kinds = groupKinds(group, available)
-  const st = (iso: string, kind: GeoKind): GeoCardState => geoCardState(history[geoKey(kind, iso)])
-  const statesOf = (iso: string) => kinds.map(k => st(iso, k))
-  const inTab = countries.filter(c => tab === 'all' || c.continent === tab)
-  const all = inTab.flatMap(c => statesOf(c.iso))
+  const st = (key: string): GeoCardState => geoCardState(history[key])
+  const statesOf = (c: MapCountry) => kinds.flatMap(k => countryCardKeys(c, k).map(st))
+  // A tile only for countries with cards of this type (Cities: few do).
+  const shown = countries.filter(c => statesOf(c).length > 0)
+  const inTab = shown.filter(c => tab === 'all' || c.continent === tab)
+  const all = inTab.flatMap(statesOf)
   const mastered = all.filter(s => s === 'fluent').length
-  const pickedCountry = countries.find(c => c.iso === picked && (tab === 'all' || c.continent === tab))
+  const pickedCountry = inTab.find(c => c.iso === picked)
 
   return (
     <div className="rounded-2xl border border-white/10 bg-white/3 p-3 sm:p-4 min-w-0">
@@ -101,7 +106,7 @@ export default function GeoMap({ history, countries, readOnly = false, kinds: av
           <div className="shrink-0 flex items-center gap-1.5">
             <Link
               href={tab === 'all' ? '/geo/pin' : pinHref(tab, 1)}
-              title="Pin the map: find capitals on the map"
+              title="Pin the map: find capitals and famous cities on the map"
               className="flex items-center bg-white/5 border border-white/15 hover:border-white/30 text-white font-bold px-3 py-3 rounded-xl transition-colors"
             >
               📍 Pin
@@ -119,10 +124,10 @@ export default function GeoMap({ history, countries, readOnly = false, kinds: av
       {tab === 'all' ? (
         <div className="space-y-2">
           {CONTINENTS.map(ct => {
-            const cs = countries.filter(c => c.continent === ct)
-            const tones = cs.map(c => cellTone(statesOf(c.iso)))
-            const done = cs.flatMap(c => statesOf(c.iso)).filter(s => s === 'fluent').length
-            const total = cs.length * kinds.length
+            const cs = shown.filter(c => c.continent === ct)
+            const tones = cs.map(c => cellTone(statesOf(c)))
+            const done = cs.flatMap(statesOf).filter(s => s === 'fluent').length
+            const total = cs.flatMap(statesOf).length
             return (
               <button key={ct} onClick={() => setTab(ct)} className="w-full text-left group">
                 <div className="flex items-center justify-between text-xs mb-1">
@@ -141,7 +146,7 @@ export default function GeoMap({ history, countries, readOnly = false, kinds: av
         <>
           <div className="flex flex-wrap gap-1">
             {inTab.map(c => {
-              const tone = cellTone(statesOf(c.iso))
+              const tone = cellTone(statesOf(c))
               return (
                 <button
                   key={c.iso}
@@ -163,9 +168,14 @@ export default function GeoMap({ history, countries, readOnly = false, kinds: av
               <>
                 <p className="font-bold text-white">{pickedCountry.name} <span className="font-normal text-zinc-400">· capital {pickedCountry.capital}</span></p>
                 <div className="flex flex-wrap gap-1 mt-1.5">
-                  {available.map(k => (
-                    <span key={k} className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${CELL_CLASS[cellTone([st(pickedCountry.iso, k)])]}`}>
+                  {available.filter(k => k !== 'city').map(k => (
+                    <span key={k} className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${CELL_CLASS[cellTone(countryCardKeys(pickedCountry, k).map(st))]}`}>
                       {KIND_LABEL[k]}
+                    </span>
+                  ))}
+                  {available.includes('city') && pickedCountry.cities.map(x => (
+                    <span key={x.key} className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${CELL_CLASS[cellTone([st(x.key)])]}`}>
+                      🏙️ {x.name}
                     </span>
                   ))}
                 </div>

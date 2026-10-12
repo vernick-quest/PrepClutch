@@ -2,7 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { maxGeoPoints, geoCardCount, geoCards, mapCountries } from '@/lib/geo'
+import { maxGeoPoints, geoCardCount, geoCards, mapCountries, CITIES } from '@/lib/geo'
 import { loadGeoHistory, loadGeoRounds, availableGeoKinds } from '@/lib/geo-history'
 import GeoMap from '@/components/geo/GeoMap'
 import GeoRounds from '@/components/geo/GeoRounds'
@@ -87,6 +87,7 @@ export default async function GeoHomePage() {
 
   const [rounds, kinds] = await Promise.all([loadGeoRounds(supabase, user.id), availableGeoKinds(supabase)])
   const shapes = kinds.includes('shape')
+  const cities = kinds.includes('city')
   const hasClass = (profile.class_code ?? '').trim() !== ''
   const [{ data: global }, { data: klass }] = await Promise.all([
     supabase.from('geo_leaderboard_view').select('*').gt('points', 0)
@@ -119,7 +120,7 @@ export default async function GeoHomePage() {
           <div>
             <h1 className="text-3xl font-black text-white">🌍 Geography</h1>
             <p className="text-zinc-400 text-sm mt-1">
-              Capitals, flags and continents for all 193 countries{shapes ? ', and every country on the map' : ''}.
+              Capitals, flags and continents for all 193 countries{shapes ? ', and every country on the map' : ''}{cities ? `, plus ${CITIES.length} famous cities` : ''}.
               A card is mastered when you get it right <em>fast</em>.
             </p>
           </div>

@@ -1,22 +1,30 @@
--- __NUM__ — Geography map: Name that country cards, Pin the map
+-- __NUM__ — Geography map: Name that country, famous cities, Pin the map
 --
 -- Phase 2 of Geography (069 is phase 1 and must be applied first). Additive:
 -- nothing here changes or removes an existing card, history row or award.
 --
 --   geo_cards                 + __SHAPES__ "Name that country" cards, kind
 --                             'shape', one per UN member, __SHAPE_POINTS__ Explorer
---                             Points each, mastered within __SHAPE_SECS__ s. Inserted
---                             only: the 069 cards are not touched.
---   badges                    + Shape Spotter (25 shapes) and Map Master (all __SHAPES__)
+--                             Points each, mastered within __SHAPE_SECS__ s
+--                             + __CITIES__ "Which country is Rio de Janeiro in?"
+--                             cards, kind 'city', one per famous city (not
+--                             capitals, lib/geo-cities.ts), __CITY_POINTS__ points,
+--                             mastered within __CITY_SECS__ s. Inserted only: the
+--                             069 cards are not touched.
+--   badges                    + Shape Spotter (25 shapes), Map Master (all
+--                             __SHAPES__), City Hopper (25 cities), Globetrotter
+--                             (all __CITIES__)
 --   award_geo_badges_for      069's function copied exactly, with the shapes
---                             rung added to its two card-type lists. Still
---                             revoked from students.
+--                             and cities rungs added to its two card-type
+--                             lists. Still revoked from students.
 --   badge descriptions        World Turtle and the six continent badges count
---                             every card, so they now include shape cards:
---                             their descriptions and thresholds are updated
---                             to the new totals. Nobody loses a badge.
---   geo_pin_places            the __PINS__ capitals Pin the map can ask, with
---                             their coordinates and level (read-only)
+--                             every card, so they now include shape and city
+--                             cards: their descriptions and thresholds are
+--                             updated to the new totals. Nobody loses a badge.
+--   geo_pin_places            the __PINS__ places Pin the map can ask (__PIN_CAPITALS__
+--                             capitals, __PIN_CITIES__ cities), keyed 'cap:ke' or
+--                             'city:rio-de-janeiro', with their coordinates and
+--                             level (read-only)
 --   geo_pin_rounds            one row per Pin the map round. Written ONLY by
 --                             record_geo_pin_round, which scores the taps
 --                             itself from geo_pin_places
@@ -35,14 +43,18 @@
 -- a dollar sign or a double dash (the Supabase editor misparses those).
 
 
--- ── 1. Name that country: the shape cards ────────────────────────────────────
+-- ── 1. The new cards: Name that country (shape) and famous cities (city) ─────
+--
+-- City cards are keyed by the city ('city:rio-de-janeiro'); iso and
+-- continent are its country's. The WHERE below means a re-run can only ever
+-- update cards of the new kinds, never a 069 card.
 
 INSERT INTO geo_cards (card_key, iso, kind, continent, points, target_ms) VALUES
 __ROWS__
 ON CONFLICT (card_key) DO UPDATE SET
   iso = EXCLUDED.iso, kind = EXCLUDED.kind, continent = EXCLUDED.continent,
   points = EXCLUDED.points, target_ms = EXCLUDED.target_ms
-  WHERE geo_cards.kind = 'shape';
+  WHERE geo_cards.kind IN (__NEW_KINDS__);
 
 
 -- ── 2. Badge definitions ─────────────────────────────────────────────────────
@@ -57,23 +69,30 @@ ON CONFLICT (key) DO UPDATE SET
   creature = EXCLUDED.creature, category = EXCLUDED.category,
   lore = EXCLUDED.lore, threshold = EXCLUDED.threshold;
 
--- Every-card badges now count the shape cards too.
+-- Every-card badges now count the shape and city cards too.
 __RETOTAL__
 
 
--- ── 3. Awarding: 069's function, plus the shapes rungs ───────────────────────
+-- ── 3. Awarding: 069's function, plus the shapes and cities rungs ────────────
 
 __AWARD_FUNCTION__
 
 
 -- ── 4. Pin the map: the places ───────────────────────────────────────────────
 
+-- A capital ('cap:ke', the asked capital of Kenya) or a famous city
+-- ('city:rio-de-janeiro'). iso and continent are the country's. tier is the
+-- Pin the map level the place belongs to (lib/geo.ts pinPlaces).
+
 CREATE TABLE IF NOT EXISTS geo_pin_places (
-  iso       TEXT PRIMARY KEY,
+  place_key TEXT PRIMARY KEY,
+  kind      TEXT NOT NULL CHECK (kind IN ('capital', 'city')),
+  name      TEXT NOT NULL,
+  iso       TEXT NOT NULL,
   continent TEXT NOT NULL,
-  tier      INT  NOT NULL,
-  lat       DOUBLE PRECISION NOT NULL,
-  lon       DOUBLE PRECISION NOT NULL
+  tier      INT  NOT NULL CHECK (tier BETWEEN 1 AND 3),
+  lat       DOUBLE PRECISION NOT NULL CHECK (lat BETWEEN -90 AND 90),
+  lon       DOUBLE PRECISION NOT NULL CHECK (lon BETWEEN -180 AND 180)
 );
 
 ALTER TABLE geo_pin_places ENABLE ROW LEVEL SECURITY;
@@ -82,10 +101,11 @@ CREATE POLICY "geo_pin_places_readable" ON geo_pin_places FOR SELECT USING (TRUE
 REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON geo_pin_places FROM anon, authenticated;
 GRANT SELECT ON geo_pin_places TO anon, authenticated;
 
-INSERT INTO geo_pin_places (iso, continent, tier, lat, lon) VALUES
+INSERT INTO geo_pin_places (place_key, kind, name, iso, continent, tier, lat, lon) VALUES
 __PIN_ROWS__
-ON CONFLICT (iso) DO UPDATE SET
-  continent = EXCLUDED.continent, tier = EXCLUDED.tier, lat = EXCLUDED.lat, lon = EXCLUDED.lon;
+ON CONFLICT (place_key) DO UPDATE SET
+  kind = EXCLUDED.kind, name = EXCLUDED.name, iso = EXCLUDED.iso, continent = EXCLUDED.continent,
+  tier = EXCLUDED.tier, lat = EXCLUDED.lat, lon = EXCLUDED.lon;
 
 
 -- ── 5. Pin the map: rounds ───────────────────────────────────────────────────
@@ -120,10 +140,11 @@ GRANT SELECT ON geo_pin_rounds TO authenticated;
 
 -- ── 6. Recording a round ─────────────────────────────────────────────────────
 --
--- p_pins: exactly __ROUND__ objects {i, lat, lon, ms}, one per DIFFERENT capital
--- of the deck's continent. lat and lon are where the student tapped (null if
--- they gave up), ms how long they took. Distance is great-circle km to the
--- capital in geo_pin_places, scored by the rings of lib/geo-pin.ts:
+-- p_pins: exactly __ROUND__ objects {i, lat, lon, ms}, one per DIFFERENT place of
+-- the deck's continent: i is its place_key ('cap:ke', 'city:mombasa'). lat
+-- and lon are where the student tapped (null if they gave up), ms how long
+-- they took. Distance is great-circle km to the place in geo_pin_places,
+-- scored by the rings of lib/geo-pin.ts:
 -- __RINGS_COMMENT__, plus __SPEED_COMMENT__
 -- on any scoring pin. Returns the round's score.
 
@@ -156,14 +177,14 @@ BEGIN
 
   WITH pins AS (
     SELECT e.ord,
-           e.v ->> 'i'                AS iso,
+           e.v ->> 'i'                AS place,
            (e.v ->> 'lat')::DOUBLE PRECISION AS lat,
            (e.v ->> 'lon')::DOUBLE PRECISION AS lon,
            (e.v ->> 'ms')::INT        AS ms
       FROM jsonb_array_elements(p_pins) WITH ORDINALITY AS e(v, ord)
   ),
   dist AS (
-    SELECT p.ord, p.iso, p.ms,
+    SELECT p.ord, p.place, p.ms,
            CASE WHEN p.lat IS NULL OR p.lon IS NULL THEN NULL
                 ELSE 2 * 6371 * asin(least(1, sqrt(
                        power(sin(radians(p.lat - g.lat) / 2), 2)
@@ -173,7 +194,7 @@ BEGIN
              OR (p.lon IS NOT NULL AND NOT p.lon BETWEEN -180 AND 180)
              OR ((p.lat IS NULL) <> (p.lon IS NULL)) AS out_of_range
       FROM pins p
-      JOIN geo_pin_places g ON g.iso = p.iso AND g.continent = cont
+      JOIN geo_pin_places g ON g.place_key = p.place AND g.continent = cont
   ),
   ringed AS (
     SELECT d.*, CASE __RING_CASE__ ELSE 0 END AS ring FROM dist d
@@ -181,13 +202,13 @@ BEGIN
   pts AS (
     SELECT r.*, r.ring + CASE WHEN r.ring > 0 THEN (CASE __SPEED_CASE__ ELSE 0 END) ELSE 0 END AS points FROM ringed r
   )
-  SELECT COUNT(DISTINCT iso), COUNT(*) FILTER (WHERE out_of_range), COALESCE(SUM(points), 0),
-         jsonb_agg(jsonb_build_object('i', iso, 'km', round(km::NUMERIC), 'ms', ms, 'p', points) ORDER BY ord)
+  SELECT COUNT(DISTINCT place), COUNT(*) FILTER (WHERE out_of_range), COALESCE(SUM(points), 0),
+         jsonb_agg(jsonb_build_object('i', place, 'km', round(km::NUMERIC), 'ms', ms, 'p', points) ORDER BY ord)
     INTO places, bad, total, scored
     FROM pts;
 
   IF places <> __ROUND__ THEN
-    RAISE EXCEPTION 'a pin round needs __ROUND__ different capitals of its continent';
+    RAISE EXCEPTION 'a pin round needs __ROUND__ different places of its continent';
   END IF;
   IF bad > 0 THEN
     RAISE EXCEPTION 'pin outside the map';
@@ -227,22 +248,25 @@ GRANT SELECT ON geo_pin_leaderboard_view TO authenticated;
 
 -- ── Verification ─────────────────────────────────────────────────────────────
 --
--- Expected: cards __CARDS__, shape_cards __SHAPES__, phase1_cards __P1CARDS__,
---           phase1_points __P1POINTS__, max_points __MAXPTS__, orphan_history 0,
---           geo_badges __BADGES__, pin_places __PINS__, pin_rounds_table 1,
+-- Expected: cards __CARDS__, shape_cards __SHAPES__, city_cards __CITIES__,
+--           phase1_cards __P1CARDS__, phase1_points __P1POINTS__, max_points __MAXPTS__,
+--           orphan_history 0, geo_badges __BADGES__, pin_places __PINS__,
+--           pin_cities __PIN_CITIES__, pin_rounds_table 1,
 --           helper_callable_by_students false,
 --           pin_record_callable_by_anon false, pin_insert_by_students false.
 
 SELECT
   (SELECT COUNT(*) FROM geo_cards)                                        AS cards,
   (SELECT COUNT(*) FROM geo_cards WHERE kind = 'shape')                   AS shape_cards,
-  (SELECT COUNT(*) FROM geo_cards WHERE kind <> 'shape')                  AS phase1_cards,
-  (SELECT SUM(points) FROM geo_cards WHERE kind <> 'shape')               AS phase1_points,
+  (SELECT COUNT(*) FROM geo_cards WHERE kind = 'city')                    AS city_cards,
+  (SELECT COUNT(*) FROM geo_cards WHERE kind NOT IN (__NEW_KINDS__))      AS phase1_cards,
+  (SELECT SUM(points) FROM geo_cards WHERE kind NOT IN (__NEW_KINDS__))   AS phase1_points,
   (SELECT SUM(points) FROM geo_cards)                                     AS max_points,
   (SELECT COUNT(*) FROM geo_history h
     WHERE NOT EXISTS (SELECT 1 FROM geo_cards c WHERE c.card_key = h.card_key)) AS orphan_history,
   (SELECT COUNT(*) FROM achievement_definitions WHERE category = 'Geography') AS geo_badges,
   (SELECT COUNT(*) FROM geo_pin_places)                                   AS pin_places,
+  (SELECT COUNT(*) FROM geo_pin_places WHERE kind = 'city')               AS pin_cities,
   (SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'geo_pin_rounds') AS pin_rounds_table,
   has_function_privilege('authenticated', 'award_geo_badges_for(uuid, boolean)', 'EXECUTE')
                                                                            AS helper_callable_by_students,
