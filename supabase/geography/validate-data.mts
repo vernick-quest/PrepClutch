@@ -11,6 +11,7 @@ import type { Country } from '../../lib/geo-data.ts'
 
 const { COUNTRIES, LOOKALIKE_FLAGS } = await import('../../lib/geo-data.ts')
 const geo = await import('../../lib/geo.ts')
+const md = await import('../../lib/geo-map-data.ts')
 
 const lc = (s: string) => s.toLowerCase()
 
@@ -116,7 +117,7 @@ function validateCountries(cs: Country[]): string[] {
 function validateCards(): string[] {
   const p: string[] = []
   const cards = geo.allGeoCards()
-  if (cards.length !== geo.GEO_CARD_COUNT) p.push(`expected ${geo.GEO_CARD_COUNT} cards, built ${cards.length}`)
+  if (cards.length !== geo.geoCardCount()) p.push(`expected ${geo.geoCardCount()} cards, built ${cards.length}`)
   const keys = new Set<string>()
   for (const card of cards) {
     if (keys.has(card.key)) p.push(`duplicate card key ${card.key}`)
@@ -152,6 +153,10 @@ function validateCards(): string[] {
         for (const o of wrong) if (never.has(lc(o.value))) p.push(`${card.key}: ${o.value} is official or recognised in ${c.name}`)
         break
       }
+      case 'shape':
+        for (const o of wrong) if ((md.ENCLOSED_BY[c.iso] ?? []).includes(o.value)) p.push(`${card.key}: ${o.value} surrounds ${c.name} on the map`)
+        if (card.map !== c.iso) p.push(`${card.key}: map shows ${card.map}`)
+        break
       case 'cont':
         for (const o of wrong) if (o.value === c.continent || (c.alsoContinent ?? []).includes(o.value as never))
           p.push(`${card.key}: ${o.value} is a continent ${c.name} is in`)
@@ -166,7 +171,7 @@ function validateCards(): string[] {
 
 // ── Run on the real data ─────────────────────────────────────────────────────
 const real = [...validateCountries(COUNTRIES), ...validateCards()]
-console.log(`real data: ${COUNTRIES.length} countries, ${geo.allGeoCards().length} cards, max ${geo.MAX_GEO_POINTS} Explorer Points`)
+console.log(`real data: ${COUNTRIES.length} countries, ${geo.allGeoCards().length} cards, max ${geo.maxGeoPoints()} Explorer Points`)
 if (real.length) {
   console.error(`FAIL: ${real.length} problem(s)`)
   real.forEach(x => console.error('  ' + x))

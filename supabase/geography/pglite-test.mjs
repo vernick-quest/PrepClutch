@@ -10,6 +10,9 @@
 //   cp <repo>/supabase/geography/pglite-test.mjs run.mjs
 //   REPO=<repo> node run.mjs
 //
+// Checks 069 alone, so it uses the 069 card kinds (KINDS_069); the map
+// migration has its own test, pglite-map-test.mjs.
+//
 // Covers: first run and re-run inside BEGIN/COMMIT, TS-vs-SQL catalogue
 // parity, answer recording (slow, too fast, fast, repeat, wrong after
 // mastery), badge awards with negative cases, backfill, privileges and RLS.
@@ -90,7 +93,7 @@ check('re-run: identical verification', JSON.stringify(v1) === JSON.stringify(v2
 
 // ── 3. TS vs SQL catalogue parity ────────────────────────────────────────────
 const sqlCards = (await db.query('SELECT card_key, iso, kind, continent, points, target_ms FROM geo_cards ORDER BY card_key')).rows
-const tsCards = geo.allGeoCards().map(c => ({ card_key: c.key, iso: c.iso, kind: c.kind, continent: c.continent, points: c.points, target_ms: c.targetMs }))
+const tsCards = geo.geoCards(geo.KINDS_069).map(c => ({ card_key: c.key, iso: c.iso, kind: c.kind, continent: c.continent, points: c.points, target_ms: c.targetMs }))
   .sort((x, y) => (x.card_key < y.card_key ? -1 : 1))
 check('parity: same keys, points and targets as lib/geo.ts', JSON.stringify(sqlCards) === JSON.stringify(tsCards), `${sqlCards.length} vs ${tsCards.length}`)
 
@@ -130,7 +133,7 @@ for (const [what, stmt] of [
 check('A still mastered after those attempts', (await fluentAt(A, 'cap:fr')).fluent_at !== null)
 
 // ── 5. Badges ────────────────────────────────────────────────────────────────
-const cards = geo.allGeoCards()
+const cards = geo.geoCards(geo.KINDS_069)
 const oc = cards.filter(c => c.continent === 'oc')
 check('Oceania has 98 cards', oc.length === 98)
 for (const c of oc.slice(1)) await answer(B, c.key, true, 1500)

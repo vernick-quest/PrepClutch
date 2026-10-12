@@ -2,8 +2,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { MAX_GEO_POINTS, GEO_CARD_COUNT, allGeoCards, mapCountries } from '@/lib/geo'
-import { loadGeoHistory, loadGeoRounds } from '@/lib/geo-history'
+import { maxGeoPoints, geoCardCount, geoCards, mapCountries } from '@/lib/geo'
+import { loadGeoHistory, loadGeoRounds, availableGeoKinds } from '@/lib/geo-history'
 import GeoMap from '@/components/geo/GeoMap'
 import GeoRounds from '@/components/geo/GeoRounds'
 import TopBar from '@/components/ui/TopBar'
@@ -85,7 +85,8 @@ export default async function GeoHomePage() {
     )
   }
 
-  const rounds = await loadGeoRounds(supabase, user.id)
+  const [rounds, kinds] = await Promise.all([loadGeoRounds(supabase, user.id), availableGeoKinds(supabase)])
+  const shapes = kinds.includes('shape')
   const hasClass = (profile.class_code ?? '').trim() !== ''
   const [{ data: global }, { data: klass }] = await Promise.all([
     supabase.from('geo_leaderboard_view').select('*').gt('points', 0)
@@ -106,8 +107,9 @@ export default async function GeoHomePage() {
   const defs = ((badgeDefs ?? []) as { key: string; label: string; icon_emoji: string; rarity: string }[])
     .slice().sort(compareBadges)
 
-  const points = allGeoCards().reduce((s, c) => s + (rows.get(c.key)?.fluent_at ? c.points : 0), 0)
-  const fluent = allGeoCards().filter(c => rows.get(c.key)?.fluent_at).length
+  const cards = geoCards(kinds)
+  const points = cards.reduce((s, c) => s + (rows.get(c.key)?.fluent_at ? c.points : 0), 0)
+  const fluent = cards.filter(c => rows.get(c.key)?.fluent_at).length
 
   return (
     <div className="min-h-screen bg-[#0a0a0f]">
@@ -117,15 +119,15 @@ export default async function GeoHomePage() {
           <div>
             <h1 className="text-3xl font-black text-white">🌍 Geography</h1>
             <p className="text-zinc-400 text-sm mt-1">
-              Capitals, flags, money, languages and continents for all 193 countries. A card is
-              mastered when you get it right <em>fast</em>.
+              Capitals, flags, money, languages and continents for all 193 countries{shapes ? ', and every country on the map' : ''}.
+              A card is mastered when you get it right <em>fast</em>.
             </p>
           </div>
           <div className="text-right">
             <p className="text-3xl font-black text-sky-300 tabular-nums">
-              {points}<span className="text-sm font-normal text-zinc-500"> / {MAX_GEO_POINTS}</span>
+              {points}<span className="text-sm font-normal text-zinc-500"> / {maxGeoPoints(kinds)}</span>
             </p>
-            <p className="text-xs text-zinc-500">Explorer Points · {fluent} of {GEO_CARD_COUNT} cards mastered</p>
+            <p className="text-xs text-zinc-500">Explorer Points · {fluent} of {geoCardCount(kinds)} cards mastered</p>
             {defs.length > 0 && (
               <Link href="/profile" className="inline-block mt-1 text-xs text-violet-300 hover:text-violet-200">
                 🏅 {defs.filter(d => heldKeys.has(d.key)).length} / {defs.length} badges →
@@ -145,7 +147,7 @@ export default async function GeoHomePage() {
           </div>
         </div>
         <p className="text-xs text-zinc-600 text-center">
-          Explorer Points are separate from Clutch Points and Fact Points. Facts from Wikidata, flags from flag-icons.
+          Explorer Points are separate from Clutch Points and Fact Points. Facts from Wikidata, flags from flag-icons{shapes ? ', maps from Natural Earth' : ''}.
         </p>
       </div>
     </div>
