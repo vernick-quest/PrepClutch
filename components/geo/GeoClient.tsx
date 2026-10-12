@@ -5,9 +5,8 @@
 // Four big choices per card, tap or press 1-4. Built like the Math Facts
 // round (components/math/FactsClient.tsx): one screen tall so nothing
 // scrolls on a phone, each FIRST answer is saved as it happens so leaving
-// mid-round loses nothing, and a missed card shows its answer and comes back
-// once at the end for practice, unscored, because picking an answer you were
-// just shown is not recall.
+// mid-round loses nothing, and a missed card shows its answer. A round is
+// exactly 10 cards: misses are listed at the end, not asked again.
 //
 // "Name that country" cards show the map (components/geo/WorldMap.tsx). A
 // round with any of them loads the map before the first card, so the clock
@@ -35,7 +34,7 @@ export default function GeoClient({ deck, deckId }: {
   deckId: string
 }) {
   const router = useRouter()
-  const [queue, setQueue]       = useState<Shown[]>(() => deck.map(card => ({ card, retry: false })))
+  const [queue]                 = useState<Shown[]>(() => deck.map(card => ({ card, retry: false })))
   const [idx, setIdx]           = useState(0)
   const [feedback, setFeedback] = useState<Feedback>(null)
   const [results, setResults]   = useState<Result[]>([])
@@ -98,9 +97,8 @@ export default function GeoClient({ deck, deckId }: {
       setResults(r => [...r, { card: current.card, correct, ms, given }])
       void save(current.card, correct, ms)
     }
-    if (!correct && !current.retry) {
-      setQueue(q => [...q, { card: current.card, retry: true }])
-    }
+    // No requeue: Robert wants a round to be exactly 10 questions. A miss
+    // shows its answer now and is listed under "Practice these" at the end.
     setFeedback({ kind: !correct ? 'wrong' : fast ? 'fast' : 'slow', ms, given })
     setTimeout(advance, !correct ? 2600 : fast ? 700 : 1500)
   }, [current, feedback, save, advance, mapReady])
@@ -322,7 +320,7 @@ export default function GeoClient({ deck, deckId }: {
           {feedback?.kind === 'fast'  && <span className="text-emerald-300">⚡ {(feedback.ms / 1000).toFixed(1)}s</span>}
           {feedback?.kind === 'slow'  && <span className="text-amber-300">✓ Right — {(feedback.ms / 1000).toFixed(1)}s. Under {card.targetMs / 1000}s to master it.</span>}
           {feedback?.kind === 'wrong' && (
-            <span className="text-rose-300 line-clamp-2">{card.full} It&rsquo;ll come back at the end.</span>
+            <span className="text-rose-300 line-clamp-2">{card.full}</span>
           )}
         </div>
 
