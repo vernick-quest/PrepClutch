@@ -3,13 +3,23 @@
 import { useState } from 'react'
 import {
   FACT_TABLES, EQUIV_BASES, EQUIV_MULTIPLIERS, EQUIV_FORMS, FDP_BASES, FDP_FORMS,
-  factKey, cardState, makeFdpCard,
+  factKey, cardState, makeFdpCard, deckHref,
 } from '@/lib/math-facts'
+import type { DeckOptions } from '@/lib/math-facts'
+import Link from 'next/link'
 import type { FactHistoryRow, CardState, Topic } from '@/lib/math-facts'
-import { cellTone, CELL_CLASS } from '@/components/math/cells'
+import { cellTone, CELL_CLASS, mapCells } from '@/components/math/cells'
 import type { MapTab } from '@/components/math/cells'
 
-const TABS: [MapTab, string][] = [['mul', '×'], ['div', '÷'], ['equiv', '½'], ['fdp', '%']]
+// The tab bar IS the topic picker: one selection chooses both the map shown
+// and what ▶ Play starts, so the mode and its map can never disagree.
+const TABS: { id: MapTab; symbol: string; short: string; title: string; deck: Partial<DeckOptions> }[] = [
+  { id: 'mul',   symbol: '×', short: 'Multiply',  title: 'Multiplication',                 deck: { op: 'mul' } },
+  { id: 'div',   symbol: '÷', short: 'Divide',    title: 'Division',                       deck: { op: 'div' } },
+  { id: 'equiv', symbol: '½', short: 'Fractions', title: 'Equivalent fractions',           deck: { topic: 'equiv' } },
+  { id: 'fdp',   symbol: '%', short: 'Decimals',  title: 'Fractions, decimals & percents', deck: { topic: 'fdp' } },
+]
+const BASE: DeckOptions = { topic: 'times', op: 'mixed', type: 'both', tables: [], focus: 'all' }
 
 const cellStyle = (states: CardState[]) => CELL_CLASS[cellTone(states)]
 
@@ -118,22 +128,45 @@ export default function FactGrid({ history, topics = ['times', 'equiv', 'fdp'] }
     note = 'Each cell is one card, showing its answer.'
   }
 
+  const current = TABS.find(t => t.id === tab)!
+  const states = mapCells(tab, history).flat(2)
+  const mastered = states.filter(s => s === 'fluent').length
+
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/3 p-4 min-w-0">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-bold text-white">Your fact map</h3>
-        <div className="flex gap-1">
-          {TABS.filter(([t]) => t === 'mul' || t === 'div' || topics.includes(t)).map(([t, label]) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`px-3 py-1 rounded-lg text-sm font-bold ${tab === t ? 'bg-white/10 text-white' : 'text-zinc-500'}`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+    <div className="rounded-2xl border border-white/10 bg-white/3 p-3 sm:p-4 min-w-0">
+      <div className="grid grid-cols-4 gap-1 p-1 rounded-xl bg-black/30 mb-4">
+        {TABS.filter(t => t.id === 'mul' || t.id === 'div' || topics.includes(t.id)).map(t => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            aria-pressed={tab === t.id}
+            className={`rounded-lg py-2 transition-colors ${
+              tab === t.id ? 'bg-white/10 text-white' : 'text-zinc-500 hover:text-zinc-300'
+            }`}
+          >
+            <span className="block text-xl font-black leading-none">{t.symbol}</span>
+            <span className="block text-[11px] font-semibold mt-1">{t.short}</span>
+          </button>
+        ))}
       </div>
+
+      <div className="flex items-center justify-between gap-3 mb-3">
+        <div className="min-w-0">
+          <h3 className="font-bold text-white leading-tight">
+            <span className="text-zinc-400 mr-1">{current.symbol}</span>{current.title}
+          </h3>
+          <p className="text-xs text-zinc-400 mt-0.5">
+            <span className="font-bold text-white">{mastered}</span> of {states.length} mastered
+          </p>
+        </div>
+        <Link
+          href={deckHref({ ...BASE, ...current.deck })}
+          className="shrink-0 flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-black font-bold px-5 py-3 rounded-xl transition-colors"
+        >
+          ▶ Play
+        </Link>
+      </div>
+
       <div className="overflow-x-auto">{table}</div>
       <p className="text-[11px] text-zinc-500 mt-3 leading-relaxed">
         {note}{' '}

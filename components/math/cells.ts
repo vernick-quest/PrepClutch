@@ -1,5 +1,6 @@
-// Shared by the fact map and the start tiles, so a tile's thumbnail is the
-// same picture as its map, in the same colours.
+// Fact map cells: how a group of cards is coloured, and which cards make up
+// each map. Kept apart from the component so any future topic's map can use
+// the same colours.
 
 import {
   FACT_TABLES, EQUIV_BASES, EQUIV_MULTIPLIERS, EQUIV_FORMS, FDP_BASES, FDP_FORMS,
@@ -35,18 +36,7 @@ export const CELL_CLASS: Record<CellTone, string> = {
   new:    'bg-white/3 text-zinc-600',
 }
 
-/** Thumbnail cells: no text, so a little brighter to read at a few pixels. */
-export const MINI_CLASS: Record<CellTone, string> = {
-  solid:  'bg-emerald-400',
-  some:   'bg-emerald-500/45',
-  missed: 'bg-rose-500/70',
-  slow:   'bg-amber-500/60',
-  new:    'bg-white/10',
-}
-
-/** The map for one tab as rows of cells, each cell the states of its cards.
- *  Same grouping as the full fact map; the fraction maps are laid on their
- *  side so the thumbnail is wide rather than tall. */
+/** The cards behind one tab's map, grouped by cell. */
 export function mapCells(tab: MapTab, history: Record<string, FactHistoryRow>): CardState[][][] {
   const st = (k: string) => cardState(history[k])
   if (tab === 'mul' || tab === 'div') {

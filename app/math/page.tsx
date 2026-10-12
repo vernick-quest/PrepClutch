@@ -4,7 +4,6 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { MAX_FACT_POINTS, allCards } from '@/lib/math-facts'
 import { loadFactHistory, availableTopics } from '@/lib/math-history'
-import MathStart from '@/components/math/MathStart'
 import TrackSwitcher from '@/components/ui/TrackSwitcher'
 import FactGrid from '@/components/math/FactGrid'
 import { MATH_FACTS_CATEGORY, compareBadges } from '@/lib/badges'
@@ -155,7 +154,6 @@ export default async function MathHomePage() {
 
         <div className="grid lg:grid-cols-2 gap-6">
           <div className="space-y-6 min-w-0">
-            <MathStart topics={topics} history={history} />
             <FactGrid history={history} topics={topics} />
           </div>
           <div className="space-y-8 min-w-0">
