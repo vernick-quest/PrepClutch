@@ -20,6 +20,10 @@
 // with lib/geo-pin.ts on real mixed capital/city rounds, refusals,
 // privileges and RLS. Every expected count is derived from lib/ or the
 // generated SQL, never typed in.
+//
+// Pin scores here are 070's rings (lib/geo-pin.ts pinScore070): this tests
+// 070 as written. 073 replaced them with per-continent scaling and rescored
+// the old rounds; pglite-country-test.mjs tests that.
 import { PGlite } from '@electric-sql/pglite'
 import fs from 'node:fs'
 
@@ -259,8 +263,8 @@ check(`pin: ten cities, bullseyes in 2 s each = ${pin.MAX_PIN_SCORE}`, (await ro
 // A city pinned on its own country's capital scores what the TS says, not a bullseye.
 const ny = PLACES.find(p => p.key === 'city:new-york'), dc = PLACES.find(p => p.key === 'cap:us')
 const nyOnDc = [{ i: ny.key, lat: dc.lat, lon: dc.lon, ms: 2000 }, ...naCities.filter(p => p.i !== ny.key).slice(0, 9).map(p => ({ ...p, ms: 2000 }))]
-const nyTs = pin.pinScore(ny, dc, 2000).points + 9 * pin.MAX_PIN_SCORE / pin.PIN_ROUND
-check(`pin: New York tapped on Washington scores ${pin.pinScore(ny, dc, 2000).points} (${Math.round(pin.pinScore(ny, dc, 2000).km)} km), as lib/geo-pin.ts`, (await round(A, 'na:1', nyOnDc)) === nyTs)
+const nyTs = pin.pinScore070(ny, dc, 2000).points + 9 * pin.MAX_PIN_SCORE / pin.PIN_ROUND
+check(`pin: New York tapped on Washington scores ${pin.pinScore070(ny, dc, 2000).points} (${Math.round(pin.pinScore070(ny, dc, 2000).km)} km), as lib/geo-pin.ts`, (await round(A, 'na:1', nyOnDc)) === nyTs)
 
 // Parity with lib/geo-pin.ts on random taps (seeded), all continents.
 let seedN = 7
@@ -276,7 +280,7 @@ for (const ct of geo.CONTINENTS) {
       const spread = [0.3, 2, 6, 12, 20][Math.floor(rnd() * 5)]
       return { i: p.i, lat: Math.max(-89, Math.min(89, p.lat + (rnd() - 0.5) * spread)), lon: Math.max(-180, Math.min(180, p.lon + (rnd() - 0.5) * spread)), ms: Math.floor(rnd() * 9000) }
     })
-    const ts = pins.reduce((s, x, j) => s + pin.pinScore(ps[j], x.lat === null ? null : x, x.ms).points, 0)
+    const ts = pins.reduce((s, x, j) => s + pin.pinScore070(ps[j], x.lat === null ? null : x, x.ms).points, 0)
     const sq = await round(A, `${ct}:${1 + (k % 3)}`, pins)
     rounds++
     if (ts !== sq) { parityOk = false; detail += ` ${ct}: ts ${ts} sql ${sq}` }

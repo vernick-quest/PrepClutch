@@ -15,18 +15,27 @@
 //               on a phone). Off for "Name that country": nothing to tap.
 //   target/guess  Pin the map feedback: the real place, the pin, and the
 //               great-circle line between them.
+//   marks/zone  Find the country feedback: countries lit right (green) or
+//               wrong (red), and a tiny country's ring at its true size.
+//   bounds      how far the map may pan and zoom out, when it opens on a
+//               smaller box (Pin the map's Europe). Default: the box.
+//   shaded      a political map: neighbours in different muted tones
+//               (landShades in lib/geo-map.ts) instead of one flat fill.
 //
 // Neutral land (not a UN member: Kosovo, Western Sahara, Taiwan, Greenland,
 // dependencies) is drawn a shade darker and is never highlighted.
 
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import {
-  loadMap, fitView, projectShapes, toSvg, fromSvg, greatCircle, sidePx, TINY_PX,
+  loadMap, fitView, projectShapes, toSvg, fromSvg, greatCircle, sidePx, TINY_PX, landShades, geoCircle,
+  LAND_SHADES, NEUTRAL_FILL,
 } from '@/lib/geo-map'
 import { wrapLon } from '@/lib/geo-projection'
 import type { Box, MapShape } from '@/lib/geo-map'
 
 export interface LatLon { lat: number; lon: number }
+/** A country lit as feedback, by its shape's a3 (neutral land too). */
+export interface MapMark { a3: string; tone: 'good' | 'bad' }
 
 /** The shapes, loaded once per page. `need` false skips the download. */
 export function useWorldMap(need = true): { shapes: MapShape[] | null; failed: boolean } {
@@ -48,15 +57,19 @@ const TAP_MS = 700
 interface Zoom { k: number; cx: number; cy: number }
 
 export default function WorldMap({
-  shapes, box, highlight, onTap, interactive = false, target, guess, className = '', label,
+  shapes, box, bounds, highlight, onTap, interactive = false, target, guess, marks, zone, shaded = false, className = '', label,
 }: {
   shapes: MapShape[]
   box: Box
+  bounds?: Box
   highlight?: string
   onTap?: (p: LatLon) => void
   interactive?: boolean
   target?: LatLon | null
   guess?: LatLon | null
+  marks?: MapMark[]
+  zone?: (LatLon & { km: number }) | null
+  shaded?: boolean
   className?: string
   /** Accessible description of what the map shows. */
   label?: string
@@ -79,6 +92,10 @@ export default function WorldMap({
   const lon0 = wrapLon((box.w + box.e) / 2)
   const projected = useMemo(() => projectShapes(shapes, lon0), [shapes, lon0])
   const base = useMemo(() => (size ? fitView(box, size.w / size.h) : null), [box, size])
+  // How far the map may pan and zoom out: the bounds, drawn around the same
+  // meridian as the box. Without bounds, the box itself (zoom 1 is the floor).
+  const outer = useMemo(() => (size && base ? (bounds ? fitView(bounds, size.w / size.h, 0.04, lon0) : base) : null), [bounds, size, base, lon0])
+  const kMin = base && outer ? Math.min(1, base.w / outer.w) : 1
 
   // Zoom belongs to the box it was made on: a new box (a new card, a new
   // round) starts unzoomed.
@@ -88,23 +105,27 @@ export default function WorldMap({
   const setZoom = useCallback((z: Zoom) => setZoomed({ key: boxKey, z }), [boxKey])
 
   const view = useMemo(() => {
-    if (!base) return null
+    if (!base || !outer) return null
     const z = zoom ?? { k: 1, cx: base.x + base.w / 2, cy: base.y + base.h / 2 }
     const w = base.w / z.k, h = base.h / z.k
-    const cx = Math.min(Math.max(z.cx, base.x + w / 2), base.x + base.w - w / 2)
-    const cy = Math.min(Math.max(z.cy, base.y + h / 2), base.y + base.h - h / 2)
+    // Keep the view inside the bounds (centred on them if it is wider).
+    const clamp = (c: number, lo: number, span: number, size: number) =>
+      size >= span ? lo + span / 2 : Math.min(Math.max(c, lo + size / 2), lo + span - size / 2)
+    const cx = clamp(z.cx, outer.x, outer.w, w)
+    const cy = clamp(z.cy, outer.y, outer.h, h)
     return { x: cx - w / 2, y: cy - h / 2, w, h, k: z.k, cx, cy }
-  }, [base, zoom])
+  }, [base, outer, zoom])
 
   const pxPerUnit = size && view ? size.w / view.w : 1
 
   // Only shapes near the box are drawn: a continent view is a small part of
   // the world, and a phone should not lay out 55,000 points it cannot see.
   const visible = useMemo(() => {
-    if (!base) return []
-    const mx = base.w * 0.1, my = base.h * 0.1
-    return projected.filter(p => p.x1 >= base.x - mx && p.x0 <= base.x + base.w + mx && p.y1 >= base.y - my && p.y0 <= base.y + base.h + my)
-  }, [projected, base])
+    if (!outer) return []
+    const mx = outer.w * 0.1, my = outer.h * 0.1
+    return projected.filter(p => p.x1 >= outer.x - mx && p.x0 <= outer.x + outer.w + mx && p.y1 >= outer.y - my && p.y0 <= outer.y + outer.h + my)
+  }, [projected, outer])
+  const shades = useMemo(() => (shaded ? landShades(shapes) : null), [shaded, shapes])
 
   const lit = highlight ? projected.find(p => p.iso === highlight) : undefined
   const litShape = highlight ? shapes.find(s => s.iso === highlight) : undefined
@@ -128,12 +149,12 @@ export default function WorldMap({
 
   const zoomAt = useCallback((k: number, sx: number, sy: number, from: Zoom & { x: number; y: number; w: number; h: number }) => {
     if (!base) return
-    const nk = Math.min(MAX_ZOOM, Math.max(1, k))
+    const nk = Math.min(MAX_ZOOM, Math.max(kMin, k))
     // Keep the SVG point (sx, sy) under the same screen spot.
     const fx = (sx - from.x) / from.w, fy = (sy - from.y) / from.h
     const w = base.w / nk, h = base.h / nk
     setZoom({ k: nk, cx: sx - fx * w + w / 2, cy: sy - fy * h + h / 2 })
-  }, [base, setZoom])
+  }, [base, kMin, setZoom])
 
   function onPointerDown(e: React.PointerEvent) {
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
@@ -156,7 +177,7 @@ export default function WorldMap({
     const g = gesture.current
     if (g.tap && Math.hypot(e.clientX - g.tap.x, e.clientY - g.tap.y) > TAP_SLOP) g.tap = null
     if (!interactive || !view) return
-    if (pointers.current.size === 1 && g.pan && !g.tap && view.k > 1) {
+    if (pointers.current.size === 1 && g.pan && !g.tap && view.k > kMin + 1e-9) {
       setZoom({ k: view.k, cx: g.pan.cx - (e.clientX - g.pan.x) / pxPerUnit, cy: g.pan.cy - (e.clientY - g.pan.y) / pxPerUnit })
     } else if (pointers.current.size === 2 && g.pinch) {
       const [a, b] = [...pointers.current.values()]
@@ -196,6 +217,10 @@ export default function WorldMap({
   const px = (n: number) => n / pxPerUnit
   const pt = (p: LatLon) => toSvg(p.lon, p.lat, lon0)
   const line = target && guess ? greatCircle(guess, target).map(pt) : null
+  const byA3 = (a3: string) => projected.find(p => p.a3 === a3)
+  const zonePts = zone ? geoCircle(zone, zone.km).map(pt) : null
+  // A ring narrower than a fingertip on screen gets a locator ring around it.
+  const zoneSmall = zone ? (zone.km / 6.371) * pxPerUnit < 14 : false
 
   return (
     <div ref={wrap} className={`relative w-full h-full overflow-hidden bg-[#0d1726] select-none ${className}`}>
@@ -219,7 +244,7 @@ export default function WorldMap({
               key={p.a3}
               d={p.d}
               fillRule="evenodd"
-              fill={p.iso ? '#334155' : '#263040'}
+              fill={shades ? (p.iso ? LAND_SHADES[shades.get(p.a3) ?? 0] : NEUTRAL_FILL) : (p.iso ? '#334155' : '#263040')}
               stroke="#0d1726"
               strokeWidth={0.8}
               strokeLinejoin="round"
@@ -236,6 +261,27 @@ export default function WorldMap({
               <g>
                 <circle cx={x} cy={y} r={px(15)} fill="none" stroke="#fbbf24" strokeWidth={3} vectorEffect="non-scaling-stroke" />
                 <circle cx={x} cy={y} r={px(3)} fill="#f59e0b" />
+              </g>
+            )
+          })()}
+          {marks?.map(m => {
+            const p = byA3(m.a3)
+            if (!p) return null
+            return (
+              <path key={`${m.a3}-${m.tone}`} d={p.d} fillRule="evenodd"
+                    fill={m.tone === 'good' ? '#10b981' : 'rgba(244, 63, 94, 0.35)'}
+                    stroke={m.tone === 'good' ? '#a7f3d0' : '#fb7185'} strokeWidth={m.tone === 'good' ? 1.5 : 2}
+                    strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+            )
+          })}
+          {zonePts && zone && (() => {
+            const [x, y] = pt(zone)
+            return (
+              <g>
+                <polygon points={zonePts.map(([a, b]) => `${a},${b}`).join(' ')} fill="rgba(16, 185, 129, 0.18)"
+                         stroke="#34d399" strokeWidth={2} strokeDasharray="5 3" vectorEffect="non-scaling-stroke" />
+                {zoneSmall && <circle cx={x} cy={y} r={px(16)} fill="none" stroke="#34d399" strokeWidth={2.5} vectorEffect="non-scaling-stroke" />}
+                <circle cx={x} cy={y} r={px(3)} fill="#34d399" />
               </g>
             )
           })()}

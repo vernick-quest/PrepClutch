@@ -96,7 +96,7 @@ const award = AWARD_069
 const places = geo.pinPlaces()
 const pinRows = places.map(p =>
   `(${[q(p.key), q(p.kind), q(p.name), q(p.iso), q(p.continent), p.tier, p.lat, p.lon].join(', ')})`)
-const ringCase = pin.PIN_RINGS.map(([km, p]) => `WHEN km <= ${km} THEN ${p}`).join(' ')
+const ringCase = pin.PIN_RINGS_070.map(([km, p]) => `WHEN km <= ${km} THEN ${p}`).join(' ')
 const speedCase = pin.PIN_SPEED.map(([ms, p]) => `WHEN r.ms BETWEEN 0 AND ${ms} THEN ${p}`).join(' ')
 
 const p1points = phase1.reduce((s, c) => s + c.points, 0)
@@ -113,7 +113,7 @@ let sql = fs.readFileSync(path.join(here, '070.template.sql'), 'utf8')
   .replace('__CONTINENTS__', geo.CONTINENTS.map(q).join(', '))
   .replace('__RING_CASE__', ringCase)
   .replace('__SPEED_CASE__', speedCase)
-  .replace('__RINGS_COMMENT__', pin.PIN_RINGS.map(([km, p]) => `${p} within ${km} km`).join(', '))
+  .replace('__RINGS_COMMENT__', pin.PIN_RINGS_070.map(([km, p]) => `${p} within ${km} km`).join(', '))
   .replace('__SPEED_COMMENT__', pin.PIN_SPEED.map(([ms, p]) => `${p} for ${ms / 1000} s`).join(' or '))
   .replaceAll('__NUM__', NUM)
   .replaceAll('__ROUND__', String(pin.PIN_ROUND))

@@ -41,8 +41,8 @@
 import { COUNTRIES, LOOKALIKE_FLAGS } from './geo-data'
 import { CITIES } from './geo-cities'
 import { NEIGHBOURS, POPULATION } from './geo-map-data'
-import { PIN_ROUND, PIN_CITY_SHARE, pinPlaceKey } from './geo-pin'
-import type { PinLevel, PinPlace } from './geo-pin'
+import { PIN_ROUND, PIN_CITY_SHARE, pinPlaceKey, isTinyCountry } from './geo-pin'
+import type { PinLevel, PinPlace, PinCountry } from './geo-pin'
 import type { Country, Continent } from './geo-data'
 import type { City } from './geo-cities'
 import {
@@ -359,6 +359,27 @@ export function buildPinRound(continent: Continent, level: PinLevel, rnd: () => 
     take(cities, Math.min(PIN_CITY_SHARE - picked.filter(p => p.kind === 'city').length, PIN_ROUND - picked.length))
     take(caps, PIN_ROUND - picked.length)
     take(cities, PIN_ROUND - picked.length)
+  }
+  return shuffleWith(picked, rnd)
+}
+
+/** Ten countries for a "Find the country" round: the level's own tier (the
+ *  capitals' tiers, pinTiers), then the nearest other tiers when a continent
+ *  is short, never one twice. Every UN member is asked, disputed borders
+ *  included: a tap on disputed land is right for every party to the
+ *  dispute (DISPUTED_AREAS in lib/geo-pin.ts), so no answer turns on a
+ *  contested line. South America has exactly ten, so every level asks all
+ *  of them. */
+export function buildCountryRound(continent: Continent, level: PinLevel, rnd: () => number = Math.random): PinCountry[] {
+  const tiers = pinTiers()
+  const all = COUNTRIES.filter(c => c.continent === continent).map((c): PinCountry => ({
+    iso: c.iso, name: c.name, continent: c.continent, tier: tiers.get(c.iso)!,
+    lat: c.capitals[0].lat, lon: c.capitals[0].lon, tiny: isTinyCountry(c.iso),
+  }))
+  const order: PinLevel[] = level === 1 ? [1, 2, 3] : level === 2 ? [2, 1, 3] : [3, 2, 1]
+  const picked: PinCountry[] = []
+  for (const t of order) {
+    picked.push(...shuffleWith(all.filter(c => c.tier === t), rnd).slice(0, PIN_ROUND - picked.length))
   }
   return shuffleWith(picked, rnd)
 }
