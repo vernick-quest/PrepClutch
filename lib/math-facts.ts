@@ -67,8 +67,12 @@ export interface FactCard {
   decimal:  boolean
   points:   number
   targetMs: number
-  /** Short instruction above the card. */
+  /** The instruction, shown big above the card. Says what FORM the answer
+   *  takes, because "62.5% = ?" alone could fairly be a fraction. */
   hint:     string
+  /** What the empty blank shows: '0.?' when the answer is a decimal under 1,
+   *  so the blank itself looks like the answer's shape; otherwise '?'. */
+  blank:    string
   /** The whole equation, answer filled in, for feedback. */
   full:     string
 }
@@ -108,6 +112,7 @@ export function makeCard(op: FactOp, a: number, b: number, form: FactForm): Fact
     points: form === 'c' ? 10 : 15,
     targetMs: form === 'c' ? 3000 : 5000,
     hint: form === 'c' ? 'Solve it' : 'Find the missing number',
+    blank: '?',
     full: `${terms[0]} ${sym} ${terms[1]} = ${terms[2]}`,
   }
 }
@@ -141,6 +146,7 @@ export function makeEquivCard(a: number, b: number, k: number, form: EquivForm):
     parts: [left, '=', shown],
     answer: String(answer), decimal: false, ...OTHER_INT,
     hint: up ? 'Make an equivalent fraction' : 'Simplify',
+    blank: '?',
     full: `${left.n}/${left.d} = ${right.n}/${right.d}`,
   }
 }
@@ -171,16 +177,17 @@ export function makeFdpCard(a: number, b: number, form: FdpForm): FactCard {
   const f: Frac = { n: a, d: b }
   const card = (parts: Tok[], answer: string, hint: string, full: string) => ({ parts, answer, hint, full })
   const c = {
-    fp: card([f, '=', { pct: null }],          pct,       'As a percent',  `${a}/${b} = ${pct}%`),
-    fd: card([f, '=', null],                   dec,       'As a decimal',  `${a}/${b} = ${dec}`),
-    dp: card([dec, '=', { pct: null }],        pct,       'As a percent',  `${dec} = ${pct}%`),
-    pd: card([{ pct }, '=', null],             dec,       'As a decimal',  `${pct}% = ${dec}`),
-    pf: card([{ pct }, '=', { n: null, d: b }], String(a), 'As a fraction', `${pct}% = ${a}/${b}`),
-    df: card([dec, '=', { n: null, d: b }],    String(a), 'As a fraction', `${dec} = ${a}/${b}`),
+    fp: card([f, '=', { pct: null }],          pct,       'Write it as a percent',  `${a}/${b} = ${pct}%`),
+    fd: card([f, '=', null],                   dec,       'Write it as a decimal',  `${a}/${b} = ${dec}`),
+    dp: card([dec, '=', { pct: null }],        pct,       'Write it as a percent',  `${dec} = ${pct}%`),
+    pd: card([{ pct }, '=', null],             dec,       'Write it as a decimal',  `${pct}% = ${dec}`),
+    pf: card([{ pct }, '=', { n: null, d: b }], String(a), 'Write it as a fraction', `${pct}% = ${a}/${b}`),
+    df: card([dec, '=', { n: null, d: b }],    String(a), 'Write it as a fraction', `${dec} = ${a}/${b}`),
   }[form]
   const decimal = c.answer.includes('.')
   return {
     key: `fdp:${a}:${b}:${form}`, topic: 'fdp', form, ...c, decimal,
+    blank: form === 'fd' || form === 'pd' ? '0.?' : '?',
     ...(decimal ? OTHER_DEC : OTHER_INT),
   }
 }

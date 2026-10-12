@@ -76,10 +76,10 @@ export default function LearnClient({ deck, playHref }: { deck: FactCard[]; play
   }
 
   const steps = cardSteps(card)
-  const blankText = outcome ? card.answer : (input || '?')
+  const blankText = outcome ? card.answer : (input || card.blank)
 
   return (
-    <div className="h-[100dvh] overflow-hidden bg-[#0a0a0f] flex flex-col" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+    <div className="fixed inset-0 overflow-hidden bg-[#0a0a0f] flex flex-col" style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
       <div className="border-b border-white/5">
         <div className="max-w-xl mx-auto px-4 py-3 flex items-center gap-4">
           <Link href="/math" className="text-zinc-500 hover:text-white text-sm transition-colors shrink-0">← Exit</Link>
@@ -93,10 +93,13 @@ export default function LearnClient({ deck, playHref }: { deck: FactCard[]; play
       <div className="flex-1 min-h-0 max-w-xl mx-auto w-full px-4 pt-3 pb-3 flex flex-col">
         <div className="flex items-center justify-between text-xs mb-2">
           <span className="font-semibold px-2.5 py-1 rounded-full bg-sky-500/10 border border-sky-500/30 text-sky-300">📖 Learn</span>
-          <span className="text-zinc-500">{card.hint} · no timer</span>
+          <span className="text-zinc-500">no timer</span>
         </div>
 
-        <div className={`${outcome ? 'py-4' : 'flex-1 min-h-0'} flex items-center justify-center`}>
+        <div className={`${outcome ? 'py-3' : 'flex-1 min-h-0'} flex flex-col items-center justify-center gap-4`}>
+          <p className="text-base sm:text-lg font-bold text-sky-200 bg-sky-500/10 border border-sky-500/30 rounded-full px-4 py-1.5">
+            {card.hint}
+          </p>
           <Equation card={card} blankText={blankText} done={!!outcome} />
         </div>
 

@@ -250,17 +250,20 @@ export default function FactsClient({ deck, deckId }: {
   // ── Card ───────────────────────────────────────────────────────────────────
   const card = current.card
   const target = card.targetMs
-  const blankText = feedback ? (feedback.kind === 'wrong' ? card.answer : feedback.given) : (input || '?')
+  const blankText = feedback ? (feedback.kind === 'wrong' ? card.answer : feedback.given) : (input || card.blank)
 
   return (
     // Exactly one screen tall (dvh tracks the phone's visible area, address bar
     // included), so the keypad is always on screen with no scrolling. The
     // equation area absorbs whatever height is left; keys shrink on short phones.
+    // Fixed to the viewport, not just 100dvh tall: iPhone Safari can still
+    // scroll the document a little as its toolbar collapses, which slid the
+    // Exit / progress bar up under the status bar.
     <div
-      className="h-[100dvh] overflow-hidden bg-[#0a0a0f] flex flex-col"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      className="fixed inset-0 overflow-hidden bg-[#0a0a0f] flex flex-col"
+      style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
-      <div className="sticky top-0 z-30 border-b border-white/5 bg-[#0a0a0f]/90 backdrop-blur-sm">
+      <div className="z-30 border-b border-white/5 bg-[#0a0a0f]/90 backdrop-blur-sm">
         <div className="max-w-xl mx-auto px-4 py-3 flex items-center gap-4">
           <Link href="/math" className="text-zinc-500 hover:text-white text-sm transition-colors shrink-0">← Exit</Link>
           <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
@@ -271,15 +274,16 @@ export default function FactsClient({ deck, deckId }: {
       </div>
 
       <div className="flex-1 min-h-0 max-w-xl mx-auto w-full px-4 pt-3 pb-3 flex flex-col">
-        <div className="flex items-center justify-between text-xs mb-2">
-          <span className="text-zinc-500">
-            {current.retry ? '🔁 Practice — not scored' : card.hint}
-          </span>
-          <span className="text-zinc-500">Aim for under {target / 1000}s</span>
+        <div className="flex items-center justify-end text-xs mb-2 text-zinc-500">
+          {current.retry ? '🔁 Practice, not scored' : `Aim for under ${target / 1000}s`}
         </div>
 
-        {/* Equation */}
-        <div className="flex-1 min-h-0 flex items-center justify-center">
+        {/* The instruction, big and right above the equation: it says what
+            form the answer takes. */}
+        <div className="flex-1 min-h-0 flex flex-col items-center justify-center gap-5">
+          <p className="text-base sm:text-lg font-bold text-sky-200 bg-sky-500/10 border border-sky-500/30 rounded-full px-4 py-1.5">
+            {card.hint}
+          </p>
           <Equation card={card} blankText={blankText} done={!!feedback} />
         </div>
 
