@@ -238,7 +238,7 @@ export default function QuizClient({
       {/* Top bar */}
       <div className="border-b border-white/5 bg-[#0a0a0f]/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-4">
-          <Link href="/" className="text-zinc-500 hover:text-white transition-colors text-sm">← Exit</Link>
+          <Link href="/hspt" className="text-zinc-500 hover:text-white transition-colors text-sm">← Exit</Link>
           <div className="flex-1">
             <div className="h-2 bg-white/10 rounded-full overflow-hidden">
               <div

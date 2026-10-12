@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { MAX_FACT_POINTS, allCards } from '@/lib/math-facts'
 import { loadFactHistory, availableTopics } from '@/lib/math-history'
-import TrackSwitcher from '@/components/ui/TrackSwitcher'
+import TopBar from '@/components/ui/TopBar'
 import FactGrid from '@/components/math/FactGrid'
 import { MATH_FACTS_CATEGORY, compareBadges } from '@/lib/badges'
 import { loginUrl } from '@/lib/tracks'
@@ -64,33 +64,13 @@ export default async function MathHomePage() {
 
   const { ready, rows } = await loadFactHistory(supabase, user.id)
 
-  // Same shape as the HSPT dashboard's bar, so the switch reads as one site.
-  const header = (
-    <div className="flex items-center justify-between gap-3">
-      <div className="flex items-center gap-3">
-        <Link href="/" className="text-xl font-black hidden sm:block">
-          <span className="text-amber-400">Prep</span><span className="text-white">Clutch</span>
-        </Link>
-        <TrackSwitcher current="math" />
-      </div>
-      <Link href="/profile" className="shrink-0 hover:opacity-80 transition-opacity">
-        {profile.avatar_url ? (
-          <Image src={profile.avatar_url} alt={profile.display_name} width={36} height={36} className="rounded-full" />
-        ) : (
-          <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white"
-               style={{ backgroundColor: profile.avatar_color }}>
-            {profile.display_name?.[0]?.toUpperCase()}
-          </div>
-        )}
-      </Link>
-    </div>
-  )
+  const header = <TopBar current="math" profile={profile} />
 
   if (!ready) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] px-4 py-10">
-        <div className="max-w-md mx-auto space-y-6 text-center">
-          {header}
+      <div className="min-h-screen bg-[#0a0a0f]">
+        {header}
+        <div className="max-w-md mx-auto space-y-6 text-center px-4 py-10">
           <p className="text-5xl">🧮</p>
           <h1 className="text-2xl font-black text-white">Math Facts is almost ready</h1>
           <p className="text-zinc-400 text-sm">It&rsquo;s waiting on one last setup step. Check back soon.</p>
@@ -128,9 +108,9 @@ export default async function MathHomePage() {
   const history = Object.fromEntries(rows)
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] px-4 py-8">
-      <div className="max-w-5xl mx-auto space-y-8">
-        {header}
+    <div className="min-h-screen bg-[#0a0a0f]">
+      {header}
+      <div className="max-w-5xl mx-auto space-y-8 px-4 py-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="text-3xl font-black text-white">🧮 Math Facts</h1>

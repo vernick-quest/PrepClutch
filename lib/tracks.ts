@@ -10,7 +10,7 @@
 
 export type Track = 'hspt' | 'math'
 
-export const TRACK_HOME: Record<Track, string> = { hspt: '/', math: '/math' }
+export const TRACK_HOME: Record<Track, string> = { hspt: '/hspt', math: '/math' }
 
 const NEXT_KEY = 'prepclutch:next'
 
@@ -36,7 +36,7 @@ export function trackOf(path: string | null): Track | null {
 
 /** Sign-in that finishes on `path`. Every page that requires a signed-in
  *  student sends visitors here, so a direct link survives the Google round
- *  trip. The bare homepage passes no path: it lands on the student's track. */
+ *  trip. The bare homepage passes no path: it is the hub, the default. */
 export function loginUrl(path: string): string {
   return `/login?next=${encodeURIComponent(path)}`
 }

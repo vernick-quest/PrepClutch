@@ -3,7 +3,7 @@
 import { useEffect, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createBrowserClient } from '@supabase/ssr'
-import { takeNext, TRACK_HOME } from '@/lib/tracks'
+import { takeNext } from '@/lib/tracks'
 
 function CallbackHandler() {
   const router = useRouter()
@@ -66,8 +66,8 @@ function CallbackHandler() {
 
       // New students: onboarding reads the remembered link itself, so leave it.
       if (!profile) { router.push('/onboarding'); return }
-      const track = profile.home_track === 'math' ? 'math' : 'hspt'
-      router.push(takeNext() ?? TRACK_HOME[track])
+      // A link they followed wins; otherwise the hub, where they choose.
+      router.push(takeNext() ?? '/')
     })
   }, [router, searchParams])
 

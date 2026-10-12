@@ -94,7 +94,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
     <div className="min-h-screen bg-[#0a0a0f]">
       <nav className="border-b border-white/5 sticky top-0 z-50 bg-[#0a0a0f]/80 backdrop-blur-sm">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="text-zinc-400 hover:text-white transition-colors text-sm">← Dashboard</Link>
+          <Link href="/" className="text-zinc-400 hover:text-white transition-colors text-sm">← Home</Link>
           <h1 className="text-lg font-bold text-white">{profile.display_name}</h1>
           <div />
         </div>

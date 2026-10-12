@@ -49,7 +49,7 @@ export default function ResultsPage() {
 
   useEffect(() => {
     const raw = sessionStorage.getItem('quiz_result')
-    if (!raw) { router.replace('/'); return }
+    if (!raw) { router.replace('/hspt'); return }
 
     const parsed: StoredResult = JSON.parse(raw)
     setResult(parsed)
@@ -124,7 +124,7 @@ export default function ResultsPage() {
           long scroll away and students could not find their way home. */}
       <nav className="border-b border-white/5 sticky top-0 z-50 bg-[#0a0a0f]/90 backdrop-blur-sm">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link href="/" className="text-zinc-400 hover:text-white transition-colors text-sm">
+          <Link href="/hspt" className="text-zinc-400 hover:text-white transition-colors text-sm">
             ← Dashboard
           </Link>
           <span className="text-xs text-zinc-500">{cfg.emoji} {cfg.label}</span>
@@ -364,7 +364,7 @@ export default function ResultsPage() {
             🔄 Try Again
           </Link>
           <Link
-            href="/"
+            href="/hspt"
             className="flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 text-black font-bold py-3.5 rounded-2xl transition-colors"
           >
             🏠 Dashboard

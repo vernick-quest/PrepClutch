@@ -58,7 +58,7 @@ export default async function AdminPage() {
     <div className="min-h-screen bg-[#0a0a0f]">
       <nav className="border-b border-white/5 sticky top-0 z-50 bg-[#0a0a0f]/80 backdrop-blur-sm">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="text-zinc-400 hover:text-white transition-colors text-sm">← Dashboard</Link>
+          <Link href="/" className="text-zinc-400 hover:text-white transition-colors text-sm">← Home</Link>
           <div className="flex items-center gap-2">
             <span className="text-xs bg-violet-500/20 border border-violet-500/30 text-violet-400 px-2 py-0.5 rounded-full font-mono">ADMIN</span>
             <h1 className="text-lg font-bold text-white">Class Manager</h1>

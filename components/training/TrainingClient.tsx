@@ -137,7 +137,7 @@ export default function TrainingClient({
                 Pick a level
               </Link>
             </div>
-            <Link href="/" className="block text-sm text-zinc-500 hover:text-white transition-colors">Dashboard</Link>
+            <Link href="/hspt" className="block text-sm text-zinc-500 hover:text-white transition-colors">Dashboard</Link>
           </div>
         </div>
       )
@@ -163,7 +163,7 @@ export default function TrainingClient({
               ↺ Start over
             </button>
             <Link
-              href="/"
+              href="/hspt"
               className="flex items-center justify-center bg-sky-500 hover:bg-sky-400 text-black font-bold py-3.5 rounded-2xl transition-colors"
             >
               Dashboard
@@ -204,7 +204,7 @@ export default function TrainingClient({
       {/* Top bar. No timer here, deliberately. */}
       <div className="sticky top-0 z-30 border-b border-white/5 bg-[#0a0a0f]/90 backdrop-blur-sm">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-4">
-          <Link href={review ? reviewHref : '/'} className="text-zinc-500 hover:text-white text-sm transition-colors shrink-0">
+          <Link href={review ? reviewHref : '/hspt'} className="text-zinc-500 hover:text-white text-sm transition-colors shrink-0">
             ← Exit
           </Link>
           <div className="flex-1">

@@ -359,7 +359,7 @@ export default function ReadingQuizClient({
 
           {/* Back */}
           <a
-            href="/"
+            href="/hspt"
             className="text-zinc-500 hover:text-zinc-300 transition-colors text-sm shrink-0"
           >
             ← Exit

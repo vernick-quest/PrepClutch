@@ -54,7 +54,7 @@ export default async function ReviewPage({ params, searchParams }: Props) {
   return (
     <div className="min-h-screen bg-[#0a0a0f] px-4 py-10">
       <div className="max-w-md mx-auto space-y-6">
-        <Link href="/" className="text-zinc-500 hover:text-white text-sm transition-colors">← Dashboard</Link>
+        <Link href="/hspt" className="text-zinc-500 hover:text-white text-sm transition-colors">← Dashboard</Link>
         <div className="text-center space-y-2">
           <p className="text-5xl">⭐</p>
           <h1 className="text-2xl font-black text-white">{cfg.emoji} {cfg.label} review</h1>
