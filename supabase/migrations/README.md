@@ -96,7 +96,9 @@ passage into two in the quiz UI. 035-038 are independent of the others.
 
 | 065 | profiles.home_track: HSPT or Math Facts, chosen at sign-up | migration | ✅ |
 
-Next free number: **066**
+| 066 | Rename Flawless Twenty → Flawless Ten (rounds are now 10 cards) | migration | ⏳ |
+
+Next free number: **067**
 
 **Why 039-043 failed:** they matched rows with `AND options = '[...]'::JSONB`, but
 migration 019 shuffled every question's options in production. The snapshot's

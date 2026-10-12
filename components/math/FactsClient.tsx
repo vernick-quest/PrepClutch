@@ -177,7 +177,7 @@ export default function FactsClient({ deck }: { deck: FactCard[] }) {
                   </div>
                 ))}
               </div>
-              <Link href="/bestiary" className="block mt-3 text-xs text-violet-300 hover:text-violet-200">See all your badges →</Link>
+              <Link href="/profile" className="block mt-3 text-xs text-violet-300 hover:text-violet-200">See all your badges →</Link>
             </div>
           )}
 

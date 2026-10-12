@@ -65,8 +65,8 @@ B.append(('facts_missing_100', 'Master Sleuth', '🔍', '100 missing-number card
           'Sleuth', 'One hundred missing numbers recovered. The Sleuth sees seven times blank equals fifty-six and knows the culprit before the question finishes loading.', 100))
 
 # ── A perfect round ──
-B.append(('facts_perfect_round', 'Flawless Twenty', '🎯', 'A 20-card round with every card right, and every one fast enough to master.', 'Rare',
-          'Flawless', 'Twenty cards. Twenty right answers. Not one of them slow. It is not luck if it happens twenty times in a row.', 20))
+B.append(('facts_perfect_round', 'Flawless Ten', '🎯', 'A 10-card round with every card right, and every one fast enough to master.', 'Rare',
+          'Flawless', 'Ten cards. Ten right answers. Not one of them slow. It is not luck if it happens ten times in a row.', 10))
 
 def q(s):
   bad = [c for c in (';', '$', '--') if c in s]

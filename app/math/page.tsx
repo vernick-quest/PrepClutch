@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { MAX_FACT_POINTS, allCards } from '@/lib/math-facts'
 import { loadFactHistory, availableTopics } from '@/lib/math-history'
 import MathStart from '@/components/math/MathStart'
+import type { TileProgress } from '@/components/math/MathStart'
 import TrackSwitcher from '@/components/ui/TrackSwitcher'
 import FactGrid from '@/components/math/FactGrid'
 import { MATH_FACTS_CATEGORY, compareBadges } from '@/lib/badges'
@@ -125,6 +126,17 @@ export default async function MathHomePage() {
 
   const points = allCards().reduce((s, c) => s + (rows.get(c.key)?.fluent_at ? c.points : 0), 0)
   const fluent = [...rows.values()].filter(r => r.fluent_at).length
+
+  // Mastered / total for each start tile: × and ÷ are separate tiles.
+  const progress: TileProgress = {
+    mul: { mastered: 0, total: 0 }, div: { mastered: 0, total: 0 },
+    equiv: { mastered: 0, total: 0 }, fdp: { mastered: 0, total: 0 },
+  }
+  for (const c of allCards()) {
+    const tile = progress[c.topic === 'times' ? c.op! : c.topic]
+    tile.total++
+    if (rows.get(c.key)?.fluent_at) tile.mastered++
+  }
   const history = Object.fromEntries(rows)
 
   return (
@@ -144,35 +156,17 @@ export default async function MathHomePage() {
               {points}<span className="text-sm font-normal text-zinc-500"> / {MAX_FACT_POINTS}</span>
             </p>
             <p className="text-xs text-zinc-500">Fact Points · {fluent} of {allCards().length} cards mastered</p>
+            {defs.length > 0 && (
+              <Link href="/profile" className="inline-block mt-1 text-xs text-violet-300 hover:text-violet-200">
+                🏅 {heldKeys.size} / {defs.length} badges →
+              </Link>
+            )}
           </div>
         </div>
 
-        {defs.length > 0 && (
-          <Link
-            href="/bestiary"
-            className="block rounded-2xl border border-violet-500/20 bg-violet-500/5 hover:border-violet-500/40 px-4 py-3 transition-colors"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-bold text-violet-200">🏅 Math Facts badges</span>
-              <span className="text-xs text-zinc-400">{heldKeys.size} / {defs.length} · see all →</span>
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {defs.map(d => (
-                <span
-                  key={d.key}
-                  title={heldKeys.has(d.key) ? d.label : `${d.label} (not yet)`}
-                  className={`text-xl ${heldKeys.has(d.key) ? '' : 'grayscale opacity-25'}`}
-                >
-                  {d.icon_emoji}
-                </span>
-              ))}
-            </div>
-          </Link>
-        )}
-
         <div className="grid lg:grid-cols-2 gap-6">
           <div className="space-y-6 min-w-0">
-            <MathStart topics={topics} />
+            <MathStart topics={topics} progress={progress} />
             <FactGrid history={history} topics={topics} />
           </div>
           <div className="space-y-8 min-w-0">

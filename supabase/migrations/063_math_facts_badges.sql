@@ -7,11 +7,11 @@
 --   Master of the Ns   every x-card for one times table, all 3 card types (69 each)
 --   Monarch / Duchess  all 432 multiplication / all 432 division cards
 --   Detective / Sleuth 25 / 100 missing-number cards mastered
---   Flawless Twenty    a 20-card round, every card right and fast
+--   Flawless Ten       a 10-card round, every card right and fast
 --
--- Everything except Flawless Twenty is computed in SQL from fact_history, so a
+-- Everything except Flawless Ten is computed in SQL from fact_history, so a
 -- badge can only be awarded for mastery that is really recorded. Flawless
--- Twenty is a property of one session and is reported by the client, the same
+-- Ten is a property of one session and is reported by the client, the same
 -- trust every other badge already has.
 --
 -- Additive. Badges are only ever inserted, never removed, and nothing here
@@ -93,8 +93,8 @@ INSERT INTO achievement_definitions (key, label, icon_emoji, description, rarity
 ('facts_missing_100', 'Master Sleuth', '🔍', '100 missing-number cards mastered.', 'Epic', 'Sleuth', 'Math Facts',
  'One hundred missing numbers recovered. The Sleuth sees seven times blank equals fifty-six and knows the culprit before the question finishes loading.', 100),
 
-('facts_perfect_round', 'Flawless Twenty', '🎯', 'A 20-card round with every card right, and every one fast enough to master.', 'Rare', 'Flawless', 'Math Facts',
- 'Twenty cards. Twenty right answers. Not one of them slow. It is not luck if it happens twenty times in a row.', 20)
+('facts_perfect_round', 'Flawless Ten', '🎯', 'A 10-card round with every card right, and every one fast enough to master.', 'Rare', 'Flawless', 'Math Facts',
+ 'Ten cards. Ten right answers. Not one of them slow. It is not luck if it happens ten times in a row.', 10)
 
 ON CONFLICT (key) DO UPDATE SET
   label = EXCLUDED.label, icon_emoji = EXCLUDED.icon_emoji,

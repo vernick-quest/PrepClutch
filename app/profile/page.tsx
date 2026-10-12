@@ -7,7 +7,7 @@ import Footer from '@/components/ui/Footer'
 import SignOutButton from '@/components/ui/SignOutButton'
 import ProfileActions from '@/components/profile/ProfileActions'
 import AttemptReview from '@/components/quiz/AttemptReview'
-import { isSectionComplete } from '@/lib/badges'
+import { isSectionComplete, compareBadges, MATH_FACTS_CATEGORY } from '@/lib/badges'
 import type { Section, QuizAnswer } from '@/types/database'
 import { loginUrl } from '@/lib/tracks'
 
@@ -58,6 +58,10 @@ export default async function ProfilePage() {
 
   const totalAttempts = attempts?.length ?? 0
   const earnedKeys = new Set(userAchievements?.map(a => a.achievement_key) ?? [])
+  type BadgeDef = { key: string; label: string; icon_emoji: string; description: string; rarity: string; category: string }
+  const mathBadges = ((allAchievements ?? []) as BadgeDef[])
+    .filter(b => b.category === MATH_FACTS_CATEGORY)
+    .sort(compareBadges)
 
   const { data: masteryRaw } = await supabase
     .rpc('get_section_mastery', { p_user_id: user.id })
@@ -203,6 +207,39 @@ export default async function ProfilePage() {
             View Bestiary →
           </Link>
         </div>
+
+        {/* Math Facts badges. Every one is listed, earned or not, with what it
+            takes, so a student can see the next thing to aim for. They are
+            awarded automatically at the end of a round. */}
+        {mathBadges.length > 0 && (
+          <div className="bg-white/3 border border-white/10 rounded-2xl p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-white">🧮 Math Facts badges</h3>
+              <span className="text-sm text-zinc-400">
+                {mathBadges.filter(b => earnedKeys.has(b.key)).length} / {mathBadges.length}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
+              {mathBadges.map(b => {
+                const earned = earnedKeys.has(b.key)
+                return (
+                  <div
+                    key={b.key}
+                    className={`rounded-xl border p-3 ${
+                      earned ? 'border-amber-500/30 bg-amber-500/5' : 'border-white/5 bg-white/2'
+                    }`}
+                  >
+                    <div className={`text-2xl mb-1 ${earned ? '' : 'grayscale opacity-30'}`}>{b.icon_emoji}</div>
+                    <div className={`text-sm font-bold leading-tight ${earned ? 'text-white' : 'text-zinc-500'}`}>{b.label}</div>
+                    <div className="text-[11px] text-zinc-500 leading-snug mt-0.5">
+                      {earned ? '✓ ' : '🔒 '}{b.description}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Recent attempts */}
         {attempts && attempts.length > 0 && (

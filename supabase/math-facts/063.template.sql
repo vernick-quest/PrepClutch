@@ -7,11 +7,11 @@
 --   Master of the Ns   every x-card for one times table, all 3 card types (69 each)
 --   Monarch / Duchess  all 432 multiplication / all 432 division cards
 --   Detective / Sleuth 25 / 100 missing-number cards mastered
---   Flawless Twenty    a 20-card round, every card right and fast
+--   Flawless Ten       a 10-card round, every card right and fast
 --
--- Everything except Flawless Twenty is computed in SQL from fact_history, so a
+-- Everything except Flawless Ten is computed in SQL from fact_history, so a
 -- badge can only be awarded for mastery that is really recorded. Flawless
--- Twenty is a property of one session and is reported by the client, the same
+-- Ten is a property of one session and is reported by the client, the same
 -- trust every other badge already has.
 --
 -- Additive. Badges are only ever inserted, never removed, and nothing here

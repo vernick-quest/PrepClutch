@@ -44,7 +44,7 @@ export const FACT_MIN = 1
 export const FACT_MAX = 12
 export const FACT_TABLES = Array.from({ length: FACT_MAX }, (_, i) => i + 1)
 
-export const SESSION_SIZE = 20
+export const SESSION_SIZE = 10
 
 /** A fraction on the card. Either half may be the blank (null). */
 export interface Frac { n: number | null; d: number | null }
@@ -329,7 +329,7 @@ function shuffle<T>(xs: T[]): T[] {
 // Unmastered first. Missed cards come back soonest, then correct-but-slow ones
 // (one more fast answer masters them), then new ones. A couple of mastered
 // cards are mixed in as review, and fill the deck once nothing else is left.
-const QUOTA: [CardState, number][] = [['struggling', 6], ['learning', 6], ['unseen', 18], ['fluent', 2]]
+const QUOTA: [CardState, number][] = [['struggling', 3], ['learning', 3], ['unseen', 9], ['fluent', 1]]
 
 export function buildDeck(opts: DeckOptions, history: Map<string, FactHistoryRow>): FactCard[] {
   const buckets = new Map<CardState, FactCard[]>()
