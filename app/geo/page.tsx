@@ -138,7 +138,7 @@ export default async function GeoHomePage() {
 
         <div className="grid lg:grid-cols-2 gap-6">
           <div className="space-y-6 min-w-0">
-            <GeoMap history={Object.fromEntries(rows)} countries={mapCountries()} />
+            <GeoMap history={Object.fromEntries(rows)} countries={mapCountries()} kinds={kinds} />
             <GeoRounds rounds={rounds} />
           </div>
           <div className="space-y-8 min-w-0">
