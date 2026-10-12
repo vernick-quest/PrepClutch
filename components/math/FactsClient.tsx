@@ -4,9 +4,8 @@
 //
 // Flash cards with a typed answer: no choices to guess between, and speed is
 // the point. Each FIRST answer to a card is saved as it happens, so leaving
-// mid-session loses nothing. A missed card shows its answer and comes back
-// once at the end for practice; that retry is not recorded, because answering
-// a card you were just shown is not recall.
+// mid-session loses nothing. A missed card shows its answer. A round is
+// exactly 10 cards: misses are listed at the end, not asked again.
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
@@ -31,7 +30,7 @@ export default function FactsClient({ deck, deckId, home }: {
   home: string
 }) {
   const router = useRouter()
-  const [queue, setQueue]       = useState<Shown[]>(() => deck.map(card => ({ card, retry: false })))
+  const [queue]                 = useState<Shown[]>(() => deck.map(card => ({ card, retry: false })))
   const [idx, setIdx]           = useState(0)
   const [input, setInput]       = useState('')
   const [feedback, setFeedback] = useState<Feedback>(null)
@@ -81,9 +80,6 @@ export default function FactsClient({ deck, deckId, home }: {
     if (!current.retry) {
       setResults(r => [...r, { card: current.card, correct, ms, given }])
       void save(current.card, correct, ms)
-    }
-    if (!correct && !current.retry) {
-      setQueue(q => [...q, { card: current.card, retry: true }])
     }
     setFeedback({ kind: !correct ? 'wrong' : fast ? 'fast' : 'slow', ms, given })
     setTimeout(advance, !correct ? 2200 : fast ? 550 : 1300)
@@ -295,7 +291,7 @@ export default function FactsClient({ deck, deckId, home }: {
           {feedback?.kind === 'slow'  && <span className="text-amber-300">✓ Right — {(feedback.ms / 1000).toFixed(1)}s. Under {target / 1000}s to master it.</span>}
           {feedback?.kind === 'wrong' && (
             <span className="text-rose-300">
-              {feedback.given === '-1' ? 'Here it is' : `Not ${feedback.given}`} — {card.full}. It&rsquo;ll come back at the end.
+              {feedback.given === '-1' ? 'Here it is' : `Not ${feedback.given}`} — {card.full}
             </span>
           )}
         </div>
