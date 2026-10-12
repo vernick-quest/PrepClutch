@@ -24,5 +24,10 @@ export default async function MathPlayPage({ searchParams }: Props) {
   if (deck.length === 0) redirect('/math')
 
   // A new deck is a new session: remount so "Play again" starts clean.
-  return <FactsClient key={deck.map(c => c.key).join()} deck={deck} />
+  // Round history label: the tab played, plus the table if it was just one.
+  const deckId = opts.topic === 'times'
+    ? `${opts.op === 'mixed' ? 'times' : opts.op}${opts.tables.length === 1 ? `:${opts.tables[0]}` : ''}`
+    : opts.topic
+
+  return <FactsClient key={deck.map(c => c.key).join()} deck={deck} deckId={deckId} />
 }

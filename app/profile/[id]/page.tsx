@@ -8,6 +8,9 @@ import AttemptReview from '@/components/quiz/AttemptReview'
 import { SECTION_MASTERY_CATEGORY, MATH_FACTS_CATEGORY, badgeEmojiStyle, sectionMasteryTier, compareBadges, isSectionComplete } from '@/lib/badges'
 import type { Section, QuizAnswer } from '@/types/database'
 import { loginUrl } from '@/lib/tracks'
+import FactGrid from '@/components/math/FactGrid'
+import MathRounds from '@/components/math/MathRounds'
+import { loadFactHistory, loadRounds, availableTopics } from '@/lib/math-history'
 
 export const dynamic = 'force-dynamic'
 
@@ -53,6 +56,12 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
     studentEmail = (directory ?? [])
       .find((d: { user_id: string }) => d.user_id === id)?.email ?? null
   }
+
+  // Admins also see this student's Math Facts progress (migration 068 lets
+  // an admin read it). Everyone else sees only the badges.
+  const math = viewerIsAdmin
+    ? await Promise.all([loadFactHistory(supabase, id), loadRounds(supabase, id), availableTopics(supabase)])
+    : null
 
   const { data: attempts } = await supabase
     .from('quiz_attempts')
@@ -229,6 +238,17 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
             )
           })}
         </div>
+
+        {/* Math Facts, admins only */}
+        {math && math[0].ready && (
+          <div className="space-y-4">
+            <h3 className="text-xl font-bold text-white">🧮 Math Facts</h3>
+            <div className="grid lg:grid-cols-2 gap-4">
+              <FactGrid history={Object.fromEntries(math[0].rows)} topics={math[2]} readOnly />
+              <MathRounds rounds={math[1]} title="📋 Their recent rounds" empty="No Math Facts rounds yet." />
+            </div>
+          </div>
+        )}
 
         {/* Recent attempts */}
         {attempts && attempts.length > 0 && (

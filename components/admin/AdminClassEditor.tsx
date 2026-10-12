@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { normalizeClassCode } from '@/lib/constants'
 
 interface ClassRow {
@@ -127,12 +128,16 @@ export default function AdminClassEditor({ classes, students }: Props) {
           {students.map(student => (
             <div key={student.id} className="bg-white/3 border border-white/5 rounded-xl p-3 flex items-center gap-3">
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium text-white truncate">{student.display_name}</div>
+                {/* Every student is reachable from here, not only those on a
+                    leaderboard. The profile shows admins their email and answers. */}
+                <Link href={`/profile/${student.id}`} className="block text-sm font-medium text-white hover:text-amber-400 truncate transition-colors">
+                  {student.display_name} <span className="text-zinc-600">→</span>
+                </Link>
                 {student.email && (
                   <div className="text-xs text-zinc-400 truncate font-mono">{student.email}</div>
                 )}
                 <div className="text-xs text-zinc-500">
-                  Class: <span className="font-mono text-zinc-400">{student.class_code}</span>
+                  Class: <span className="font-mono text-zinc-400">{student.class_code || 'none'}</span>
                 </div>
               </div>
               {editingStudent === student.id ? (

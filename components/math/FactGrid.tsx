@@ -29,9 +29,11 @@ const FDP_HEAD: Record<string, [string, string]> = {
   pd: ['%', '→ dec'], pf: ['%', '→ frac'], df: ['dec', '→ frac'],
 }
 
-export default function FactGrid({ history, topics = ['times', 'equiv', 'fdp'] }: {
+export default function FactGrid({ history, topics = ['times', 'equiv', 'fdp'], readOnly = false }: {
   history: Record<string, FactHistoryRow>
   topics?: Topic[]
+  /** Someone else's map (an admin viewing a student): no Play button. */
+  readOnly?: boolean
 }) {
   const [tab, setTab] = useState<MapTab>('mul')
   const st = (k: string) => cardState(history[k])
@@ -159,12 +161,12 @@ export default function FactGrid({ history, topics = ['times', 'equiv', 'fdp'] }
             <span className="font-bold text-white">{mastered}</span> of {states.length} mastered
           </p>
         </div>
-        <Link
+        {!readOnly && <Link
           href={deckHref({ ...BASE, ...current.deck })}
           className="shrink-0 flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-black font-bold px-5 py-3 rounded-xl transition-colors"
         >
           ▶ Play
-        </Link>
+        </Link>}
       </div>
 
       <div className="overflow-x-auto">{table}</div>

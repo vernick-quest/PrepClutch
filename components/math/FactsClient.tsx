@@ -16,7 +16,7 @@ import { SESSION_SIZE, parseFactKey, isCorrect, isFrac, isPct } from '@/lib/math
 import type { FactCard, Tok } from '@/lib/math-facts'
 
 interface Shown { card: FactCard; retry: boolean }
-interface Result { card: FactCard; correct: boolean; ms: number }
+interface Result { card: FactCard; correct: boolean; ms: number; given: string }
 interface Badge { key: string; label: string; icon_emoji: string; description: string }
 type Feedback = { kind: 'fast' | 'slow' | 'wrong'; ms: number; given: string } | null
 
@@ -24,7 +24,11 @@ type Feedback = { kind: 'fast' | 'slow' | 'wrong'; ms: number; given: string } |
 const MAX_CHARS = 6
 const SYMBOLS = new Set(['×', '÷', '='])
 
-export default function FactsClient({ deck }: { deck: FactCard[] }) {
+export default function FactsClient({ deck, deckId }: {
+  deck: FactCard[]
+  /** What was played, for round history: mul, div, equiv, fdp, or mul:7. */
+  deckId: string
+}) {
   const router = useRouter()
   const [queue, setQueue]       = useState<Shown[]>(() => deck.map(card => ({ card, retry: false })))
   const [idx, setIdx]           = useState(0)
@@ -74,7 +78,7 @@ export default function FactsClient({ deck }: { deck: FactCard[] }) {
     const fast = correct && ms <= current.card.targetMs
 
     if (!current.retry) {
-      setResults(r => [...r, { card: current.card, correct, ms }])
+      setResults(r => [...r, { card: current.card, correct, ms, given }])
       void save(current.card, correct, ms)
     }
     if (!correct && !current.retry) {
@@ -111,9 +115,10 @@ export default function FactsClient({ deck }: { deck: FactCard[] }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [press])
 
-  // Badges, once every answer has saved: they are computed in SQL from the
-  // saved history, so asking earlier would miss what the last card earned.
-  // Fails soft — before migration 063 the round still ends normally.
+  // Once every answer has saved: record the round for history, then badges.
+  // Badges are computed in SQL from the saved history, so asking earlier would
+  // miss what the last card earned. Both fail soft: the round itself is
+  // already saved card by card, and these only add history and badges.
   useEffect(() => {
     if (!done || pending > 0 || awarded.current) return
     awarded.current = true
@@ -121,6 +126,18 @@ export default function FactsClient({ deck }: { deck: FactCard[] }) {
       results.every(r => r.correct && r.ms <= r.card.targetMs)
     void (async () => {
       const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user && results.length > 0) {
+        await supabase.from('fact_rounds').insert({
+          user_id: user.id,
+          deck:    deckId,
+          cards:   results.length,
+          correct: results.filter(r => r.correct).length,
+          fast:    results.filter(r => r.correct && r.ms <= r.card.targetMs).length,
+          points:  newlyFluent.reduce((s, k) => s + (parseFactKey(k)?.points ?? 0), 0),
+          answers: results.map(r => ({ k: r.card.key, g: r.given, c: r.correct, ms: r.ms })),
+        })
+      }
       const { data: keys, error } = await supabase.rpc('award_fact_badges', { p_perfect_round: perfect })
       if (error || !Array.isArray(keys) || keys.length === 0) return
       const { data: defs } = await supabase
@@ -129,7 +146,7 @@ export default function FactsClient({ deck }: { deck: FactCard[] }) {
         .in('key', keys as string[])
       if (defs) setBadges(defs as Badge[])
     })()
-  }, [done, pending, results])
+  }, [done, pending, results, deckId, newlyFluent])
 
   // ── Summary ────────────────────────────────────────────────────────────────
   if (done) {

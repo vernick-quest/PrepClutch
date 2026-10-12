@@ -27,3 +27,27 @@ export async function loadFactHistory(supabase: any, userId: string):
     rows: new Map((data as FactHistoryRow[]).map(r => [r.fact_key, r])),
   }
 }
+
+export interface FactRound {
+  id:           string
+  deck:         string
+  cards:        number
+  correct:      number
+  fast:         number
+  points:       number
+  answers:      { k: string; g: string; c: boolean; ms: number }[]
+  completed_at: string
+}
+
+/** A student's most recent Math Facts rounds, newest first. Empty if
+ *  migration 068 is not applied yet, or the viewer may not see them. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function loadRounds(supabase: any, userId: string, limit = 10): Promise<FactRound[]> {
+  const { data, error } = await supabase
+    .from('fact_rounds')
+    .select('id, deck, cards, correct, fast, points, answers, completed_at')
+    .eq('user_id', userId)
+    .order('completed_at', { ascending: false })
+    .limit(limit)
+  return error ? [] : (data as FactRound[])
+}

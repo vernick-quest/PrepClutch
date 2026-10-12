@@ -3,7 +3,8 @@ import Image from 'next/image'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { MAX_FACT_POINTS, allCards } from '@/lib/math-facts'
-import { loadFactHistory, availableTopics } from '@/lib/math-history'
+import { loadFactHistory, availableTopics, loadRounds } from '@/lib/math-history'
+import MathRounds from '@/components/math/MathRounds'
 import TopBar from '@/components/ui/TopBar'
 import FactGrid from '@/components/math/FactGrid'
 import { MATH_FACTS_CATEGORY, compareBadges } from '@/lib/badges'
@@ -40,9 +41,12 @@ function Board({ title, rows, me }: { title: string; rows: LbRow[]; me: string }
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <p className={`font-semibold truncate ${isMe ? 'text-amber-400' : 'text-white'}`}>
+              <Link
+                href={isMe ? '/profile' : `/profile/${r.user_id}`}
+                className={`block font-semibold truncate transition-colors hover:text-amber-300 ${isMe ? 'text-amber-400' : 'text-white'}`}
+              >
                 {r.display_name}{isMe && <span className="text-xs text-amber-500/70"> (you)</span>}
-              </p>
+              </Link>
               <p className="text-[11px] text-zinc-500">× {r.mul_points} · ÷ {r.div_points} · {r.fluent} mastered</p>
             </div>
             <span className="text-lg font-black text-white tabular-nums">{r.points}</span>
@@ -80,6 +84,7 @@ export default async function MathHomePage() {
   }
 
   const topics = await availableTopics(supabase)
+  const rounds = await loadRounds(supabase, user.id)
   const hasClass = (profile.class_code ?? '').trim() !== ''
   const [{ data: global }, { data: klass }] = await Promise.all([
     supabase.from('math_leaderboard_view').select('*').gt('points', 0)
@@ -135,6 +140,7 @@ export default async function MathHomePage() {
         <div className="grid lg:grid-cols-2 gap-6">
           <div className="space-y-6 min-w-0">
             <FactGrid history={history} topics={topics} />
+            <MathRounds rounds={rounds} />
           </div>
           <div className="space-y-8 min-w-0">
             {hasClass && <Board title="🏆 Class" rows={(klass ?? []) as LbRow[]} me={user.id} />}
