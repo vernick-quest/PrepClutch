@@ -7,7 +7,7 @@ import Footer from '@/components/ui/Footer'
 import SignOutButton from '@/components/ui/SignOutButton'
 import ProfileActions from '@/components/profile/ProfileActions'
 import AttemptReview from '@/components/quiz/AttemptReview'
-import { isSectionComplete, compareBadges, MATH_FACTS_CATEGORY, MATH_FACTS_GROUPS, mathFactsGroup } from '@/lib/badges'
+import { isSectionComplete, compareBadges, MATH_FACTS_CATEGORY, MATH_FACTS_GROUPS, mathFactsGroup, GEOGRAPHY_CATEGORY, GEOGRAPHY_GROUPS, geographyGroup } from '@/lib/badges'
 import type { Section, QuizAnswer } from '@/types/database'
 import { loginUrl } from '@/lib/tracks'
 
@@ -61,6 +61,9 @@ export default async function ProfilePage() {
   type BadgeDef = { key: string; label: string; icon_emoji: string; description: string; rarity: string; category: string }
   const mathBadges = ((allAchievements ?? []) as BadgeDef[])
     .filter(b => b.category === MATH_FACTS_CATEGORY)
+    .sort(compareBadges)
+  const geoBadges = ((allAchievements ?? []) as BadgeDef[])
+    .filter(b => b.category === GEOGRAPHY_CATEGORY)
     .sort(compareBadges)
 
   const { data: masteryRaw } = await supabase
@@ -254,6 +257,54 @@ export default async function ProfilePage() {
                 </div>
               )
             })}
+            </div>
+          </div>
+        )}
+
+        {/* Geography badges, shown the same way. Empty (and hidden) until the
+            Geography migration is applied. */}
+        {geoBadges.length > 0 && (
+          <div className="bg-white/3 border border-white/10 rounded-2xl p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-white">🌍 Geography badges</h3>
+              <span className="text-sm text-zinc-400">
+                {geoBadges.filter(b => earnedKeys.has(b.key)).length} / {geoBadges.length}
+              </span>
+            </div>
+            <div className="space-y-5">
+              {GEOGRAPHY_GROUPS.map(group => {
+                const inGroup = geoBadges.filter(b => geographyGroup(b.key) === group)
+                if (inGroup.length === 0) return null
+                return (
+                  <div key={group}>
+                    <p className="text-xs font-bold uppercase tracking-wide text-zinc-400 mb-2">
+                      {group}
+                      <span className="ml-2 font-normal normal-case text-zinc-600">
+                        {inGroup.filter(b => earnedKeys.has(b.key)).length} / {inGroup.length}
+                      </span>
+                    </p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
+                      {inGroup.map(b => {
+                        const earned = earnedKeys.has(b.key)
+                        return (
+                          <div
+                            key={b.key}
+                            className={`rounded-xl border p-3 ${
+                              earned ? 'border-sky-500/30 bg-sky-500/5' : 'border-white/5 bg-white/2'
+                            }`}
+                          >
+                            <div className={`text-2xl mb-1 ${earned ? '' : 'grayscale opacity-30'}`}>{b.icon_emoji}</div>
+                            <div className={`text-sm font-bold leading-tight ${earned ? 'text-white' : 'text-zinc-500'}`}>{b.label}</div>
+                            <div className="text-[11px] text-zinc-500 leading-snug mt-0.5">
+                              {earned ? '✓ ' : '🔒 '}{b.description}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           </div>
         )}

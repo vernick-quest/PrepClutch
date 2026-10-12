@@ -1,0 +1,5954 @@
+{
+ "source": "Wikidata Query Service, https://query.wikidata.org (CC0 1.0)",
+ "fetched": "2026-10-12",
+ "rows": [
+  {
+   "iso": "AD",
+   "item": "Q228",
+   "label": "Andorra",
+   "iso3": [
+    "AND"
+   ],
+   "languages": [
+    "Catalan"
+   ],
+   "currencies": [],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Andorra la Vella",
+     "item": "Q1863",
+     "lat": 42.507222222,
+     "lon": 1.522222222,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "AE",
+   "item": "Q878",
+   "label": "United Arab Emirates",
+   "iso3": [
+    "ARE"
+   ],
+   "languages": [
+    "Arabic"
+   ],
+   "currencies": [
+    "United Arab Emirates dirham#AED"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Abu Dhabi",
+     "item": "Q1519",
+     "lat": 24.451111111,
+     "lon": 54.396944444,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "AF",
+   "item": "Q889",
+   "label": "Afghanistan",
+   "iso3": [
+    "AFG"
+   ],
+   "languages": [
+    "Arabic",
+    "Balochi",
+    "Dari",
+    "Nuristani",
+    "Pamir",
+    "Pashayi",
+    "Pashto",
+    "Turkmen",
+    "Uzbek"
+   ],
+   "currencies": [
+    "afghani#AFN"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Kabul",
+     "item": "Q5838",
+     "lat": 34.532777777,
+     "lon": 69.165833333,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "AG",
+   "item": "Q781",
+   "label": "Antigua and Barbuda",
+   "iso3": [
+    "ATG"
+   ],
+   "languages": [
+    "English",
+    "Spanish"
+   ],
+   "currencies": [
+    "Eastern Caribbean dollar#XCD"
+   ],
+   "continents": [
+    "North America"
+   ],
+   "capitals": [
+    {
+     "name": "St. John's",
+     "item": "Q36262",
+     "lat": 17.121111111,
+     "lon": -61.844722222,
+     "current": false,
+     "via": "pinned"
+    }
+   ]
+  },
+  {
+   "iso": "AL",
+   "item": "Q222",
+   "label": "Albania",
+   "iso3": [
+    "ALB"
+   ],
+   "languages": [
+    "Albanian"
+   ],
+   "currencies": [
+    "Albanian lek#ALL"
+   ],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Tirana",
+     "item": "Q19689",
+     "lat": 41.328333333,
+     "lon": 19.818055555,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "AM",
+   "item": "Q399",
+   "label": "Armenia",
+   "iso3": [
+    "ARM"
+   ],
+   "languages": [
+    "Armenian"
+   ],
+   "currencies": [
+    "Armenian dram#AMD"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Yerevan",
+     "item": "Q1953",
+     "lat": 40.181388888,
+     "lon": 44.514444444,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "AO",
+   "item": "Q916",
+   "label": "Angola",
+   "iso3": [
+    "AGO"
+   ],
+   "languages": [
+    "Portuguese"
+   ],
+   "currencies": [
+    "kwanza#AOA"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Luanda",
+     "item": "Q3897",
+     "lat": -8.838333333,
+     "lon": 13.234444444,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "AR",
+   "item": "Q414",
+   "label": "Argentina",
+   "iso3": [
+    "ARG"
+   ],
+   "languages": [
+    "Spanish"
+   ],
+   "currencies": [
+    "Argentine convertible peso#ARS"
+   ],
+   "continents": [
+    "South America"
+   ],
+   "capitals": [
+    {
+     "name": "Buenos Aires",
+     "item": "Q1486",
+     "lat": -34.599722222,
+     "lon": -58.381944444,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "AT",
+   "item": "Q40",
+   "label": "Austria",
+   "iso3": [
+    "AUT"
+   ],
+   "languages": [
+    "Austrian Sign Language",
+    "German"
+   ],
+   "currencies": [],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Vienna",
+     "item": "Q1741",
+     "lat": 48.208333333,
+     "lon": 16.3725,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "AU",
+   "item": "Q408",
+   "label": "Australia",
+   "iso3": [
+    "AUS"
+   ],
+   "languages": [
+    "Auslan",
+    "Australian English",
+    "English"
+   ],
+   "currencies": [
+    "Australian dollar#AUD"
+   ],
+   "continents": [
+    "Oceania"
+   ],
+   "capitals": [
+    {
+     "name": "Canberra",
+     "item": "Q3114",
+     "lat": -35.293055555,
+     "lon": 149.126944444,
+     "current": true,
+     "via": "P36"
+    },
+    {
+     "name": "Melbourne",
+     "item": "Q3141",
+     "lat": -37.814166666,
+     "lon": 144.963055555,
+     "current": false,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "AZ",
+   "item": "Q227",
+   "label": "Azerbaijan",
+   "iso3": [
+    "AZE"
+   ],
+   "languages": [
+    "Azerbaijani",
+    "Azerbaijani Sign Language"
+   ],
+   "currencies": [
+    "Azerbaijani manat#AZN"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Baku",
+     "item": "Q9248",
+     "lat": 40.366655555,
+     "lon": 49.835183333,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "BA",
+   "item": "Q225",
+   "label": "Bosnia and Herzegovina",
+   "iso3": [
+    "BIH"
+   ],
+   "languages": [
+    "Bosnian",
+    "Croatian",
+    "Serbian"
+   ],
+   "currencies": [
+    "convertible mark#BAM"
+   ],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Sarajevo",
+     "item": "Q11194",
+     "lat": 43.856388888,
+     "lon": 18.413055555,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "BB",
+   "item": "Q244",
+   "label": "Barbados",
+   "iso3": [
+    "BRB"
+   ],
+   "languages": [
+    "Bajan Creole",
+    "English"
+   ],
+   "currencies": [
+    "Barbadian dollar#BBD"
+   ],
+   "continents": [
+    "North America"
+   ],
+   "capitals": [
+    {
+     "name": "Bridgetown",
+     "item": "Q36168",
+     "lat": 13.0975,
+     "lon": -59.616666666,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "BD",
+   "item": "Q902",
+   "label": "Bangladesh",
+   "iso3": [
+    "BGD"
+   ],
+   "languages": [
+    "Bangla"
+   ],
+   "currencies": [
+    "Bangladeshi taka#BDT"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Dhaka",
+     "item": "Q1354",
+     "lat": 23.728888888,
+     "lon": 90.394444444,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "BE",
+   "item": "Q31",
+   "label": "Belgium",
+   "iso3": [
+    "BEL"
+   ],
+   "languages": [
+    "Dutch",
+    "French",
+    "German"
+   ],
+   "currencies": [],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Brussels",
+     "item": "Q239",
+     "lat": 50.846666666,
+     "lon": 4.351666666,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "BF",
+   "item": "Q965",
+   "label": "Burkina Faso",
+   "iso3": [
+    "BFA"
+   ],
+   "languages": [
+    "Bissa",
+    "Dioula",
+    "Mooré"
+   ],
+   "currencies": [
+    "West African CFA franc#XOF"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Ouagadougou",
+     "item": "Q3777",
+     "lat": 12.368611111,
+     "lon": -1.5275,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "BG",
+   "item": "Q219",
+   "label": "Bulgaria",
+   "iso3": [
+    "BGR"
+   ],
+   "languages": [
+    "Bulgarian"
+   ],
+   "currencies": [],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Sofia",
+     "item": "Q472",
+     "lat": 42.697886,
+     "lon": 23.321726,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "BH",
+   "item": "Q398",
+   "label": "Bahrain",
+   "iso3": [
+    "BHR"
+   ],
+   "languages": [
+    "Arabic"
+   ],
+   "currencies": [
+    "Bahraini dinar#BHD"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Manama",
+     "item": "Q3882",
+     "lat": 26.216666666,
+     "lon": 50.583333333,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "BI",
+   "item": "Q967",
+   "label": "Burundi",
+   "iso3": [
+    "BDI"
+   ],
+   "languages": [
+    "English",
+    "French",
+    "Kirundi"
+   ],
+   "currencies": [
+    "Burundian franc#BIF"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Gitega",
+     "item": "Q167551",
+     "lat": -3.428333333,
+     "lon": 29.925,
+     "current": true,
+     "via": "P36"
+    },
+    {
+     "name": "Bujumbura",
+     "item": "Q3854",
+     "lat": -3.3825,
+     "lon": 29.361111111,
+     "current": false,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "BJ",
+   "item": "Q962",
+   "label": "Benin",
+   "iso3": [
+    "BEN"
+   ],
+   "languages": [
+    "French"
+   ],
+   "currencies": [
+    "West African CFA franc#XOF"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Porto-Novo",
+     "item": "Q3799",
+     "lat": 6.483333333,
+     "lon": 2.616666666,
+     "current": true,
+     "via": "P36"
+    },
+    {
+     "name": "Cotonou",
+     "item": "Q43595",
+     "lat": 6.366666666,
+     "lon": 2.416666666,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "BN",
+   "item": "Q921",
+   "label": "Brunei",
+   "iso3": [
+    "BRN"
+   ],
+   "languages": [
+    "British English",
+    "Malay"
+   ],
+   "currencies": [
+    "Brunei dollar#BND"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Bandar Seri Begawan",
+     "item": "Q9279",
+     "lat": 4.916666666,
+     "lon": 114.916666666,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "BO",
+   "item": "Q750",
+   "label": "Bolivia",
+   "iso3": [
+    "BOL"
+   ],
+   "languages": [
+    "Aymara",
+    "Guarani",
+    "Quechua",
+    "Spanish"
+   ],
+   "currencies": [
+    "boliviano#BOB"
+   ],
+   "continents": [
+    "South America"
+   ],
+   "capitals": [
+    {
+     "name": "La Paz",
+     "item": "Q1491",
+     "lat": -16.495833333,
+     "lon": -68.133333333,
+     "current": true,
+     "via": "P36"
+    },
+    {
+     "name": "Sucre",
+     "item": "Q2907",
+     "lat": -19.0475,
+     "lon": -65.26,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "BR",
+   "item": "Q155",
+   "label": "Brazil",
+   "iso3": [
+    "BRA"
+   ],
+   "languages": [
+    "Brazilian Sign Language",
+    "Portuguese"
+   ],
+   "currencies": [
+    "Brazilian real#BRL"
+   ],
+   "continents": [
+    "South America"
+   ],
+   "capitals": [
+    {
+     "name": "Brasília",
+     "item": "Q2844",
+     "lat": -15.793888888,
+     "lon": -47.882777777,
+     "current": true,
+     "via": "P36"
+    },
+    {
+     "name": "Rio de Janeiro",
+     "item": "Q8678",
+     "lat": -22.911111111,
+     "lon": -43.205555555,
+     "current": false,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "BS",
+   "item": "Q778",
+   "label": "The Bahamas",
+   "iso3": [
+    "BHS"
+   ],
+   "languages": [
+    "English"
+   ],
+   "currencies": [
+    "Bahamian dollar#BSD"
+   ],
+   "continents": [
+    "North America"
+   ],
+   "capitals": [
+    {
+     "name": "Nassau",
+     "item": "Q2467",
+     "lat": 25.078055555,
+     "lon": -77.338611111,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "BT",
+   "item": "Q917",
+   "label": "Bhutan",
+   "iso3": [
+    "BTN"
+   ],
+   "languages": [
+    "Dzongkha"
+   ],
+   "currencies": [
+    "ngultrum#BTN"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Thimphu",
+     "item": "Q9270",
+     "lat": 27.47135,
+     "lon": 89.63367,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "BW",
+   "item": "Q963",
+   "label": "Botswana",
+   "iso3": [
+    "BWA"
+   ],
+   "languages": [
+    "English"
+   ],
+   "currencies": [
+    "Botswana pula#BWP"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Gaborone",
+     "item": "Q3919",
+     "lat": -24.656944444,
+     "lon": 25.908611111,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "BY",
+   "item": "Q184",
+   "label": "Belarus",
+   "iso3": [
+    "BLR"
+   ],
+   "languages": [
+    "Belarusian",
+    "Russian"
+   ],
+   "currencies": [
+    "Belarusian ruble#BYN"
+   ],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Minsk",
+     "item": "Q2280",
+     "lat": 53.902246,
+     "lon": 27.561837,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "BZ",
+   "item": "Q242",
+   "label": "Belize",
+   "iso3": [
+    "BLZ"
+   ],
+   "languages": [
+    "English"
+   ],
+   "currencies": [
+    "Belize dollar#BZD"
+   ],
+   "continents": [
+    "North America"
+   ],
+   "capitals": [
+    {
+     "name": "Belmopan",
+     "item": "Q3043",
+     "lat": 17.25,
+     "lon": -88.7675,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "CA",
+   "item": "Q16",
+   "label": "Canada",
+   "iso3": [
+    "CAN"
+   ],
+   "languages": [
+    "English",
+    "French"
+   ],
+   "currencies": [
+    "Canadian dollar#CAD"
+   ],
+   "continents": [
+    "North America"
+   ],
+   "capitals": [
+    {
+     "name": "Ottawa",
+     "item": "Q1930",
+     "lat": 45.424722222,
+     "lon": -75.695,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "CD",
+   "item": "Q974",
+   "label": "Democratic Republic of the Congo",
+   "iso3": [
+    "COD"
+   ],
+   "languages": [
+    "French"
+   ],
+   "currencies": [
+    "Congolese franc#CDF"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Kinshasa",
+     "item": "Q3838",
+     "lat": -4.321944444,
+     "lon": 15.311944444,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "CF",
+   "item": "Q929",
+   "label": "Central African Republic",
+   "iso3": [
+    "CAF"
+   ],
+   "languages": [
+    "French",
+    "Sango"
+   ],
+   "currencies": [
+    "Central African CFA franc#XAF"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Bangui",
+     "item": "Q3832",
+     "lat": 4.37325,
+     "lon": 18.562833333,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "CG",
+   "item": "Q971",
+   "label": "Republic of the Congo",
+   "iso3": [
+    "COG"
+   ],
+   "languages": [
+    "French"
+   ],
+   "currencies": [
+    "Central African CFA franc#XAF"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Brazzaville",
+     "item": "Q3844",
+     "lat": -4.269444444,
+     "lon": 15.271111111,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "CH",
+   "item": "Q39",
+   "label": "Switzerland",
+   "iso3": [
+    "CHE"
+   ],
+   "languages": [
+    "French",
+    "German",
+    "Italian",
+    "Romansh"
+   ],
+   "currencies": [
+    "Swiss franc#CHF"
+   ],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Bern",
+     "item": "Q70",
+     "lat": 46.94798,
+     "lon": 7.44743,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "CI",
+   "item": "Q1008",
+   "label": "Ivory Coast",
+   "iso3": [
+    "CIV"
+   ],
+   "languages": [
+    "French"
+   ],
+   "currencies": [
+    "West African CFA franc#XOF"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Abidjan",
+     "item": "Q1515",
+     "lat": 5.336388888,
+     "lon": -4.026666666,
+     "current": false,
+     "via": "P36"
+    },
+    {
+     "name": "Yamoussoukro",
+     "item": "Q3768",
+     "lat": 6.816111111,
+     "lon": -5.274166666,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "CL",
+   "item": "Q298",
+   "label": "Chile",
+   "iso3": [
+    "CHL"
+   ],
+   "languages": [
+    "Spanish"
+   ],
+   "currencies": [
+    "Chilean peso#CLP",
+    "Unidad de Fomento#CLF"
+   ],
+   "continents": [
+    "South America"
+   ],
+   "capitals": [
+    {
+     "name": "Santiago",
+     "item": "Q2887",
+     "lat": -33.4375,
+     "lon": -70.65,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "CM",
+   "item": "Q1009",
+   "label": "Cameroon",
+   "iso3": [
+    "CMR"
+   ],
+   "languages": [
+    "English",
+    "French"
+   ],
+   "currencies": [
+    "Central African CFA franc#XAF"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Yaoundé",
+     "item": "Q3808",
+     "lat": 3.857777777,
+     "lon": 11.518055555,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "CN",
+   "item": "Q148",
+   "label": "People's Republic of China",
+   "iso3": [
+    "CHN"
+   ],
+   "languages": [
+    "Chinese",
+    "Putonghua",
+    "Standard Chinese"
+   ],
+   "currencies": [
+    "renminbi#CNY"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Beijing",
+     "item": "Q956",
+     "lat": 39.90403,
+     "lon": 116.407526,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "CO",
+   "item": "Q739",
+   "label": "Colombia",
+   "iso3": [
+    "COL"
+   ],
+   "languages": [
+    "Spanish"
+   ],
+   "currencies": [
+    "Colombian peso#COP"
+   ],
+   "continents": [
+    "South America"
+   ],
+   "capitals": [
+    {
+     "name": "Bogotá",
+     "item": "Q2841",
+     "lat": 4.60971,
+     "lon": -74.08175,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "CR",
+   "item": "Q800",
+   "label": "Costa Rica",
+   "iso3": [
+    "CRI"
+   ],
+   "languages": [
+    "Spanish"
+   ],
+   "currencies": [
+    "Costa Rican colón#CRC"
+   ],
+   "continents": [
+    "North America"
+   ],
+   "capitals": [
+    {
+     "name": "San José",
+     "item": "Q3070",
+     "lat": 9.932738888,
+     "lon": -84.079613888,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "CU",
+   "item": "Q241",
+   "label": "Cuba",
+   "iso3": [
+    "CUB"
+   ],
+   "languages": [
+    "Spanish"
+   ],
+   "currencies": [
+    "Cuban peso#CUP"
+   ],
+   "continents": [
+    "North America"
+   ],
+   "capitals": [
+    {
+     "name": "Havana",
+     "item": "Q1563",
+     "lat": 23.136666666,
+     "lon": -82.358888888,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "CV",
+   "item": "Q1011",
+   "label": "Cape Verde",
+   "iso3": [
+    "CPV"
+   ],
+   "languages": [
+    "Cape Verdean Creole",
+    "Portuguese"
+   ],
+   "currencies": [
+    "Cape Verdean escudo#CVE"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Praia",
+     "item": "Q3751",
+     "lat": 14.917719444,
+     "lon": -23.509155555,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "CY",
+   "item": "Q229",
+   "label": "Cyprus",
+   "iso3": [
+    "CYP"
+   ],
+   "languages": [
+    "Modern Greek",
+    "Turkish"
+   ],
+   "currencies": [
+    "All-Russian Classifier of Currencies#"
+   ],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Nicosia",
+     "item": "Q3856",
+     "lat": 35.1725,
+     "lon": 33.365,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "CZ",
+   "item": "Q213",
+   "label": "Czech Republic",
+   "iso3": [
+    "CZE"
+   ],
+   "languages": [
+    "Czech"
+   ],
+   "currencies": [
+    "Czech koruna#203",
+    "Czech koruna#CZK"
+   ],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Prague",
+     "item": "Q1085",
+     "lat": 50.0875,
+     "lon": 14.421388888,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "DE",
+   "item": "Q183",
+   "label": "Germany",
+   "iso3": [
+    "DEU"
+   ],
+   "languages": [
+    "German"
+   ],
+   "currencies": [],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Bonn",
+     "item": "Q586",
+     "lat": 50.735277777,
+     "lon": 7.102222222,
+     "current": false,
+     "via": "P36"
+    },
+    {
+     "name": "Berlin",
+     "item": "Q64",
+     "lat": 52.516666666,
+     "lon": 13.383333333,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "DJ",
+   "item": "Q977",
+   "label": "Djibouti",
+   "iso3": [
+    "DJI"
+   ],
+   "languages": [
+    "Arabic",
+    "French"
+   ],
+   "currencies": [
+    "Djiboutian franc#DJF"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Djibouti",
+     "item": "Q3604",
+     "lat": 11.595,
+     "lon": 43.148055555,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "DK",
+   "item": "Q35",
+   "label": "Denmark",
+   "iso3": [
+    "DNK"
+   ],
+   "languages": [
+    "Danish"
+   ],
+   "currencies": [
+    "Danish krone#DKK"
+   ],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Copenhagen",
+     "item": "Q1748",
+     "lat": 55.676111111,
+     "lon": 12.568888888,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "DM",
+   "item": "Q784",
+   "label": "Dominica",
+   "iso3": [
+    "DMA"
+   ],
+   "languages": [
+    "English"
+   ],
+   "currencies": [
+    "Eastern Caribbean dollar#XCD"
+   ],
+   "continents": [
+    "North America"
+   ],
+   "capitals": [
+    {
+     "name": "Roseau",
+     "item": "Q36281",
+     "lat": 15.3,
+     "lon": -61.383333333,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "DO",
+   "item": "Q786",
+   "label": "Dominican Republic",
+   "iso3": [
+    "DOM"
+   ],
+   "languages": [
+    "Spanish"
+   ],
+   "currencies": [
+    "Dominican peso#DOP"
+   ],
+   "continents": [
+    "North America"
+   ],
+   "capitals": [
+    {
+     "name": "Santo Domingo",
+     "item": "Q34820",
+     "lat": 18.4625,
+     "lon": -69.936111111,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "DZ",
+   "item": "Q262",
+   "label": "Algeria",
+   "iso3": [
+    "DZA"
+   ],
+   "languages": [
+    "Arabic",
+    "Standard Algerian Berber"
+   ],
+   "currencies": [
+    "Algerian dinar#DZD"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Algiers",
+     "item": "Q3561",
+     "lat": 36.776388888,
+     "lon": 3.058611111,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "EC",
+   "item": "Q736",
+   "label": "Ecuador",
+   "iso3": [
+    "ECU"
+   ],
+   "languages": [
+    "Northern Quichua",
+    "Shuar",
+    "Spanish"
+   ],
+   "currencies": [
+    "United States dollar#USD"
+   ],
+   "continents": [
+    "South America"
+   ],
+   "capitals": [
+    {
+     "name": "Quito",
+     "item": "Q2900",
+     "lat": -0.22,
+     "lon": -78.5125,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "EE",
+   "item": "Q191",
+   "label": "Estonia",
+   "iso3": [
+    "EST"
+   ],
+   "languages": [
+    "Estonian"
+   ],
+   "currencies": [],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Tallinn",
+     "item": "Q1770",
+     "lat": 59.437222222,
+     "lon": 24.745,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "EG",
+   "item": "Q79",
+   "label": "Egypt",
+   "iso3": [
+    "EGY"
+   ],
+   "languages": [
+    "Arabic"
+   ],
+   "currencies": [
+    "Egyptian pound#EGP"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Thinis",
+     "item": "Q1153959",
+     "lat": 26.333333333,
+     "lon": 31.9,
+     "current": false,
+     "via": "P36"
+    },
+    {
+     "name": "Memphis",
+     "item": "Q5715",
+     "lat": 29.844667,
+     "lon": 31.250917,
+     "current": false,
+     "via": "P36"
+    },
+    {
+     "name": "Cairo",
+     "item": "Q85",
+     "lat": 30.044444444,
+     "lon": 31.235833333,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "ER",
+   "item": "Q986",
+   "label": "Eritrea",
+   "iso3": [
+    "ERI"
+   ],
+   "languages": [
+    "Arabic",
+    "English",
+    "Tigrinya"
+   ],
+   "currencies": [
+    "nakfa#ERN"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Asmara",
+     "item": "Q3642",
+     "lat": 15.333333333,
+     "lon": 38.916666666,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "ES",
+   "item": "Q29",
+   "label": "Spain",
+   "iso3": [
+    "ESP"
+   ],
+   "languages": [
+    "Basque",
+    "Catalan",
+    "Galician",
+    "Occitan",
+    "Spanish"
+   ],
+   "currencies": [],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Madrid city",
+     "item": "Q116170766",
+     "lat": 40.40841191,
+     "lon": -3.68760088,
+     "current": false,
+     "via": "P36"
+    },
+    {
+     "name": "Madrid",
+     "item": "Q2807",
+     "lat": 40.416944444,
+     "lon": -3.703333333,
+     "current": true,
+     "via": "P36"
+    },
+    {
+     "name": "Toledo city",
+     "item": "Q31844059",
+     "lat": 39.8565219,
+     "lon": -4.024974933,
+     "current": false,
+     "via": "P36"
+    },
+    {
+     "name": "Valladolid city",
+     "item": "Q31925679",
+     "lat": 41.6523,
+     "lon": -4.72854,
+     "current": false,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "ET",
+   "item": "Q115",
+   "label": "Ethiopia",
+   "iso3": [
+    "ETH"
+   ],
+   "languages": [
+    "Amharic"
+   ],
+   "currencies": [
+    "bir#ETB"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Addis Ababa",
+     "item": "Q3624",
+     "lat": 9.035833333,
+     "lon": 38.7525,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "FI",
+   "item": "Q33",
+   "label": "Finland",
+   "iso3": [
+    "FIN"
+   ],
+   "languages": [
+    "Finnish",
+    "Swedish"
+   ],
+   "currencies": [],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Helsinki",
+     "item": "Q1757",
+     "lat": 60.170833333,
+     "lon": 24.9375,
+     "current": true,
+     "via": "P36"
+    },
+    {
+     "name": "Turku",
+     "item": "Q38511",
+     "lat": 60.451666666,
+     "lon": 22.266944444,
+     "current": false,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "FJ",
+   "item": "Q712",
+   "label": "Fiji",
+   "iso3": [
+    "FJI"
+   ],
+   "languages": [
+    "English",
+    "Fiji Hindi",
+    "Fijian"
+   ],
+   "currencies": [
+    "Fijian dollar#FJD"
+   ],
+   "continents": [
+    "Insular Oceania"
+   ],
+   "capitals": [
+    {
+     "name": "Suva",
+     "item": "Q38807",
+     "lat": -18.133333333,
+     "lon": 178.433333333,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "FM",
+   "item": "Q702",
+   "label": "Federated States of Micronesia",
+   "iso3": [
+    "FSM"
+   ],
+   "languages": [
+    "English"
+   ],
+   "currencies": [
+    "United States dollar#USD"
+   ],
+   "continents": [
+    "Oceania"
+   ],
+   "capitals": [
+    {
+     "name": "Palikir",
+     "item": "Q42751",
+     "lat": 6.917777777,
+     "lon": 158.185,
+     "current": true,
+     "via": "P36"
+    },
+    {
+     "name": "Kolonia",
+     "item": "Q514165",
+     "lat": 6.963888888,
+     "lon": 158.208055555,
+     "current": false,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "FR",
+   "item": "Q142",
+   "label": "France",
+   "iso3": [
+    "FRA"
+   ],
+   "languages": [
+    "French"
+   ],
+   "currencies": [
+    "CFP Franc#XPF"
+   ],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Bordeaux",
+     "item": "Q1479",
+     "lat": 44.837777777,
+     "lon": -0.579444444,
+     "current": false,
+     "via": "P36"
+    },
+    {
+     "name": "Bayeux",
+     "item": "Q183910",
+     "lat": 49.278611111,
+     "lon": -0.703888888,
+     "current": false,
+     "via": "P36"
+    },
+    {
+     "name": "Tours",
+     "item": "Q288",
+     "lat": 47.392777777,
+     "lon": 0.688333333,
+     "current": false,
+     "via": "P36"
+    },
+    {
+     "name": "Algiers",
+     "item": "Q3561",
+     "lat": 36.776388888,
+     "lon": 3.058611111,
+     "current": false,
+     "via": "P36"
+    },
+    {
+     "name": "Brazzaville",
+     "item": "Q3844",
+     "lat": -4.269444444,
+     "lon": 15.271111111,
+     "current": false,
+     "via": "P36"
+    },
+    {
+     "name": "Versailles",
+     "item": "Q621",
+     "lat": 48.805,
+     "lon": 2.135,
+     "current": false,
+     "via": "P36"
+    },
+    {
+     "name": "London",
+     "item": "Q84",
+     "lat": 51.507222222,
+     "lon": -0.1275,
+     "current": false,
+     "via": "P36"
+    },
+    {
+     "name": "Paris",
+     "item": "Q90",
+     "lat": 48.856666666,
+     "lon": 2.352222222,
+     "current": true,
+     "via": "P36"
+    },
+    {
+     "name": "Vichy",
+     "item": "Q93351",
+     "lat": 46.126944444,
+     "lon": 3.425833333,
+     "current": false,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "GA",
+   "item": "Q1000",
+   "label": "Gabon",
+   "iso3": [
+    "GAB"
+   ],
+   "languages": [
+    "French"
+   ],
+   "currencies": [
+    "Central African CFA franc#XAF"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Libreville",
+     "item": "Q3825",
+     "lat": 0.407777777,
+     "lon": 9.440277777,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "GB",
+   "item": "Q145",
+   "label": "United Kingdom",
+   "iso3": [
+    "GBR"
+   ],
+   "languages": [
+    "British Sign Language",
+    "Cornish",
+    "English",
+    "Irish",
+    "Scots",
+    "Scottish Gaelic",
+    "Ulster Scots",
+    "Welsh"
+   ],
+   "currencies": [
+    "pound sterling#GBP"
+   ],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "London",
+     "item": "Q84",
+     "lat": 51.507222222,
+     "lon": -0.1275,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "GD",
+   "item": "Q769",
+   "label": "Grenada",
+   "iso3": [
+    "GRD"
+   ],
+   "languages": [
+    "English",
+    "Grenadian Creole English"
+   ],
+   "currencies": [
+    "Eastern Caribbean dollar#XCD"
+   ],
+   "continents": [
+    "North America"
+   ],
+   "capitals": [
+    {
+     "name": "St. George's",
+     "item": "Q41547",
+     "lat": 12.0525,
+     "lon": -61.753055555,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "GE",
+   "item": "Q230",
+   "label": "Georgia",
+   "iso3": [
+    "GEO"
+   ],
+   "languages": [
+    "Georgian"
+   ],
+   "currencies": [
+    "Georgian lari#GEL"
+   ],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Kutaisi",
+     "item": "Q172415",
+     "lat": 42.271666666,
+     "lon": 42.705555555,
+     "current": false,
+     "via": "P36"
+    },
+    {
+     "name": "Tbilisi",
+     "item": "Q994",
+     "lat": 41.7225,
+     "lon": 44.7925,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "GH",
+   "item": "Q117",
+   "label": "Ghana",
+   "iso3": [
+    "GHA"
+   ],
+   "languages": [
+    "English"
+   ],
+   "currencies": [
+    "Ghana Pesewa#",
+    "Ghana cedi#GHS"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Accra",
+     "item": "Q3761",
+     "lat": 5.55602,
+     "lon": -0.1969,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "GM",
+   "item": "Q1005",
+   "label": "The Gambia",
+   "iso3": [
+    "GMB"
+   ],
+   "languages": [
+    "English"
+   ],
+   "currencies": [
+    "dalasi#GMD"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Banjul",
+     "item": "Q3726",
+     "lat": 13.453055555,
+     "lon": -16.5775,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "GN",
+   "item": "Q1006",
+   "label": "Guinea",
+   "iso3": [
+    "GIN"
+   ],
+   "languages": [
+    "French",
+    "languages of Guinea"
+   ],
+   "currencies": [
+    "Guinean franc#GNF"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Conakry",
+     "item": "Q3733",
+     "lat": 9.509166666,
+     "lon": -13.712222222,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "GQ",
+   "item": "Q983",
+   "label": "Equatorial Guinea",
+   "iso3": [
+    "GNQ"
+   ],
+   "languages": [
+    "French",
+    "Portuguese",
+    "Spanish"
+   ],
+   "currencies": [
+    "Central African CFA franc#XAF"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Ciudad de la Paz",
+     "item": "Q1140136",
+     "lat": 1.591666666,
+     "lon": 10.822222222,
+     "current": true,
+     "via": "P36"
+    },
+    {
+     "name": "Malabo",
+     "item": "Q3818",
+     "lat": 3.752063888,
+     "lon": 8.7737,
+     "current": false,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "GR",
+   "item": "Q41",
+   "label": "Greece",
+   "iso3": [
+    "GRC"
+   ],
+   "languages": [
+    "Greek"
+   ],
+   "currencies": [],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Athens",
+     "item": "Q1524",
+     "lat": 37.984166666,
+     "lon": 23.728055555,
+     "current": true,
+     "via": "P36"
+    },
+    {
+     "name": "Nafplio",
+     "item": "Q202337",
+     "lat": 37.565833333,
+     "lon": 22.8,
+     "current": false,
+     "via": "P36"
+    },
+    {
+     "name": "Aegina",
+     "item": "Q3720429",
+     "lat": 37.74667,
+     "lon": 23.4275,
+     "current": false,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "GT",
+   "item": "Q774",
+   "label": "Guatemala",
+   "iso3": [
+    "GTM"
+   ],
+   "languages": [
+    "Spanish"
+   ],
+   "currencies": [
+    "quetzal#GTQ"
+   ],
+   "continents": [
+    "North America"
+   ],
+   "capitals": [
+    {
+     "name": "Guatemala City",
+     "item": "Q1555",
+     "lat": 14.641666666,
+     "lon": -90.513333333,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "GW",
+   "item": "Q1007",
+   "label": "Guinea-Bissau",
+   "iso3": [
+    "GNB"
+   ],
+   "languages": [
+    "Portuguese"
+   ],
+   "currencies": [
+    "West African CFA franc#XOF"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Bissau",
+     "item": "Q3739",
+     "lat": 11.86,
+     "lon": -15.583333333,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "GY",
+   "item": "Q734",
+   "label": "Guyana",
+   "iso3": [
+    "GUY"
+   ],
+   "languages": [
+    "English"
+   ],
+   "currencies": [
+    "Guyanese dollar#GYD"
+   ],
+   "continents": [
+    "South America"
+   ],
+   "capitals": [
+    {
+     "name": "Georgetown",
+     "item": "Q10717",
+     "lat": 6.805833333,
+     "lon": -58.150833333,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "HN",
+   "item": "Q783",
+   "label": "Honduras",
+   "iso3": [
+    "HND"
+   ],
+   "languages": [
+    "Spanish"
+   ],
+   "currencies": [
+    "Honduran lempira#HNL"
+   ],
+   "continents": [
+    "North America"
+   ],
+   "capitals": [
+    {
+     "name": "Tegucigalpa",
+     "item": "Q3238",
+     "lat": 14.105783333,
+     "lon": -87.204705555,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "HR",
+   "item": "Q224",
+   "label": "Croatia",
+   "iso3": [
+    "HRV"
+   ],
+   "languages": [
+    "Croatian"
+   ],
+   "currencies": [],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Zagreb",
+     "item": "Q1435",
+     "lat": 45.813055555,
+     "lon": 15.977222222,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "HT",
+   "item": "Q790",
+   "label": "Haiti",
+   "iso3": [
+    "HTI"
+   ],
+   "languages": [
+    "French",
+    "Haitian Creole"
+   ],
+   "currencies": [
+    "gourde#HTG"
+   ],
+   "continents": [
+    "North America"
+   ],
+   "capitals": [
+    {
+     "name": "Port-au-Prince",
+     "item": "Q34261",
+     "lat": 18.546944444,
+     "lon": -72.340277777,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "HU",
+   "item": "Q28",
+   "label": "Hungary",
+   "iso3": [
+    "HUN"
+   ],
+   "languages": [
+    "Hungarian"
+   ],
+   "currencies": [
+    "forint#HUF"
+   ],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Budapest",
+     "item": "Q1781",
+     "lat": 47.498333333,
+     "lon": 19.040833333,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "ID",
+   "item": "Q252",
+   "label": "Indonesia",
+   "iso3": [
+    "IDN"
+   ],
+   "languages": [
+    "Indonesian"
+   ],
+   "currencies": [
+    "rupiah#IDR"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Nusantara",
+     "item": "Q110601629",
+     "lat": -0.972972222,
+     "lon": 116.708833333,
+     "current": false,
+     "via": "P36"
+    },
+    {
+     "name": "Jakarta",
+     "item": "Q3630",
+     "lat": -6.175277777,
+     "lon": 106.826944444,
+     "current": true,
+     "via": "P36"
+    },
+    {
+     "name": "Bukittinggi",
+     "item": "Q7248",
+     "lat": -0.309722222,
+     "lon": 100.375277777,
+     "current": false,
+     "via": "P36"
+    },
+    {
+     "name": "Yogyakarta",
+     "item": "Q7568",
+     "lat": -7.800456766,
+     "lon": 110.391280229,
+     "current": false,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "IE",
+   "item": "Q27",
+   "label": "Ireland",
+   "iso3": [
+    "IRL"
+   ],
+   "languages": [
+    "English",
+    "Irish"
+   ],
+   "currencies": [
+    "Irish euro coin#"
+   ],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Dublin",
+     "item": "Q1761",
+     "lat": 53.349722222,
+     "lon": -6.260277777,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "IL",
+   "item": "Q801",
+   "label": "Israel",
+   "iso3": [
+    "ISR"
+   ],
+   "languages": [
+    "Hebrew"
+   ],
+   "currencies": [
+    "new shekel#ILS"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Jerusalem",
+     "item": "Q1218",
+     "lat": 31.776679,
+     "lon": 35.234156,
+     "current": true,
+     "via": "P36"
+    },
+    {
+     "name": "Tel Aviv",
+     "item": "Q33935",
+     "lat": 32.08,
+     "lon": 34.78,
+     "current": false,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "IN",
+   "item": "Q668",
+   "label": "India",
+   "iso3": [
+    "IND"
+   ],
+   "languages": [
+    "English",
+    "Hindi"
+   ],
+   "currencies": [
+    "Indian rupee#INR"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "New Delhi",
+     "item": "Q987",
+     "lat": 28.613888888,
+     "lon": 77.208888888,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "IQ",
+   "item": "Q796",
+   "label": "Iraq",
+   "iso3": [
+    "IRQ"
+   ],
+   "languages": [
+    "Arabic",
+    "Kurdish language"
+   ],
+   "currencies": [
+    "Iraqi dinar#IQD"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Baghdad",
+     "item": "Q1530",
+     "lat": 33.315277777,
+     "lon": 44.366111111,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "IR",
+   "item": "Q794",
+   "label": "Iran",
+   "iso3": [
+    "IRN"
+   ],
+   "languages": [
+    "Persian"
+   ],
+   "currencies": [
+    "Iranian rial#IRR"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Tehran",
+     "item": "Q3616",
+     "lat": 35.688888888,
+     "lon": 51.389722222,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "IS",
+   "item": "Q189",
+   "label": "Iceland",
+   "iso3": [
+    "ISL"
+   ],
+   "languages": [
+    "Icelandic"
+   ],
+   "currencies": [
+    "Icelandic króna#ISK"
+   ],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Reykjavík",
+     "item": "Q1764",
+     "lat": 64.1475,
+     "lon": -21.935,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "IT",
+   "item": "Q38",
+   "label": "Italy",
+   "iso3": [
+    "ITA"
+   ],
+   "languages": [
+    "Italian"
+   ],
+   "currencies": [],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Florence",
+     "item": "Q2044",
+     "lat": 43.771388888,
+     "lon": 11.254166666,
+     "current": false,
+     "via": "P36"
+    },
+    {
+     "name": "Rome",
+     "item": "Q220",
+     "lat": 41.893055555,
+     "lon": 12.482777777,
+     "current": true,
+     "via": "P36"
+    },
+    {
+     "name": "Turin",
+     "item": "Q495",
+     "lat": 45.079166666,
+     "lon": 7.676111111,
+     "current": false,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "JM",
+   "item": "Q766",
+   "label": "Jamaica",
+   "iso3": [
+    "JAM"
+   ],
+   "languages": [
+    "English",
+    "Jamaican Patois"
+   ],
+   "currencies": [
+    "Jamaican dollar#JMD"
+   ],
+   "continents": [
+    "North America"
+   ],
+   "capitals": [
+    {
+     "name": "Kingston",
+     "item": "Q34692",
+     "lat": 17.971388888,
+     "lon": -76.793055555,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "JO",
+   "item": "Q810",
+   "label": "Jordan",
+   "iso3": [
+    "JOR"
+   ],
+   "languages": [
+    "Arabic"
+   ],
+   "currencies": [
+    "Jordanian dinar#JOD"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Amman",
+     "item": "Q3805",
+     "lat": 31.930983,
+     "lon": 35.926084,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "JP",
+   "item": "Q17",
+   "label": "Japan",
+   "iso3": [
+    "JPN"
+   ],
+   "languages": [
+    "Japanese"
+   ],
+   "currencies": [
+    "yen#JPY"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Nagaoka-kyō",
+     "item": "Q1052803",
+     "lat": 34.943204,
+     "lon": 135.703232,
+     "current": false,
+     "via": "P36"
+    },
+    {
+     "name": "Tokyo Prefecture",
+     "item": "Q1189121",
+     "lat": 35.68,
+     "lon": 139.77,
+     "current": false,
+     "via": "P36"
+    },
+    {
+     "name": "Tokyo City",
+     "item": "Q1207735",
+     "lat": 35.67666667,
+     "lon": 139.76472222,
+     "current": false,
+     "via": "P36"
+    },
+    {
+     "name": "Tokyo",
+     "item": "Q1490",
+     "lat": 35.689444444,
+     "lon": 139.691666666,
+     "current": true,
+     "via": "P36"
+    },
+    {
+     "name": "Edo",
+     "item": "Q215646",
+     "lat": 35.683888888,
+     "lon": 139.774444444,
+     "current": false,
+     "via": "P36"
+    },
+    {
+     "name": "Shigaraki Palace",
+     "item": "Q262438",
+     "lat": 34.934722222,
+     "lon": 136.084444444,
+     "current": false,
+     "via": "P36"
+    },
+    {
+     "name": "Fukuhara-kyō",
+     "item": "Q6031707",
+     "lat": 34.68527778,
+     "lon": 135.16833333,
+     "current": false,
+     "via": "P36"
+    },
+    {
+     "name": "Heian-kyō",
+     "item": "Q751907",
+     "lat": 35,
+     "lon": 135.76666667,
+     "current": false,
+     "via": "P36"
+    },
+    {
+     "name": "Heijō-kyō",
+     "item": "Q862509",
+     "lat": 34.69111111,
+     "lon": 135.79472222,
+     "current": false,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "KE",
+   "item": "Q114",
+   "label": "Kenya",
+   "iso3": [
+    "KEN"
+   ],
+   "languages": [
+    "English",
+    "Swahili"
+   ],
+   "currencies": [
+    "Kenyan shilling#KES"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Nairobi",
+     "item": "Q3870",
+     "lat": -1.286388888,
+     "lon": 36.817222222,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "KG",
+   "item": "Q813",
+   "label": "Kyrgyzstan",
+   "iso3": [
+    "KGZ"
+   ],
+   "languages": [
+    "Kyrgyz",
+    "Russian"
+   ],
+   "currencies": [
+    "Kyrgyz som#KGS"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Bishkek",
+     "item": "Q9361",
+     "lat": 42.866666666,
+     "lon": 74.566666666,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "KH",
+   "item": "Q424",
+   "label": "Cambodia",
+   "iso3": [
+    "KHM"
+   ],
+   "languages": [
+    "Khmer"
+   ],
+   "currencies": [
+    "riel#KHR"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Phnom Penh",
+     "item": "Q1850",
+     "lat": 11.569583333,
+     "lon": 104.921027777,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "KI",
+   "item": "Q710",
+   "label": "Kiribati",
+   "iso3": [
+    "KIR"
+   ],
+   "languages": [
+    "English",
+    "Gilbertese"
+   ],
+   "currencies": [
+    "Australian dollar#AUD",
+    "Kiribati dollar#"
+   ],
+   "continents": [
+    "Insular Oceania",
+    "Oceania"
+   ],
+   "capitals": [
+    {
+     "name": "South Tarawa",
+     "item": "Q131233",
+     "lat": 1.333333333,
+     "lon": 172.966666666,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "KM",
+   "item": "Q970",
+   "label": "Comoros",
+   "iso3": [
+    "COM"
+   ],
+   "languages": [
+    "Arabic",
+    "Comorian",
+    "French"
+   ],
+   "currencies": [
+    "Comorian franc#KMF"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Moroni",
+     "item": "Q3901",
+     "lat": -11.703611111,
+     "lon": 43.253611111,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "KN",
+   "item": "Q763",
+   "label": "Saint Kitts and Nevis",
+   "iso3": [
+    "KNA"
+   ],
+   "languages": [
+    "English"
+   ],
+   "currencies": [
+    "Eastern Caribbean dollar#XCD"
+   ],
+   "continents": [
+    "North America"
+   ],
+   "capitals": [
+    {
+     "name": "Basseterre",
+     "item": "Q41295",
+     "lat": 17.298333333,
+     "lon": -62.734166666,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "KP",
+   "item": "Q423",
+   "label": "North Korea",
+   "iso3": [
+    "PRK"
+   ],
+   "languages": [
+    "Korean",
+    "North Korean standard language"
+   ],
+   "currencies": [
+    "North Korean won#KPW"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Pyongyang",
+     "item": "Q18808",
+     "lat": 39.016666666,
+     "lon": 125.7475,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "KR",
+   "item": "Q884",
+   "label": "South Korea",
+   "iso3": [
+    "KOR"
+   ],
+   "languages": [
+    "Korean",
+    "Korean Sign Language"
+   ],
+   "currencies": [
+    "won#KRW"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Seoul",
+     "item": "Q8684",
+     "lat": 37.56,
+     "lon": 126.99,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "KW",
+   "item": "Q817",
+   "label": "Kuwait",
+   "iso3": [
+    "KWT"
+   ],
+   "languages": [
+    "Arabic"
+   ],
+   "currencies": [
+    "Kuwaiti dinar#KWD"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Kuwait City",
+     "item": "Q35178",
+     "lat": 29.375,
+     "lon": 47.98,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "KZ",
+   "item": "Q232",
+   "label": "Kazakhstan",
+   "iso3": [
+    "KAZ"
+   ],
+   "languages": [
+    "Kazakh",
+    "Russian"
+   ],
+   "currencies": [
+    "Kazakhstani tenge#KZT"
+   ],
+   "continents": [
+    "Asia",
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Astana",
+     "item": "Q1520",
+     "lat": 51.133333333,
+     "lon": 71.433333333,
+     "current": true,
+     "via": "P36"
+    },
+    {
+     "name": "Almaty",
+     "item": "Q35493",
+     "lat": 43.24,
+     "lon": 76.915,
+     "current": false,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "LA",
+   "item": "Q819",
+   "label": "Laos",
+   "iso3": [
+    "LAO"
+   ],
+   "languages": [
+    "Lao"
+   ],
+   "currencies": [
+    "Lao kip#LAK"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Vientiane",
+     "item": "Q9326",
+     "lat": 17.98,
+     "lon": 102.63,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "LB",
+   "item": "Q822",
+   "label": "Lebanon",
+   "iso3": [
+    "LBN"
+   ],
+   "languages": [
+    "Arabic"
+   ],
+   "currencies": [
+    "Lebanese pound#LBP"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Beirut",
+     "item": "Q3820",
+     "lat": 33.886944444,
+     "lon": 35.513055555,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "LC",
+   "item": "Q760",
+   "label": "Saint Lucia",
+   "iso3": [
+    "LCA"
+   ],
+   "languages": [
+    "English"
+   ],
+   "currencies": [
+    "Eastern Caribbean dollar#XCD"
+   ],
+   "continents": [
+    "North America"
+   ],
+   "capitals": [
+    {
+     "name": "Castries",
+     "item": "Q41699",
+     "lat": 14.010833333,
+     "lon": -60.989444444,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "LI",
+   "item": "Q347",
+   "label": "Liechtenstein",
+   "iso3": [
+    "LIE"
+   ],
+   "languages": [
+    "German"
+   ],
+   "currencies": [
+    "Swiss franc#CHF"
+   ],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Vaduz",
+     "item": "Q1844",
+     "lat": 47.140555555,
+     "lon": 9.522222222,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "LK",
+   "item": "Q854",
+   "label": "Sri Lanka",
+   "iso3": [
+    "LKA"
+   ],
+   "languages": [
+    "Sinhala",
+    "Tamil"
+   ],
+   "currencies": [
+    "Sri Lankan rupee#LKR"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Colombo",
+     "item": "Q35381",
+     "lat": 6.926666666,
+     "lon": 79.860555555,
+     "current": true,
+     "via": "P36"
+    },
+    {
+     "name": "Sri Jayawardenepura Kotte",
+     "item": "Q41963",
+     "lat": 6.9,
+     "lon": 79.916388888,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "LR",
+   "item": "Q1014",
+   "label": "Liberia",
+   "iso3": [
+    "LBR"
+   ],
+   "languages": [
+    "English"
+   ],
+   "currencies": [
+    "Liberian dollar#LRD",
+    "United States dollar#USD"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Monrovia",
+     "item": "Q3748",
+     "lat": 6.310555555,
+     "lon": -10.804722222,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "LS",
+   "item": "Q1013",
+   "label": "Lesotho",
+   "iso3": [
+    "LSO"
+   ],
+   "languages": [
+    "English",
+    "Sesotho"
+   ],
+   "currencies": [
+    "loti#LSL",
+    "rand#ZAR"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Maseru",
+     "item": "Q3909",
+     "lat": -29.31,
+     "lon": 27.48,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "LT",
+   "item": "Q37",
+   "label": "Lithuania",
+   "iso3": [
+    "LTU"
+   ],
+   "languages": [
+    "Lithuanian"
+   ],
+   "currencies": [
+    "Lithuanian talonas#LTT"
+   ],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Vilnius",
+     "item": "Q216",
+     "lat": 54.687222222,
+     "lon": 25.28,
+     "current": true,
+     "via": "P36"
+    },
+    {
+     "name": "Kaunas",
+     "item": "Q4115712",
+     "lat": 54.9,
+     "lon": 23.933333333,
+     "current": false,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "LU",
+   "item": "Q32",
+   "label": "Luxembourg",
+   "iso3": [
+    "LUX"
+   ],
+   "languages": [
+    "French",
+    "German",
+    "Luxembourgish"
+   ],
+   "currencies": [],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Luxembourg",
+     "item": "Q1842",
+     "lat": 49.611388888,
+     "lon": 6.13,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "LV",
+   "item": "Q211",
+   "label": "Latvia",
+   "iso3": [
+    "LVA"
+   ],
+   "languages": [
+    "Latvian"
+   ],
+   "currencies": [],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Riga",
+     "item": "Q1773",
+     "lat": 56.9475,
+     "lon": 24.106944444,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "LY",
+   "item": "Q1016",
+   "label": "Libya",
+   "iso3": [
+    "LBY"
+   ],
+   "languages": [
+    "Arabic",
+    "Modern Standard Arabic"
+   ],
+   "currencies": [
+    "Libyan dinar#LYD"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Tripoli",
+     "item": "Q3579",
+     "lat": 32.8875,
+     "lon": 13.1875,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "MA",
+   "item": "Q1028",
+   "label": "Morocco",
+   "iso3": [
+    "MAR"
+   ],
+   "languages": [
+    "Arabic",
+    "Standard Moroccan Tamazight"
+   ],
+   "currencies": [
+    "Moroccan dirham#MAD"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Rabat",
+     "item": "Q3551",
+     "lat": 34.021111111,
+     "lon": -6.841388888,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "MC",
+   "item": "Q235",
+   "label": "Monaco",
+   "iso3": [
+    "MCO"
+   ],
+   "languages": [
+    "French"
+   ],
+   "currencies": [],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Monaco",
+     "item": "Q235",
+     "lat": 43.731111111,
+     "lon": 7.42,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "MD",
+   "item": "Q217",
+   "label": "Moldova",
+   "iso3": [
+    "MDA"
+   ],
+   "languages": [
+    "Romanian"
+   ],
+   "currencies": [
+    "Moldovan leu#MDL"
+   ],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Chișinău",
+     "item": "Q21197",
+     "lat": 47.022777777,
+     "lon": 28.835277777,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "ME",
+   "item": "Q236",
+   "label": "Montenegro",
+   "iso3": [
+    "MNE"
+   ],
+   "languages": [
+    "Albanian",
+    "Bosnian",
+    "Croatian",
+    "Montenegrin",
+    "Serbian"
+   ],
+   "currencies": [],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Podgorica",
+     "item": "Q23564",
+     "lat": 42.441388888,
+     "lon": 19.262777777,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "MG",
+   "item": "Q1019",
+   "label": "Madagascar",
+   "iso3": [
+    "MDG"
+   ],
+   "languages": [
+    "French",
+    "Malagasy"
+   ],
+   "currencies": [
+    "ariary#MGA"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Antananarivo",
+     "item": "Q3915",
+     "lat": -18.91,
+     "lon": 47.525,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "MH",
+   "item": "Q709",
+   "label": "Marshall Islands",
+   "iso3": [
+    "MHL"
+   ],
+   "languages": [
+    "English",
+    "Marshallese"
+   ],
+   "currencies": [
+    "SOV#",
+    "United States dollar#USD"
+   ],
+   "continents": [
+    "Oceania"
+   ],
+   "capitals": [
+    {
+     "name": "Majuro",
+     "item": "Q12919",
+     "lat": 7.0918,
+     "lon": 171.3802,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "MK",
+   "item": "Q221",
+   "label": "North Macedonia",
+   "iso3": [
+    "MKD"
+   ],
+   "languages": [
+    "Albanian",
+    "Macedonian"
+   ],
+   "currencies": [
+    "Macedonian denar#MKD"
+   ],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Skopje",
+     "item": "Q384",
+     "lat": 41.996111111,
+     "lon": 21.431666666,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "ML",
+   "item": "Q912",
+   "label": "Mali",
+   "iso3": [
+    "MLI"
+   ],
+   "languages": [
+    "Bambara",
+    "Bobo",
+    "Bozo",
+    "Dogon",
+    "Fula",
+    "Hassaniya Arabic",
+    "Kassonke",
+    "Maninka",
+    "Minyanka",
+    "Senufo",
+    "Songhay",
+    "Soninke",
+    "Tamasheq"
+   ],
+   "currencies": [
+    "West African CFA franc#XOF"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Bamako",
+     "item": "Q3703",
+     "lat": 12.645833333,
+     "lon": -7.992222222,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "MM",
+   "item": "Q836",
+   "label": "Myanmar",
+   "iso3": [
+    "MMR"
+   ],
+   "languages": [
+    "Burmese"
+   ],
+   "currencies": [
+    "kyat#MMK"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Naypyidaw",
+     "item": "Q37400",
+     "lat": 19.7475,
+     "lon": 96.115,
+     "current": true,
+     "via": "P36"
+    },
+    {
+     "name": "Yangon",
+     "item": "Q37995",
+     "lat": 16.795,
+     "lon": 96.16,
+     "current": false,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "MN",
+   "item": "Q711",
+   "label": "Mongolia",
+   "iso3": [
+    "MNG"
+   ],
+   "languages": [
+    "Mongolian"
+   ],
+   "currencies": [
+    "Mongolian tögrög#MNT"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Ulaanbaatar",
+     "item": "Q23430",
+     "lat": 47.921357,
+     "lon": 106.905515,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "MR",
+   "item": "Q1025",
+   "label": "Mauritania",
+   "iso3": [
+    "MRT"
+   ],
+   "languages": [
+    "Arabic",
+    "French"
+   ],
+   "currencies": [
+    "Mauritanian ouguiya#MRU"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Nouakchott",
+     "item": "Q3688",
+     "lat": 18.08581,
+     "lon": -15.9785,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "MT",
+   "item": "Q233",
+   "label": "Malta",
+   "iso3": [
+    "MLT"
+   ],
+   "languages": [
+    "English",
+    "Maltese"
+   ],
+   "currencies": [],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Valletta",
+     "item": "Q23800",
+     "lat": 35.897777777,
+     "lon": 14.5125,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "MU",
+   "item": "Q1027",
+   "label": "Mauritius",
+   "iso3": [
+    "MUS"
+   ],
+   "languages": [
+    "English",
+    "French"
+   ],
+   "currencies": [
+    "Mauritian rupee#MUR"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Port Louis",
+     "item": "Q3929",
+     "lat": -20.161944444,
+     "lon": 57.498888888,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "MV",
+   "item": "Q826",
+   "label": "Maldives",
+   "iso3": [
+    "MDV"
+   ],
+   "languages": [
+    "Maldivian"
+   ],
+   "currencies": [
+    "Maldivian rufiyaa#MVR"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Malé",
+     "item": "Q9347",
+     "lat": 4.175,
+     "lon": 73.508333333,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "MW",
+   "item": "Q1020",
+   "label": "Malawi",
+   "iso3": [
+    "MWI"
+   ],
+   "languages": [
+    "Chewa",
+    "English",
+    "Tumbuka"
+   ],
+   "currencies": [
+    "Malawian kwacha#MWK"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Zomba",
+     "item": "Q219117",
+     "lat": -15.385957,
+     "lon": 35.318801,
+     "current": false,
+     "via": "P36"
+    },
+    {
+     "name": "Lilongwe",
+     "item": "Q3876",
+     "lat": -13.986388888,
+     "lon": 33.768055555,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "MX",
+   "item": "Q96",
+   "label": "Mexico",
+   "iso3": [
+    "MEX"
+   ],
+   "languages": [
+    "Nahuatl",
+    "Spanish",
+    "Yucatec Maya"
+   ],
+   "currencies": [
+    "peso#MXN"
+   ],
+   "continents": [
+    "North America"
+   ],
+   "capitals": [
+    {
+     "name": "Mexico City",
+     "item": "Q1489",
+     "lat": 19.353773,
+     "lon": -99.13589,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "MY",
+   "item": "Q833",
+   "label": "Malaysia",
+   "iso3": [
+    "MYS"
+   ],
+   "languages": [
+    "Malay"
+   ],
+   "currencies": [
+    "Malaysian ringgit#MYR"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Putrajaya",
+     "item": "Q182378",
+     "lat": 2.93,
+     "lon": 101.69,
+     "current": true,
+     "via": "P36"
+    },
+    {
+     "name": "Kuala Lumpur",
+     "item": "Q1865",
+     "lat": 3.147777777,
+     "lon": 101.695277777,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "MZ",
+   "item": "Q1029",
+   "label": "Mozambique",
+   "iso3": [
+    "MOZ"
+   ],
+   "languages": [
+    "Portuguese"
+   ],
+   "currencies": [
+    "Mozambican metical#MZN"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Maputo",
+     "item": "Q3889",
+     "lat": -25.968888888,
+     "lon": 32.573333333,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "NA",
+   "item": "Q1030",
+   "label": "Namibia",
+   "iso3": [
+    "NAM"
+   ],
+   "languages": [
+    "English"
+   ],
+   "currencies": [
+    "Namibian dollar#NAD",
+    "rand#ZAR"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Windhoek",
+     "item": "Q3935",
+     "lat": -22.57,
+     "lon": 17.083611111,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "NE",
+   "item": "Q1032",
+   "label": "Niger",
+   "iso3": [
+    "NER"
+   ],
+   "languages": [
+    "Hausa"
+   ],
+   "currencies": [
+    "West African CFA franc#XOF"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Niamey",
+     "item": "Q3674",
+     "lat": 13.515,
+     "lon": 2.1175,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "NG",
+   "item": "Q1033",
+   "label": "Nigeria",
+   "iso3": [
+    "NGA"
+   ],
+   "languages": [
+    "English"
+   ],
+   "currencies": [
+    "naira#NGN"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Abuja",
+     "item": "Q3787",
+     "lat": 9.055555555,
+     "lon": 7.491388888,
+     "current": true,
+     "via": "P36"
+    },
+    {
+     "name": "Lagos",
+     "item": "Q8673",
+     "lat": 6.456111111,
+     "lon": 3.393611111,
+     "current": false,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "NI",
+   "item": "Q811",
+   "label": "Nicaragua",
+   "iso3": [
+    "NIC"
+   ],
+   "languages": [
+    "Spanish"
+   ],
+   "currencies": [
+    "Nicaraguan córdoba#NIO"
+   ],
+   "continents": [
+    "North America"
+   ],
+   "capitals": [
+    {
+     "name": "Managua",
+     "item": "Q131546626",
+     "lat": 12.154680555,
+     "lon": -86.273725,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "NL",
+   "item": "Q29999",
+   "label": "Kingdom of the Netherlands",
+   "iso3": [
+    "NLD"
+   ],
+   "languages": [
+    "Dutch"
+   ],
+   "currencies": [
+    "Aruban florin#AWG",
+    "Caribbean guilder#XCG",
+    "United States dollar#USD"
+   ],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "The Hague",
+     "item": "Q36600",
+     "lat": 52.08,
+     "lon": 4.31,
+     "current": false,
+     "via": "P36"
+    },
+    {
+     "name": "Amsterdam",
+     "item": "Q727",
+     "lat": 52.366666666,
+     "lon": 4.883333333,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "NO",
+   "item": "Q20",
+   "label": "Norway",
+   "iso3": [
+    "NOR"
+   ],
+   "languages": [
+    "Bokmål",
+    "Norwegian",
+    "Nynorsk",
+    "Sámi"
+   ],
+   "currencies": [
+    "Norwegian krone#NOK"
+   ],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Oslo",
+     "item": "Q585",
+     "lat": 59.913333333,
+     "lon": 10.738888888,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "NP",
+   "item": "Q837",
+   "label": "Nepal",
+   "iso3": [
+    "NPL"
+   ],
+   "languages": [
+    "Nepali"
+   ],
+   "currencies": [
+    "Nepalese rupee#NPR"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Kathmandu",
+     "item": "Q3037",
+     "lat": 27.71,
+     "lon": 85.32,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "NR",
+   "item": "Q697",
+   "label": "Nauru",
+   "iso3": [
+    "NRU"
+   ],
+   "languages": [
+    "English",
+    "Nauruan"
+   ],
+   "currencies": [
+    "Australian dollar#AUD"
+   ],
+   "continents": [
+    "Oceania"
+   ],
+   "capitals": [
+    {
+     "name": "Yaren District",
+     "item": "Q31026",
+     "lat": -0.5477,
+     "lon": 166.920867,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "NZ",
+   "item": "Q664",
+   "label": "New Zealand",
+   "iso3": [
+    "NZL"
+   ],
+   "languages": [
+    "English",
+    "Māori",
+    "New Zealand Sign Language"
+   ],
+   "currencies": [
+    "New Zealand dollar#NZD"
+   ],
+   "continents": [
+    "Oceania"
+   ],
+   "capitals": [
+    {
+     "name": "Wellington",
+     "item": "Q23661",
+     "lat": -41.288888888,
+     "lon": 174.777222222,
+     "current": true,
+     "via": "P36"
+    },
+    {
+     "name": "Auckland",
+     "item": "Q37100",
+     "lat": -36.849166666,
+     "lon": 174.765277777,
+     "current": false,
+     "via": "P36"
+    },
+    {
+     "name": "Okiato",
+     "item": "Q7081990",
+     "lat": -35.304,
+     "lon": 174.122,
+     "current": false,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "OM",
+   "item": "Q842",
+   "label": "Oman",
+   "iso3": [
+    "OMN"
+   ],
+   "languages": [
+    "Arabic"
+   ],
+   "currencies": [
+    "Omani rial#OMR"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Muscat",
+     "item": "Q3826",
+     "lat": 23.613888888,
+     "lon": 58.592222222,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "PA",
+   "item": "Q804",
+   "label": "Panama",
+   "iso3": [
+    "PAN"
+   ],
+   "languages": [
+    "Spanish"
+   ],
+   "currencies": [
+    "Panamanian balboa#PAB",
+    "United States dollar#USD"
+   ],
+   "continents": [
+    "North America"
+   ],
+   "capitals": [
+    {
+     "name": "Panama City",
+     "item": "Q3306",
+     "lat": 8.971111111,
+     "lon": -79.534722222,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "PE",
+   "item": "Q419",
+   "label": "Peru",
+   "iso3": [
+    "PER"
+   ],
+   "languages": [
+    "Aymara",
+    "Quechua",
+    "Spanish"
+   ],
+   "currencies": [
+    "Nuevo sol#PEN"
+   ],
+   "continents": [
+    "South America"
+   ],
+   "capitals": [
+    {
+     "name": "Lima",
+     "item": "Q2868",
+     "lat": -12.06,
+     "lon": -77.0375,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "PG",
+   "item": "Q691",
+   "label": "Papua New Guinea",
+   "iso3": [
+    "PNG"
+   ],
+   "languages": [
+    "English",
+    "Hiri Motu",
+    "Papua New Guinean Sign Language",
+    "Tok Pisin"
+   ],
+   "currencies": [
+    "kina#PGK"
+   ],
+   "continents": [
+    "Oceania"
+   ],
+   "capitals": [
+    {
+     "name": "Port Moresby",
+     "item": "Q36526",
+     "lat": -9.478888888,
+     "lon": 147.149444444,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "PH",
+   "item": "Q928",
+   "label": "Philippines",
+   "iso3": [
+    "PHL"
+   ],
+   "languages": [
+    "English",
+    "Filipino",
+    "Taglish"
+   ],
+   "currencies": [
+    "Philippine peso#PHP"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Manila",
+     "item": "Q1461",
+     "lat": 14.595833333,
+     "lon": 120.977222222,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "PK",
+   "item": "Q843",
+   "label": "Pakistan",
+   "iso3": [
+    "PAK"
+   ],
+   "languages": [
+    "English",
+    "Urdu"
+   ],
+   "currencies": [
+    "Pakistani rupee#PKR"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Islamabad",
+     "item": "Q1362",
+     "lat": 33.698888888,
+     "lon": 73.036944444,
+     "current": true,
+     "via": "P36"
+    },
+    {
+     "name": "Rawalpindi",
+     "item": "Q93230",
+     "lat": 33.6007,
+     "lon": 73.0679,
+     "current": false,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "PL",
+   "item": "Q36",
+   "label": "Poland",
+   "iso3": [
+    "POL"
+   ],
+   "languages": [
+    "Belarusian",
+    "Kashubian",
+    "Polish",
+    "Silesian"
+   ],
+   "currencies": [
+    "złoty#PLN",
+    "złoty#PLZ"
+   ],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Warsaw",
+     "item": "Q270",
+     "lat": 52.23,
+     "lon": 21.011111111,
+     "current": true,
+     "via": "P36"
+    },
+    {
+     "name": "Kraków",
+     "item": "Q31487",
+     "lat": 50.061388888,
+     "lon": 19.937222222,
+     "current": false,
+     "via": "P36"
+    },
+    {
+     "name": "Gniezno",
+     "item": "Q51432",
+     "lat": 52.533333333,
+     "lon": 17.6,
+     "current": false,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "PT",
+   "item": "Q45",
+   "label": "Portugal",
+   "iso3": [
+    "PRT"
+   ],
+   "languages": [
+    "Portuguese"
+   ],
+   "currencies": [],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Coimbra",
+     "item": "Q45412",
+     "lat": 40.211111111,
+     "lon": -8.428888888,
+     "current": false,
+     "via": "P36"
+    },
+    {
+     "name": "Lisbon",
+     "item": "Q597",
+     "lat": 38.708042,
+     "lon": -9.139016,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "PW",
+   "item": "Q695",
+   "label": "Palau",
+   "iso3": [
+    "PLW"
+   ],
+   "languages": [
+    "English",
+    "Japanese",
+    "Palauan"
+   ],
+   "currencies": [
+    "United States dollar#USD"
+   ],
+   "continents": [
+    "Insular Oceania",
+    "Oceania"
+   ],
+   "capitals": [
+    {
+     "name": "Ngerulmud",
+     "item": "Q515229",
+     "lat": 7.500556,
+     "lon": 134.624167,
+     "current": true,
+     "via": "P36"
+    },
+    {
+     "name": "Koror",
+     "item": "Q527748",
+     "lat": 7.34333,
+     "lon": 134.48042,
+     "current": false,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "PY",
+   "item": "Q733",
+   "label": "Paraguay",
+   "iso3": [
+    "PRY"
+   ],
+   "languages": [
+    "Guarani",
+    "Spanish"
+   ],
+   "currencies": [
+    "Paraguayan guaraní#PYG"
+   ],
+   "continents": [
+    "South America"
+   ],
+   "capitals": [
+    {
+     "name": "Asunción",
+     "item": "Q2933",
+     "lat": -25.28,
+     "lon": -57.634444444,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "QA",
+   "item": "Q846",
+   "label": "Qatar",
+   "iso3": [
+    "QAT"
+   ],
+   "languages": [
+    "Arabic"
+   ],
+   "currencies": [
+    "Qatari riyal#QAR"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Doha",
+     "item": "Q3861",
+     "lat": 25.286111111,
+     "lon": 51.529444444,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "RO",
+   "item": "Q218",
+   "label": "Romania",
+   "iso3": [
+    "ROU"
+   ],
+   "languages": [
+    "Romanian"
+   ],
+   "currencies": [
+    "Romanian leu#RON"
+   ],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Bucharest",
+     "item": "Q19660",
+     "lat": 44.413361111,
+     "lon": 26.097777777,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "RS",
+   "item": "Q403",
+   "label": "Serbia",
+   "iso3": [
+    "SRB"
+   ],
+   "languages": [
+    "Serbian"
+   ],
+   "currencies": [
+    "Serbian dinar#RSD"
+   ],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Belgrade",
+     "item": "Q3711",
+     "lat": 44.817777777,
+     "lon": 20.456944444,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "RU",
+   "item": "Q159",
+   "label": "Russia",
+   "iso3": [
+    "RUS"
+   ],
+   "languages": [
+    "Abaza",
+    "Adyghe",
+    "Aghul",
+    "Avar",
+    "Azerbaijani",
+    "Bashkir",
+    "Buryat",
+    "Chechen",
+    "Chuvash",
+    "Crimean Tatar",
+    "Dargwa",
+    "Erzya",
+    "Ingush",
+    "Kabardian",
+    "Kalmyk",
+    "Karachay-Balkar",
+    "Khakas",
+    "Komi",
+    "Kumyk",
+    "Lak",
+    "Lezgian",
+    "Mari",
+    "Moksha",
+    "Nogai",
+    "Ossetian",
+    "Russian",
+    "Rutulian",
+    "Southern Altai",
+    "Tabasaran",
+    "Tat",
+    "Tatar",
+    "Tsakhur",
+    "Tuvan",
+    "Udmurt",
+    "Ukrainian",
+    "Yakut"
+   ],
+   "currencies": [
+    "Russian ruble#RUB"
+   ],
+   "continents": [
+    "Asia",
+    "Eurasia",
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Moscow",
+     "item": "Q649",
+     "lat": 55.750555555,
+     "lon": 37.6175,
+     "current": true,
+     "via": "P36"
+    },
+    {
+     "name": "Saint Petersburg",
+     "item": "Q656",
+     "lat": 59.95,
+     "lon": 30.316666666,
+     "current": false,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "RW",
+   "item": "Q1037",
+   "label": "Rwanda",
+   "iso3": [
+    "RWA"
+   ],
+   "languages": [
+    "English",
+    "French",
+    "Kinyarwanda",
+    "Swahili"
+   ],
+   "currencies": [
+    "Rwandan franc#RWF"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Kigali",
+     "item": "Q3859",
+     "lat": -1.9525,
+     "lon": 30.115,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "SA",
+   "item": "Q851",
+   "label": "Saudi Arabia",
+   "iso3": [
+    "SAU"
+   ],
+   "languages": [
+    "Arabic"
+   ],
+   "currencies": [
+    "Saudi riyal#SAR"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Diriyah",
+     "item": "Q277505",
+     "lat": 24.733333333,
+     "lon": 46.575555555,
+     "current": false,
+     "via": "P36"
+    },
+    {
+     "name": "Riyadh",
+     "item": "Q3692",
+     "lat": 24.65,
+     "lon": 46.71,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "SB",
+   "item": "Q685",
+   "label": "Solomon Islands",
+   "iso3": [
+    "SLB"
+   ],
+   "languages": [
+    "English"
+   ],
+   "currencies": [
+    "Solomon Islands dollar#SBD"
+   ],
+   "continents": [
+    "Insular Oceania",
+    "Oceania"
+   ],
+   "capitals": [
+    {
+     "name": "Honiara",
+     "item": "Q40921",
+     "lat": -9.433333,
+     "lon": 159.95,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "SC",
+   "item": "Q1042",
+   "label": "Seychelles",
+   "iso3": [
+    "SYC"
+   ],
+   "languages": [
+    "English",
+    "French",
+    "Seychellois Creole"
+   ],
+   "currencies": [
+    "Seychellois rupee#SCR"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Victoria",
+     "item": "Q3940",
+     "lat": -4.623611111,
+     "lon": 55.454444444,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "SD",
+   "item": "Q1049",
+   "label": "Sudan",
+   "iso3": [
+    "SDN"
+   ],
+   "languages": [
+    "Arabic",
+    "English"
+   ],
+   "currencies": [
+    "Sudanese pound#SDG"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Khartoum",
+     "item": "Q1963",
+     "lat": 15.60308,
+     "lon": 32.52654,
+     "current": true,
+     "via": "P36"
+    },
+    {
+     "name": "Port Sudan",
+     "item": "Q208718",
+     "lat": 19.615833333,
+     "lon": 37.216388888,
+     "current": false,
+     "via": "label"
+    }
+   ]
+  },
+  {
+   "iso": "SE",
+   "item": "Q34",
+   "label": "Sweden",
+   "iso3": [
+    "SWE"
+   ],
+   "languages": [
+    "Finnish",
+    "Meänkieli",
+    "Romani",
+    "Swedish",
+    "Sámi",
+    "Yiddish"
+   ],
+   "currencies": [
+    "Swedish krona#SEK"
+   ],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Stockholm",
+     "item": "Q1754",
+     "lat": 59.329444444,
+     "lon": 18.068611111,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "SG",
+   "item": "Q334",
+   "label": "Singapore",
+   "iso3": [
+    "SGP"
+   ],
+   "languages": [
+    "English",
+    "Malay",
+    "Standard Chinese",
+    "Tamil"
+   ],
+   "currencies": [
+    "Singapore dollar#SGD"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Singapore",
+     "item": "Q334",
+     "lat": 1.3,
+     "lon": 103.8,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "SI",
+   "item": "Q215",
+   "label": "Slovenia",
+   "iso3": [
+    "SVN"
+   ],
+   "languages": [
+    "Hungarian",
+    "Italian",
+    "Slovene"
+   ],
+   "currencies": [],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Ljubljana",
+     "item": "Q437",
+     "lat": 46.051388888,
+     "lon": 14.506111111,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "SK",
+   "item": "Q214",
+   "label": "Slovakia",
+   "iso3": [
+    "SVK"
+   ],
+   "languages": [
+    "Slovak"
+   ],
+   "currencies": [],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Bratislava",
+     "item": "Q1780",
+     "lat": 48.1516988,
+     "lon": 17.1093063,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "SL",
+   "item": "Q1044",
+   "label": "Sierra Leone",
+   "iso3": [
+    "SLE"
+   ],
+   "languages": [
+    "English",
+    "Krio"
+   ],
+   "currencies": [
+    "leone#SLE"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Freetown",
+     "item": "Q3780",
+     "lat": 8.487222222,
+     "lon": -13.235555555,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "SM",
+   "item": "Q238",
+   "label": "San Marino",
+   "iso3": [
+    "SMR"
+   ],
+   "languages": [
+    "Italian"
+   ],
+   "currencies": [],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "San Marino",
+     "item": "Q1848",
+     "lat": 43.932011111,
+     "lon": 12.44845,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "SN",
+   "item": "Q1041",
+   "label": "Senegal",
+   "iso3": [
+    "SEN"
+   ],
+   "languages": [
+    "Badyara",
+    "Balanta",
+    "French",
+    "Wolof"
+   ],
+   "currencies": [
+    "West African CFA franc#XOF"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Dakar",
+     "item": "Q3718",
+     "lat": 14.672555555,
+     "lon": -17.432,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "SO",
+   "item": "Q1045",
+   "label": "Somalia",
+   "iso3": [
+    "SOM"
+   ],
+   "languages": [
+    "Arabic",
+    "Somali"
+   ],
+   "currencies": [
+    "Somali shilling#SOS"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Mogadishu",
+     "item": "Q2449",
+     "lat": 2.039166666,
+     "lon": 45.341944444,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "SR",
+   "item": "Q730",
+   "label": "Suriname",
+   "iso3": [
+    "SUR"
+   ],
+   "languages": [
+    "Dutch"
+   ],
+   "currencies": [
+    "Surinamese dollar#SRD"
+   ],
+   "continents": [
+    "South America"
+   ],
+   "capitals": [
+    {
+     "name": "Paramaribo",
+     "item": "Q3001",
+     "lat": 5.866666666,
+     "lon": -55.166666666,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "SS",
+   "item": "Q958",
+   "label": "South Sudan",
+   "iso3": [
+    "SSD"
+   ],
+   "languages": [
+    "English"
+   ],
+   "currencies": [
+    "South Sudanese pound#SSP"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Juba",
+     "item": "Q1947",
+     "lat": 4.853888888,
+     "lon": 31.5825,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "ST",
+   "item": "Q1039",
+   "label": "São Tomé and Príncipe",
+   "iso3": [
+    "STP"
+   ],
+   "languages": [
+    "Portuguese"
+   ],
+   "currencies": [
+    "São Tomé and Príncipe dobra#STN"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "São Tomé",
+     "item": "Q3932",
+     "lat": 0.3375,
+     "lon": 6.728333333,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "SV",
+   "item": "Q792",
+   "label": "El Salvador",
+   "iso3": [
+    "SLV"
+   ],
+   "languages": [
+    "Spanish"
+   ],
+   "currencies": [
+    "Bitcoin#",
+    "United States dollar#USD"
+   ],
+   "continents": [
+    "North America"
+   ],
+   "capitals": [
+    {
+     "name": "San Salvador",
+     "item": "Q3110",
+     "lat": 13.697597222,
+     "lon": -89.191155555,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "SY",
+   "item": "Q858",
+   "label": "Syria",
+   "iso3": [
+    "SYR"
+   ],
+   "languages": [
+    "Arabic"
+   ],
+   "currencies": [
+    "Syrian pound#SYP"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Damascus",
+     "item": "Q3766",
+     "lat": 33.513,
+     "lon": 36.292,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "SZ",
+   "item": "Q1050",
+   "label": "Eswatini",
+   "iso3": [
+    "SWZ"
+   ],
+   "languages": [
+    "English",
+    "Swazi"
+   ],
+   "currencies": [
+    "lilangeni#SZL"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Lobamba",
+     "item": "Q101418",
+     "lat": -26.44648,
+     "lon": 31.206411,
+     "current": true,
+     "via": "P36"
+    },
+    {
+     "name": "Mbabane",
+     "item": "Q3904",
+     "lat": -26.316666666,
+     "lon": 31.133333333,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "TD",
+   "item": "Q657",
+   "label": "Chad",
+   "iso3": [
+    "TCD"
+   ],
+   "languages": [
+    "Arabic",
+    "French"
+   ],
+   "currencies": [
+    "Central African CFA franc#XAF"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "N'Djamena",
+     "item": "Q3659",
+     "lat": 12.11,
+     "lon": 15.05,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "TG",
+   "item": "Q945",
+   "label": "Togo",
+   "iso3": [
+    "TGO"
+   ],
+   "languages": [
+    "French"
+   ],
+   "currencies": [
+    "West African CFA franc#XOF"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Lomé",
+     "item": "Q3792",
+     "lat": 6.13,
+     "lon": 1.215833333,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "TH",
+   "item": "Q869",
+   "label": "Thailand",
+   "iso3": [
+    "THA"
+   ],
+   "languages": [
+    "Thai"
+   ],
+   "currencies": [
+    "baht#THB"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Bangkok",
+     "item": "Q1861",
+     "lat": 13.75,
+     "lon": 100.516666666,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "TJ",
+   "item": "Q863",
+   "label": "Tajikistan",
+   "iso3": [
+    "TJK"
+   ],
+   "languages": [
+    "Russian",
+    "Tajik"
+   ],
+   "currencies": [
+    "Tajikistani somoni#TJS"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Dushanbe",
+     "item": "Q9365",
+     "lat": 38.573055555,
+     "lon": 68.786388888,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "TL",
+   "item": "Q574",
+   "label": "Timor-Leste",
+   "iso3": [
+    "TLS"
+   ],
+   "languages": [
+    "Portuguese",
+    "Tetum"
+   ],
+   "currencies": [
+    "East Timor centavo coins#",
+    "United States dollar#USD"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Dili",
+     "item": "Q9310",
+     "lat": -8.553611111,
+     "lon": 125.578333333,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "TM",
+   "item": "Q874",
+   "label": "Turkmenistan",
+   "iso3": [
+    "TKM"
+   ],
+   "languages": [
+    "Turkmen"
+   ],
+   "currencies": [
+    "Turkmenistan new manat#TMT"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Ashgabat",
+     "item": "Q23438",
+     "lat": 37.95,
+     "lon": 58.383333333,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "TN",
+   "item": "Q948",
+   "label": "Tunisia",
+   "iso3": [
+    "TUN"
+   ],
+   "languages": [
+    "Arabic"
+   ],
+   "currencies": [
+    "Tunisian dinar#TND"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Tunis",
+     "item": "Q3572",
+     "lat": 36.800833333,
+     "lon": 10.18,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "TO",
+   "item": "Q678",
+   "label": "Tonga",
+   "iso3": [
+    "TON"
+   ],
+   "languages": [
+    "English",
+    "Tongan"
+   ],
+   "currencies": [
+    "Tongan paʻanga#TOP"
+   ],
+   "continents": [
+    "Oceania"
+   ],
+   "capitals": [
+    {
+     "name": "Nukuʻalofa",
+     "item": "Q38834",
+     "lat": -21.1343401,
+     "lon": -175.201808,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "TR",
+   "item": "Q43",
+   "label": "Turkey",
+   "iso3": [
+    "TUR"
+   ],
+   "languages": [
+    "Turkish"
+   ],
+   "currencies": [
+    "Turkish lira#TRY"
+   ],
+   "continents": [
+    "Asia",
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Ankara",
+     "item": "Q3640",
+     "lat": 39.93576,
+     "lon": 32.83869,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "TT",
+   "item": "Q754",
+   "label": "Trinidad and Tobago",
+   "iso3": [
+    "TTO"
+   ],
+   "languages": [
+    "English"
+   ],
+   "currencies": [
+    "Trinidad and Tobago dollar#TTD"
+   ],
+   "continents": [
+    "North America"
+   ],
+   "capitals": [
+    {
+     "name": "Port of Spain",
+     "item": "Q39178",
+     "lat": 10.666666666,
+     "lon": -61.516666666,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "TV",
+   "item": "Q672",
+   "label": "Tuvalu",
+   "iso3": [
+    "TUV"
+   ],
+   "languages": [
+    "English",
+    "Tuvaluan"
+   ],
+   "currencies": [
+    "Australian dollar#AUD",
+    "Tuvaluan dollar#"
+   ],
+   "continents": [
+    "Insular Oceania",
+    "Oceania"
+   ],
+   "capitals": [
+    {
+     "name": "Funafuti",
+     "item": "Q34126",
+     "lat": -8.504777777,
+     "lon": 179.117361111,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "TZ",
+   "item": "Q924",
+   "label": "Tanzania",
+   "iso3": [
+    "TZA"
+   ],
+   "languages": [
+    "English",
+    "Swahili"
+   ],
+   "currencies": [
+    "Tanzanian shilling#TZS"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Dar es Salaam",
+     "item": "Q1960",
+     "lat": -6.816111111,
+     "lon": 39.280277777,
+     "current": false,
+     "via": "P36"
+    },
+    {
+     "name": "Dodoma",
+     "item": "Q3866",
+     "lat": -6.1835,
+     "lon": 35.746,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "UA",
+   "item": "Q212",
+   "label": "Ukraine",
+   "iso3": [
+    "UKR"
+   ],
+   "languages": [
+    "Ukrainian"
+   ],
+   "currencies": [
+    "hryvnia#UAH"
+   ],
+   "continents": [
+    "Europe"
+   ],
+   "capitals": [
+    {
+     "name": "Kyiv",
+     "item": "Q1899",
+     "lat": 50.45,
+     "lon": 30.523611111,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "UG",
+   "item": "Q1036",
+   "label": "Uganda",
+   "iso3": [
+    "UGA"
+   ],
+   "languages": [
+    "English",
+    "Swahili"
+   ],
+   "currencies": [
+    "Ugandan shilling#UGX"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Kampala",
+     "item": "Q3894",
+     "lat": 0.313611111,
+     "lon": 32.581111111,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "US",
+   "item": "Q30",
+   "label": "United States",
+   "iso3": [
+    "USA"
+   ],
+   "languages": [
+    "Carolinian",
+    "Chamorro",
+    "Hawaiian",
+    "Samoan",
+    "Spanish"
+   ],
+   "currencies": [
+    "United States dollar#USD"
+   ],
+   "continents": [
+    "North America"
+   ],
+   "capitals": [
+    {
+     "name": "Philadelphia",
+     "item": "Q1345",
+     "lat": 39.952777777,
+     "lon": -75.163611111,
+     "current": false,
+     "via": "P36"
+    },
+    {
+     "name": "New York City",
+     "item": "Q60",
+     "lat": 40.712777777,
+     "lon": -74.006111111,
+     "current": false,
+     "via": "P36"
+    },
+    {
+     "name": "Washington, D.C.",
+     "item": "Q61",
+     "lat": 38.895,
+     "lon": -77.036666666,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "UY",
+   "item": "Q77",
+   "label": "Uruguay",
+   "iso3": [
+    "URY"
+   ],
+   "languages": [],
+   "currencies": [
+    "Uruguayan peso#UYU"
+   ],
+   "continents": [
+    "South America"
+   ],
+   "capitals": [
+    {
+     "name": "Montevideo",
+     "item": "Q1335",
+     "lat": -34.905916666,
+     "lon": -56.191311111,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "UZ",
+   "item": "Q265",
+   "label": "Uzbekistan",
+   "iso3": [
+    "UZB"
+   ],
+   "languages": [
+    "Uzbek"
+   ],
+   "currencies": [
+    "Uzbek som#UZS"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Tashkent",
+     "item": "Q269",
+     "lat": 41.311111111,
+     "lon": 69.279722222,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "VC",
+   "item": "Q757",
+   "label": "Saint Vincent and the Grenadines",
+   "iso3": [
+    "VCT"
+   ],
+   "languages": [
+    "English"
+   ],
+   "currencies": [
+    "Eastern Caribbean dollar#XCD"
+   ],
+   "continents": [
+    "North America"
+   ],
+   "capitals": [
+    {
+     "name": "Kingstown",
+     "item": "Q41474",
+     "lat": 13.15527,
+     "lon": -61.22742,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "VE",
+   "item": "Q717",
+   "label": "Venezuela",
+   "iso3": [
+    "VEN"
+   ],
+   "languages": [
+    "Spanish",
+    "Venezuelan Sign Language"
+   ],
+   "currencies": [
+    "sovereign bolivar#VES"
+   ],
+   "continents": [
+    "South America"
+   ],
+   "capitals": [
+    {
+     "name": "Caracas",
+     "item": "Q1533",
+     "lat": 10.506111111,
+     "lon": -66.914444444,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "VN",
+   "item": "Q881",
+   "label": "Vietnam",
+   "iso3": [
+    "VNM"
+   ],
+   "languages": [
+    "Vietnamese"
+   ],
+   "currencies": [
+    "Vietnamese đồng#VND"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Hanoi",
+     "item": "Q1858",
+     "lat": 21.0245,
+     "lon": 105.84117,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "VU",
+   "item": "Q686",
+   "label": "Vanuatu",
+   "iso3": [
+    "VUT"
+   ],
+   "languages": [
+    "Bislama",
+    "English",
+    "French"
+   ],
+   "currencies": [
+    "Vanuatu vatus#VUV"
+   ],
+   "continents": [
+    "Insular Oceania"
+   ],
+   "capitals": [
+    {
+     "name": "Port Vila",
+     "item": "Q37806",
+     "lat": -17.73333,
+     "lon": 168.316667,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "WS",
+   "item": "Q683",
+   "label": "Samoa",
+   "iso3": [
+    "WSM"
+   ],
+   "languages": [
+    "English",
+    "Samoan"
+   ],
+   "currencies": [
+    "Samoan tālā#WST"
+   ],
+   "continents": [
+    "Oceania"
+   ],
+   "capitals": [
+    {
+     "name": "Apia",
+     "item": "Q36260",
+     "lat": -13.833333333,
+     "lon": -171.833333333,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "YE",
+   "item": "Q805",
+   "label": "Yemen",
+   "iso3": [
+    "YEM"
+   ],
+   "languages": [
+    "Arabic"
+   ],
+   "currencies": [
+    "Yemeni Rial#YER"
+   ],
+   "continents": [
+    "Asia"
+   ],
+   "capitals": [
+    {
+     "name": "Aden",
+     "item": "Q131694",
+     "lat": 12.8,
+     "lon": 45.033333333,
+     "current": true,
+     "via": "P36"
+    },
+    {
+     "name": "Sanaa",
+     "item": "Q2471",
+     "lat": 15.35,
+     "lon": 44.2,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "ZA",
+   "item": "Q258",
+   "label": "South Africa",
+   "iso3": [
+    "ZAF"
+   ],
+   "languages": [
+    "Afrikaans",
+    "English",
+    "Northern Sotho",
+    "Sesotho",
+    "South African Sign Language",
+    "Southern Ndebele",
+    "Swazi",
+    "Tsonga",
+    "Tswana",
+    "Venda",
+    "Xhosa",
+    "Zulu"
+   ],
+   "currencies": [
+    "rand#ZAR"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Bloemfontein",
+     "item": "Q37701",
+     "lat": -29.1,
+     "lon": 26.216666666,
+     "current": true,
+     "via": "P36"
+    },
+    {
+     "name": "Pretoria",
+     "item": "Q3926",
+     "lat": -25.746388888,
+     "lon": 28.188055555,
+     "current": true,
+     "via": "P36"
+    },
+    {
+     "name": "Cape Town",
+     "item": "Q5465",
+     "lat": -33.925277777,
+     "lon": 18.423888888,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "ZM",
+   "item": "Q953",
+   "label": "Zambia",
+   "iso3": [
+    "ZMB"
+   ],
+   "languages": [
+    "English"
+   ],
+   "currencies": [
+    "Zambian Kwacha#ZMW"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Lusaka",
+     "item": "Q3881",
+     "lat": -15.416666666,
+     "lon": 28.283333333,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  },
+  {
+   "iso": "ZW",
+   "item": "Q954",
+   "label": "Zimbabwe",
+   "iso3": [
+    "ZWE"
+   ],
+   "languages": [
+    "Barwe",
+    "Chewa",
+    "English",
+    "Kalanga",
+    "Khoisan",
+    "Nambya",
+    "Ndau",
+    "Northern Ndebele",
+    "Sesotho",
+    "Shona",
+    "Tonga",
+    "Tsonga",
+    "Tswana",
+    "Venda",
+    "Xhosa",
+    "Zimbabwe Sign Language"
+   ],
+   "currencies": [
+    "Australian dollar#AUD",
+    "Indian rupee#INR",
+    "United States dollar#USD",
+    "Zimbabwe ZiG#ZWG",
+    "Zimbabwean dollar#ZWD",
+    "Zimbabwean dollar#ZWL",
+    "Zimbabwean dollar#ZWN",
+    "Zimbabwean dollar#ZWR",
+    "pound sterling#GBP",
+    "rand#ZAR",
+    "renminbi#CNY",
+    "yen#JPY"
+   ],
+   "continents": [
+    "Africa"
+   ],
+   "capitals": [
+    {
+     "name": "Harare",
+     "item": "Q3921",
+     "lat": -17.829166666,
+     "lon": 31.052222222,
+     "current": true,
+     "via": "P36"
+    }
+   ]
+  }
+ ]
+}

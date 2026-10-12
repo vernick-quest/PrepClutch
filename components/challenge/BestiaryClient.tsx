@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { SECTION_MASTERY_CATEGORY, MATH_FACTS_CATEGORY, badgeEmojiStyle, compareBadges } from '@/lib/badges'
+import { SECTION_MASTERY_CATEGORY, MATH_FACTS_CATEGORY, GEOGRAPHY_CATEGORY, badgeEmojiStyle, compareBadges } from '@/lib/badges'
 
 export interface DbBadge {
   key: string
@@ -27,7 +27,7 @@ const RARITY: Record<string, { bg: string; border: string; text: string; glow: s
   Ascendant: { bg: '#001a1e', border: '#06b6d4aa', text: '#67e8f9', glow: '0 0 64px #06b6d488', stars: 7 },
 }
 
-const CATEGORY_ORDER = ['First Completion', 'Perfect Score', 'Speed', 'Combo', 'Milestone', SECTION_MASTERY_CATEGORY, MATH_FACTS_CATEGORY]
+const CATEGORY_ORDER = ['First Completion', 'Perfect Score', 'Speed', 'Combo', 'Milestone', SECTION_MASTERY_CATEGORY, MATH_FACTS_CATEGORY, GEOGRAPHY_CATEGORY]
 
 function Stars({ count, color }: { count: number; color: string }) {
   return (
