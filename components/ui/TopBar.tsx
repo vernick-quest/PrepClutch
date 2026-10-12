@@ -6,8 +6,10 @@ import type { Track } from '@/lib/tracks'
 // The one top bar for the hub and every track: logo (back to the hub), the
 // track switcher, and the student. Each track's page shows only that track;
 // this bar is how you move between them.
-export default function TopBar({ current, profile, isAdmin = false }: {
+export default function TopBar({ current, profile, isAdmin = false, hrefFor }: {
   current?: Track
+  /** Where each track in the switcher goes (the profile: its own tabs). */
+  hrefFor?: (t: Track) => string
   profile: { display_name: string; avatar_color: string; avatar_url?: string | null }
   isAdmin?: boolean
 }) {
@@ -23,7 +25,7 @@ export default function TopBar({ current, profile, isAdmin = false }: {
           <Link href="/" className="text-base min-[380px]:text-lg sm:text-xl font-black shrink-0" aria-label="PrepClutch home">
             <span className="text-amber-400">Prep</span><span className="text-white">Clutch</span>
           </Link>
-          <TrackSwitcher current={current} />
+          <TrackSwitcher current={current} hrefFor={hrefFor} />
         </div>
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           {isAdmin && (
@@ -31,7 +33,8 @@ export default function TopBar({ current, profile, isAdmin = false }: {
               Admin
             </Link>
           )}
-          <Link href="/profile" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+          {/* The profile opens on the track you came from. */}
+          <Link href={current ? `/profile?t=${current}` : '/profile'} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             {profile.avatar_url ? (
               <Image src={profile.avatar_url} alt={profile.display_name} width={34} height={34} className="rounded-full shadow-md" />
             ) : (

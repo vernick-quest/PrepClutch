@@ -3,11 +3,12 @@ import type { Track } from '@/lib/tracks'
 
 // The site-wide top-bar choice. Each track's page shows only that track; this
 // is how you move between them (and the logo goes back to the hub). On the
-// hub itself nothing is selected.
-export default function TrackSwitcher({ current }: { current?: Track }) {
+// hub itself nothing is selected. On the profile it switches which track's
+// badges and history the profile shows instead (`hrefFor`).
+export default function TrackSwitcher({ current, hrefFor }: { current?: Track; hrefFor?: (t: Track) => string }) {
   const item = (track: Track, href: string, label: string, short: string) => (
     <Link
-      href={href}
+      href={hrefFor ? hrefFor(track) : href}
       aria-current={current === track ? 'page' : undefined}
       className={`px-1.5 min-[380px]:px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold whitespace-nowrap transition-colors ${
         current === track ? 'bg-white/10 text-white' : 'text-zinc-500 hover:text-zinc-200'

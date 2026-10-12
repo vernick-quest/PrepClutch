@@ -44,7 +44,7 @@ export default async function BestiaryPage() {
                 Admin
               </Link>
             )}
-            <Link href="/profile" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <Link href="/profile?t=hspt" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               <div
                 className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-md"
                 style={{ backgroundColor: profile.avatar_color }}

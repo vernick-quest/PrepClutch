@@ -278,7 +278,7 @@ export default async function DashboardPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1 flex-wrap">
                           {isMe ? (
-                            <Link href="/profile" className="font-semibold text-amber-400 hover:text-amber-300 transition-colors">
+                            <Link href="/profile?t=hspt" className="font-semibold text-amber-400 hover:text-amber-300 transition-colors">
                               {entry.display_name}
                             </Link>
                           ) : (
@@ -368,7 +368,7 @@ export default async function DashboardPage() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1 flex-wrap">
                             {isMe ? (
-                              <Link href="/profile" className="font-semibold text-amber-400 hover:text-amber-300 transition-colors">
+                              <Link href="/profile?t=hspt" className="font-semibold text-amber-400 hover:text-amber-300 transition-colors">
                                 {entry.display_name}
                               </Link>
                             ) : (

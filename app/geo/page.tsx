@@ -138,7 +138,7 @@ export default async function GeoHomePage({ searchParams }: { searchParams: Prom
             </p>
             <p className="text-xs text-zinc-500">Explorer Points · {fluent} of {geoCardCount(kinds)} cards mastered</p>
             {defs.length > 0 && (
-              <Link href="/profile" className="inline-block mt-1 text-xs text-violet-300 hover:text-violet-200">
+              <Link href="/profile?t=geo" className="inline-block mt-1 text-xs text-violet-300 hover:text-violet-200">
                 🏅 {defs.filter(d => heldKeys.has(d.key)).length} / {defs.length} badges →
               </Link>
             )}

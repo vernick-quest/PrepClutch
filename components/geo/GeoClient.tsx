@@ -196,7 +196,7 @@ export default function GeoClient({ deck, deckId, home }: {
                   </div>
                 ))}
               </div>
-              <Link href="/profile" className="block mt-3 text-xs text-violet-300 hover:text-violet-200">See all your badges →</Link>
+              <Link href="/profile?t=geo" className="block mt-3 text-xs text-violet-300 hover:text-violet-200">See all your badges →</Link>
             </div>
           )}
 

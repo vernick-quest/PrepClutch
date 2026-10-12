@@ -135,7 +135,7 @@ export default async function MathHomePage({ searchParams }: { searchParams: Pro
             </p>
             <p className="text-xs text-zinc-500">Fact Points · {fluent} of {allCards().length} cards mastered</p>
             {defs.length > 0 && (
-              <Link href="/profile" className="inline-block mt-1 text-xs text-violet-300 hover:text-violet-200">
+              <Link href="/profile?t=math" className="inline-block mt-1 text-xs text-violet-300 hover:text-violet-200">
                 🏅 {heldKeys.size} / {defs.length} badges →
               </Link>
             )}

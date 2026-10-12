@@ -9,7 +9,15 @@ import ProfileActions from '@/components/profile/ProfileActions'
 import AttemptReview from '@/components/quiz/AttemptReview'
 import { isSectionComplete, compareBadges, MATH_FACTS_CATEGORY, MATH_FACTS_GROUPS, mathFactsGroup, GEOGRAPHY_CATEGORY, GEOGRAPHY_GROUPS, geographyGroup } from '@/lib/badges'
 import type { Section, QuizAnswer } from '@/types/database'
-import { loginUrl } from '@/lib/tracks'
+import { loginUrl, TRACK_HOME } from '@/lib/tracks'
+import type { Track } from '@/lib/tracks'
+import TopBar from '@/components/ui/TopBar'
+import MathRounds from '@/components/math/MathRounds'
+import GeoRounds from '@/components/geo/GeoRounds'
+import { allCards, MAX_FACT_POINTS } from '@/lib/math-facts'
+import { loadFactHistory, loadRounds } from '@/lib/math-history'
+import { geoCards, maxGeoPoints } from '@/lib/geo'
+import { loadGeoHistory, loadGeoRounds, availableGeoKinds } from '@/lib/geo-history'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,7 +28,74 @@ function getAccentHex(accent: string): string {
   return map[accent] ?? '#ffffff'
 }
 
-export default async function ProfilePage() {
+const TRACK_NAME: Record<Track, string> = { hspt: 'HSPT', math: 'Math Facts', geo: 'Geography' }
+
+type BadgeDef = { key: string; label: string; icon_emoji: string; description: string; rarity: string; category: string }
+
+// Every badge of a track, earned or not, with what it takes, so a student can
+// see the next thing to aim for. Under the same headings as that track's map.
+function BadgeGroups({ title, badges, groups, groupOf, earned, tone }: {
+  title: string
+  badges: BadgeDef[]
+  groups: readonly string[]
+  groupOf: (key: string) => string
+  earned: Set<string>
+  tone: string
+}) {
+  if (badges.length === 0) return null
+  return (
+    <div className="bg-white/3 border border-white/10 rounded-2xl p-5">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-bold text-white">{title}</h3>
+        <span className="text-sm text-zinc-400">{badges.filter(b => earned.has(b.key)).length} / {badges.length}</span>
+      </div>
+      <div className="space-y-5">
+        {groups.map(group => {
+          const inGroup = badges.filter(b => groupOf(b.key) === group)
+          if (inGroup.length === 0) return null
+          return (
+            <div key={group}>
+              <p className="text-xs font-bold uppercase tracking-wide text-zinc-400 mb-2">
+                {group}
+                <span className="ml-2 font-normal normal-case text-zinc-600">
+                  {inGroup.filter(b => earned.has(b.key)).length} / {inGroup.length}
+                </span>
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
+                {inGroup.map(b => {
+                  const got = earned.has(b.key)
+                  return (
+                    <div key={b.key} className={`rounded-xl border p-3 ${got ? tone : 'border-white/5 bg-white/2'}`}>
+                      <div className={`text-2xl mb-1 ${got ? '' : 'grayscale opacity-30'}`}>{b.icon_emoji}</div>
+                      <div className={`text-sm font-bold leading-tight ${got ? 'text-white' : 'text-zinc-500'}`}>{b.label}</div>
+                      <div className="text-[11px] text-zinc-500 leading-snug mt-0.5">
+                        {got ? '✓ ' : '🔒 '}{b.description}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function Stat({ value, label, accent = false }: { value: number; label: string; accent?: boolean }) {
+  return (
+    <div className={`${accent ? 'bg-amber-500/10 border-amber-500/20' : 'bg-white/5 border-white/10'} border rounded-xl px-4 py-2 text-center`}>
+      <div className={`text-2xl font-black ${accent ? 'text-amber-400' : 'text-white'}`}>{value}</div>
+      <div className="text-xs text-zinc-400">{label}</div>
+    </div>
+  )
+}
+
+// The profile shows ONE track at a time: the one you came from (?t=math from
+// the Math Facts top bar), else your home track. The top bar's track switcher
+// flips between them here instead of leaving the page.
+export default async function ProfilePage({ searchParams }: { searchParams: Promise<{ t?: string }> }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect(loginUrl('/profile'))
@@ -33,7 +108,13 @@ export default async function ProfilePage() {
 
   if (!profile) redirect('/onboarding')
 
-  const { data: attempts } = await supabase
+  const asked = (await searchParams).t
+  const track: Track = asked === 'hspt' || asked === 'math' || asked === 'geo'
+    ? asked
+    : (profile as Record<string, unknown>).home_track === 'math' ? 'math' : 'hspt'
+  const isAdmin = (profile as Record<string, unknown>).is_admin === true
+
+  const { data: attempts } = track !== 'hspt' ? { data: null } : await supabase
     .from('quiz_attempts')
     .select('*')
     .eq('user_id', user.id)
@@ -50,7 +131,7 @@ export default async function ProfilePage() {
     .select('*')
     .order('category')
 
-  const { data: leaderboardEntry } = await supabase
+  const { data: leaderboardEntry } = track !== 'hspt' ? { data: null } : await supabase
     .from('leaderboard_view')
     .select('*')
     .eq('user_id', user.id)
@@ -58,7 +139,8 @@ export default async function ProfilePage() {
 
   const totalAttempts = attempts?.length ?? 0
   const earnedKeys = new Set(userAchievements?.map(a => a.achievement_key) ?? [])
-  type BadgeDef = { key: string; label: string; icon_emoji: string; description: string; rarity: string; category: string }
+  const hsptBadges = ((allAchievements ?? []) as BadgeDef[])
+    .filter(b => b.category !== MATH_FACTS_CATEGORY && b.category !== GEOGRAPHY_CATEGORY)
   const mathBadges = ((allAchievements ?? []) as BadgeDef[])
     .filter(b => b.category === MATH_FACTS_CATEGORY)
     .sort(compareBadges)
@@ -66,7 +148,35 @@ export default async function ProfilePage() {
     .filter(b => b.category === GEOGRAPHY_CATEGORY)
     .sort(compareBadges)
 
-  const { data: masteryRaw } = await supabase
+  const trackBadges = track === 'math' ? mathBadges : track === 'geo' ? geoBadges : hsptBadges
+  const trackEarned = trackBadges.filter(b => earnedKeys.has(b.key)).length
+
+  // Math Facts and Geography: points and mastered cards, worked out the same
+  // way their home pages do, plus recent rounds.
+  let mathStats = { points: 0, fluent: 0, rounds: [] as Awaited<ReturnType<typeof loadRounds>> }
+  if (track === 'math') {
+    const [{ rows }, rounds] = await Promise.all([loadFactHistory(supabase, user.id), loadRounds(supabase, user.id)])
+    mathStats = {
+      points: allCards().reduce((s, c) => s + (rows.get(c.key)?.fluent_at ? c.points : 0), 0),
+      fluent: [...rows.values()].filter(r => r.fluent_at).length,
+      rounds,
+    }
+  }
+  let geoStats = { points: 0, max: 0, fluent: 0, rounds: [] as Awaited<ReturnType<typeof loadGeoRounds>> }
+  if (track === 'geo') {
+    const [{ rows }, rounds, kinds] = await Promise.all([
+      loadGeoHistory(supabase, user.id), loadGeoRounds(supabase, user.id), availableGeoKinds(supabase),
+    ])
+    const cards = geoCards(kinds)
+    geoStats = {
+      points: cards.reduce((s, c) => s + (rows.get(c.key)?.fluent_at ? c.points : 0), 0),
+      max: maxGeoPoints(kinds),
+      fluent: cards.filter(c => rows.get(c.key)?.fluent_at).length,
+      rounds,
+    }
+  }
+
+  const { data: masteryRaw } = track !== 'hspt' ? { data: null } : await supabase
     .rpc('get_section_mastery', { p_user_id: user.id })
 
   type MasteryRow = { section: string; score: number; max_score: number; correct: number; seen: number; total: number }
@@ -88,16 +198,15 @@ export default async function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0f]">
-      {/* Nav */}
-      <nav className="border-b border-white/5 sticky top-0 z-50 bg-[#0a0a0f]/80 backdrop-blur-sm">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="text-zinc-400 hover:text-white transition-colors text-sm">← Home</Link>
+      <TopBar current={track} profile={profile} isAdmin={isAdmin} hrefFor={t => `/profile?t=${t}`} />
+
+      <div className="max-w-4xl mx-auto px-4 py-6 space-y-8">
+        <div className="flex items-center justify-between gap-3">
+          <Link href={TRACK_HOME[track]} className="text-zinc-400 hover:text-white transition-colors text-sm">← {TRACK_NAME[track]}</Link>
           <h1 className="text-lg font-bold text-white">My Profile</h1>
           <SignOutButton />
         </div>
-      </nav>
 
-      <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
         {/* Profile header */}
         <div className="bg-white/5 border border-white/10 rounded-3xl p-8 flex flex-col sm:flex-row items-center sm:items-start gap-6">
           <div className="shrink-0">
@@ -122,18 +231,13 @@ export default async function ProfilePage() {
             <h2 className="text-3xl font-black text-white">{profile.display_name}</h2>
             <p className="text-zinc-400 mt-1 font-mono text-sm">Class: <span className="text-amber-400 font-bold tracking-widest">{profile.class_code}</span></p>
             <div className="flex flex-wrap gap-3 mt-4 justify-center sm:justify-start">
-              <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-2 text-center">
-                <div className="text-2xl font-black text-amber-400">{leaderboardEntry?.aggregate_score ?? 0}</div>
-                <div className="text-xs text-zinc-400">Clutch Points</div>
-              </div>
-              <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-center">
-                <div className="text-2xl font-black text-white">{totalAttempts}</div>
-                <div className="text-xs text-zinc-400">Quizzes Taken</div>
-              </div>
-              <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-center">
-                <div className="text-2xl font-black text-white">{earnedKeys.size}</div>
-                <div className="text-xs text-zinc-400">Badges Earned</div>
-              </div>
+              {track === 'hspt' && <Stat accent value={leaderboardEntry?.aggregate_score ?? 0} label="Clutch Points" />}
+              {track === 'hspt' && <Stat value={totalAttempts} label="Quizzes Taken" />}
+              {track === 'math' && <Stat accent value={mathStats.points} label={`Fact Points / ${MAX_FACT_POINTS}`} />}
+              {track === 'math' && <Stat value={mathStats.fluent} label="Facts Mastered" />}
+              {track === 'geo' && <Stat accent value={geoStats.points} label={`Explorer Points / ${geoStats.max}`} />}
+              {track === 'geo' && <Stat value={geoStats.fluent} label="Cards Mastered" />}
+              <Stat value={trackEarned} label={`${TRACK_NAME[track]} Badges`} />
             </div>
           </div>
         </div>
@@ -149,6 +253,8 @@ export default async function ProfilePage() {
           displayName={profile.display_name}
         />
 
+        {track === 'hspt' && (
+          <>
         {/* Section performance */}
         <div>
           <h3 className="text-xl font-bold text-white mb-4">📊 Performance by Section</h3>
@@ -191,13 +297,13 @@ export default async function ProfilePage() {
           <div>
             <h3 className="text-lg font-bold text-white mb-1">🏅 Badge Bestiary</h3>
             <p className="text-zinc-400 text-sm">
-              {earnedKeys.size} of {allAchievements?.length ?? 0} creatures collected
+              {trackEarned} of {hsptBadges.length} creatures collected
             </p>
             <div className="h-1.5 bg-white/10 rounded-full overflow-hidden mt-2 w-48">
               <div
                 className="h-full rounded-full transition-all duration-700"
                 style={{
-                  width: `${allAchievements?.length ? Math.round((earnedKeys.size / allAchievements.length) * 100) : 0}%`,
+                  width: `${hsptBadges.length ? Math.round((trackEarned / hsptBadges.length) * 100) : 0}%`,
                   background: 'linear-gradient(90deg,#6366f1,#a855f7,#ec4899)',
                 }}
               />
@@ -210,104 +316,6 @@ export default async function ProfilePage() {
             View Bestiary →
           </Link>
         </div>
-
-        {/* Math Facts badges. Every one is listed, earned or not, with what it
-            takes, so a student can see the next thing to aim for. They are
-            awarded automatically at the end of a round. */}
-        {mathBadges.length > 0 && (
-          <div className="bg-white/3 border border-white/10 rounded-2xl p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-white">🧮 Math Facts badges</h3>
-              <span className="text-sm text-zinc-400">
-                {mathBadges.filter(b => earnedKeys.has(b.key)).length} / {mathBadges.length}
-              </span>
-            </div>
-            {/* Under the same headings as the fact map's tabs. */}
-            <div className="space-y-5">
-            {MATH_FACTS_GROUPS.map(group => {
-              const inGroup = mathBadges.filter(b => mathFactsGroup(b.key) === group)
-              if (inGroup.length === 0) return null
-              return (
-                <div key={group}>
-                  <p className="text-xs font-bold uppercase tracking-wide text-zinc-400 mb-2">
-                    {group}
-                    <span className="ml-2 font-normal normal-case text-zinc-600">
-                      {inGroup.filter(b => earnedKeys.has(b.key)).length} / {inGroup.length}
-                    </span>
-                  </p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
-              {inGroup.map(b => {
-                const earned = earnedKeys.has(b.key)
-                return (
-                  <div
-                    key={b.key}
-                    className={`rounded-xl border p-3 ${
-                      earned ? 'border-amber-500/30 bg-amber-500/5' : 'border-white/5 bg-white/2'
-                    }`}
-                  >
-                    <div className={`text-2xl mb-1 ${earned ? '' : 'grayscale opacity-30'}`}>{b.icon_emoji}</div>
-                    <div className={`text-sm font-bold leading-tight ${earned ? 'text-white' : 'text-zinc-500'}`}>{b.label}</div>
-                    <div className="text-[11px] text-zinc-500 leading-snug mt-0.5">
-                      {earned ? '✓ ' : '🔒 '}{b.description}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-                </div>
-              )
-            })}
-            </div>
-          </div>
-        )}
-
-        {/* Geography badges, shown the same way. Empty (and hidden) until the
-            Geography migration is applied. */}
-        {geoBadges.length > 0 && (
-          <div className="bg-white/3 border border-white/10 rounded-2xl p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-white">🌍 Geography badges</h3>
-              <span className="text-sm text-zinc-400">
-                {geoBadges.filter(b => earnedKeys.has(b.key)).length} / {geoBadges.length}
-              </span>
-            </div>
-            <div className="space-y-5">
-              {GEOGRAPHY_GROUPS.map(group => {
-                const inGroup = geoBadges.filter(b => geographyGroup(b.key) === group)
-                if (inGroup.length === 0) return null
-                return (
-                  <div key={group}>
-                    <p className="text-xs font-bold uppercase tracking-wide text-zinc-400 mb-2">
-                      {group}
-                      <span className="ml-2 font-normal normal-case text-zinc-600">
-                        {inGroup.filter(b => earnedKeys.has(b.key)).length} / {inGroup.length}
-                      </span>
-                    </p>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
-                      {inGroup.map(b => {
-                        const earned = earnedKeys.has(b.key)
-                        return (
-                          <div
-                            key={b.key}
-                            className={`rounded-xl border p-3 ${
-                              earned ? 'border-sky-500/30 bg-sky-500/5' : 'border-white/5 bg-white/2'
-                            }`}
-                          >
-                            <div className={`text-2xl mb-1 ${earned ? '' : 'grayscale opacity-30'}`}>{b.icon_emoji}</div>
-                            <div className={`text-sm font-bold leading-tight ${earned ? 'text-white' : 'text-zinc-500'}`}>{b.label}</div>
-                            <div className="text-[11px] text-zinc-500 leading-snug mt-0.5">
-                              {earned ? '✓ ' : '🔒 '}{b.description}
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
 
         {/* Recent attempts */}
         {attempts && attempts.length > 0 && (
@@ -348,6 +356,25 @@ export default async function ProfilePage() {
             <p className="text-zinc-400 mb-4">No quizzes taken yet.</p>
             <Link href="/quiz/verbal" className="text-amber-400 hover:underline">Start your first quiz →</Link>
           </div>
+        )}
+          </>
+        )}
+
+        {track === 'math' && (
+          <>
+            <BadgeGroups title="🧮 Math Facts badges" badges={mathBadges} groups={MATH_FACTS_GROUPS}
+              groupOf={mathFactsGroup} earned={earnedKeys} tone="border-amber-500/30 bg-amber-500/5" />
+            <MathRounds rounds={mathStats.rounds} empty="No Math Facts rounds yet. Your results show up here after each one." />
+          </>
+        )}
+
+        {/* Empty (and hidden) until the Geography migration is applied. */}
+        {track === 'geo' && (
+          <>
+            <BadgeGroups title="🌍 Geography badges" badges={geoBadges} groups={GEOGRAPHY_GROUPS}
+              groupOf={geographyGroup} earned={earnedKeys} tone="border-sky-500/30 bg-sky-500/5" />
+            <GeoRounds rounds={geoStats.rounds} empty="No Geography rounds yet. Your results show up here after each one." />
+          </>
         )}
       </div>
       <Footer />
