@@ -284,7 +284,9 @@ export function mapCountries(): MapCountry[] {
 
 /** The cards a deck draws from. `available` = the kinds the catalogue has. */
 export function deckPool(o: DeckOptions, available: GeoKind[] = KINDS): GeoCard[] {
-  const kinds = GROUP_KINDS[o.group].filter(k => available.includes(k))
+  // Inside one continent, "which continent is Kenya on?" answers itself, so a
+  // continent round never asks it. Those cards come up in World rounds.
+  const kinds = GROUP_KINDS[o.group].filter(k => available.includes(k) && !(k === 'cont' && o.continent !== 'all'))
   return allGeoCards().filter(c => (o.continent === 'all' || c.continent === o.continent) && kinds.includes(c.kind))
 }
 

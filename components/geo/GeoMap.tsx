@@ -46,7 +46,9 @@ export default function GeoMap({ history, countries, readOnly = false, kinds: av
   const [group, setGroup] = useState<KindGroup>('all')
   const [picked, setPicked] = useState<string | null>(null)
 
-  const groups = GROUPS.filter(g => groupKinds(g, available).length > 0)
+  // No Continents chip inside a continent: those questions answer themselves
+  // there (deckPool leaves them out of continent rounds too).
+  const groups = GROUPS.filter(g => groupKinds(g, available).length > 0 && !(g === 'continents' && tab !== 'all'))
   const kinds = groupKinds(group, available)
   const st = (key: string): GeoCardState => geoCardState(history[key])
   const statesOf = (c: MapCountry) => kinds.flatMap(k => countryCardKeys(c, k).map(st))
@@ -64,7 +66,7 @@ export default function GeoMap({ history, countries, readOnly = false, kinds: av
         {TABS.map(t => (
           <button
             key={t}
-            onClick={() => { setTab(t); setPicked(null) }}
+            onClick={() => { setTab(t); setPicked(null); if (t !== 'all' && group === 'continents') setGroup('all') }}
             aria-pressed={tab === t}
             className={`rounded-lg py-1.5 px-0.5 transition-colors min-w-0 ${
               tab === t ? 'bg-white/10 text-white' : 'text-zinc-500 hover:text-zinc-300'
