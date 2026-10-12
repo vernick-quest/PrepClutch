@@ -20,7 +20,7 @@ import { Equation, Keypad, typeKey } from '@/components/math/Equation'
 
 type Outcome = 'right' | 'wrong' | 'shown' | null
 
-export default function LearnClient({ deck, playHref }: { deck: FactCard[]; playHref: string }) {
+export default function LearnClient({ deck, playHref, home }: { deck: FactCard[]; playHref: string; home: string }) {
   const [idx, setIdx]         = useState(0)
   const [input, setInput]     = useState('')
   const [outcome, setOutcome] = useState<Outcome>(null)
@@ -66,7 +66,7 @@ export default function LearnClient({ deck, playHref }: { deck: FactCard[]; play
             <Link href={playHref} className="flex items-center justify-center bg-amber-500 hover:bg-amber-400 text-black font-bold py-3.5 rounded-2xl transition-colors">
               ▶ Play these
             </Link>
-            <Link href="/math" className="flex items-center justify-center bg-white/5 border border-white/10 hover:border-white/25 text-white font-medium py-3.5 rounded-2xl transition-colors">
+            <Link href={home} className="flex items-center justify-center bg-white/5 border border-white/10 hover:border-white/25 text-white font-medium py-3.5 rounded-2xl transition-colors">
               Math Facts
             </Link>
           </div>
@@ -82,7 +82,7 @@ export default function LearnClient({ deck, playHref }: { deck: FactCard[]; play
     <div className="fixed inset-0 overflow-hidden bg-[#0a0a0f] flex flex-col" style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
       <div className="border-b border-white/5">
         <div className="max-w-xl mx-auto px-4 py-3 flex items-center gap-4">
-          <Link href="/math" className="text-zinc-500 hover:text-white text-sm transition-colors shrink-0">← Exit</Link>
+          <Link href={home} className="text-zinc-500 hover:text-white text-sm transition-colors shrink-0">← Exit</Link>
           <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
             <div className="h-full rounded-full bg-sky-400 transition-all duration-300" style={{ width: `${(idx / deck.length) * 100}%` }} />
           </div>

@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import {
   CONTINENTS, CONTINENT_LABEL, CONTINENT_SHORT, CONTINENT_EMOJI, GROUPS, GROUP_LABEL,
-  GROUP_EMOJI, KINDS_069, KIND_LABEL, geoCardState, deckHref, groupKinds, countryCardKeys,
+  GROUP_EMOJI, KINDS_069, KIND_LABEL, geoCardState, deckHref, homeHref, groupKinds, countryCardKeys,
 } from '@/lib/geo-meta'
 import type { Continent, KindGroup, GeoHistoryRow, GeoCardState, GeoKind, MapCountry } from '@/lib/geo-meta'
 import { pinHref } from '@/lib/geo-pin'
@@ -34,16 +34,25 @@ const TONE_BAR: Record<string, string> = {
   solid: 'bg-emerald-500/80', some: 'bg-emerald-500/35', slow: 'bg-amber-500/50', missed: 'bg-rose-500/50', new: 'bg-white/5',
 }
 
-export default function GeoMap({ history, countries, readOnly = false, kinds: available = KINDS_069 }: {
+export default function GeoMap({ history, countries, readOnly = false, kinds: available = KINDS_069, initialTab = 'all', initialGroup = 'all' }: {
   history: Record<string, GeoHistoryRow>
   countries: MapCountry[]
   /** Someone else's map (an admin viewing a student): no Play button. */
   readOnly?: boolean
   /** The card kinds the catalogue has. */
   kinds?: GeoKind[]
+  /** From /geo?c=af&k=flags: a finished round lands back where it started. */
+  initialTab?: Tab
+  initialGroup?: KindGroup
 }) {
-  const [tab, setTab] = useState<Tab>('all')
-  const [group, setGroup] = useState<KindGroup>('all')
+  const [tab, setTab] = useState<Tab>(initialTab)
+  const [group, setGroup] = useState<KindGroup>(initialGroup)
+
+  // Keep the URL on the selection too, so Back from a round started here
+  // returns to it. Not on someone else's map: that page has its own URL.
+  useEffect(() => {
+    if (!readOnly) window.history.replaceState(null, '', homeHref({ continent: tab, group }))
+  }, [tab, group, readOnly])
   const [picked, setPicked] = useState<string | null>(null)
 
   // No Continents chip inside a continent: those questions answer themselves

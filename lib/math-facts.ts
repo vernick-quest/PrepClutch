@@ -282,6 +282,15 @@ export function parseDeckOptions(
   return { topic, op, type, tables: tables.length ? tables : FACT_TABLES, focus }
 }
 
+/** Math Facts home on the deck's own fact-map tab (/math?tab=div), so
+ *  finishing or leaving a round lands where it started. Mixed ×/÷ shows the
+ *  × map, which is also the default. */
+export const MAP_TABS = ['mul', 'div', 'equiv', 'fdp'] as const
+export function homeHref(o: DeckOptions): string {
+  const tab = o.topic !== 'times' ? o.topic : o.op === 'div' ? 'div' : 'mul'
+  return tab === 'mul' ? '/math' : `/math?tab=${tab}`
+}
+
 export function deckHref(o: DeckOptions): string {
   const q = new URLSearchParams({ topic: o.topic })
   if (o.topic === 'times') {

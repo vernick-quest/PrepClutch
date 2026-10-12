@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { buildPinRound } from '@/lib/geo'
 import { pinReady } from '@/lib/geo-history'
-import { CONTINENTS, CONTINENT_LABEL, CONTINENT_EMOJI } from '@/lib/geo-meta'
+import { CONTINENTS, CONTINENT_LABEL, CONTINENT_EMOJI, homeHref } from '@/lib/geo-meta'
 import type { Continent } from '@/lib/geo-meta'
 import { PIN_LEVELS, PIN_LEVEL_LABEL, pinHref } from '@/lib/geo-pin'
 import type { PinLevel } from '@/lib/geo-pin'
@@ -61,7 +61,7 @@ export default async function GeoPinPage({ searchParams }: Props) {
   const canSave = await pinReady(supabase)
   // A new round is a new session: remount so "Play again" starts clean.
   return (
-    <RoundGuard round={crypto.randomUUID()} home="/geo">
+    <RoundGuard round={crypto.randomUUID()} home={homeHref({ continent, group: 'all' })}>
       <PinClient key={places.map(x => x.key).join()} places={places} continent={continent} level={level} canSave={canSave} />
     </RoundGuard>
   )

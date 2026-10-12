@@ -2,7 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { MAX_FACT_POINTS, allCards } from '@/lib/math-facts'
+import { MAX_FACT_POINTS, allCards, MAP_TABS } from '@/lib/math-facts'
 import { loadFactHistory, availableTopics, loadRounds } from '@/lib/math-history'
 import MathRounds from '@/components/math/MathRounds'
 import TopBar from '@/components/ui/TopBar'
@@ -57,7 +57,7 @@ function Board({ title, rows, me }: { title: string; rows: LbRow[]; me: string }
   )
 }
 
-export default async function MathHomePage() {
+export default async function MathHomePage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect(loginUrl('/math'))
@@ -84,6 +84,11 @@ export default async function MathHomePage() {
   }
 
   const topics = await availableTopics(supabase)
+  // ?tab=div from a finished round: open on that tab, if its topic is live.
+  const asked = (await searchParams).tab
+  const tab = (MAP_TABS as readonly string[]).includes(asked ?? '')
+    && (asked === 'mul' || asked === 'div' || topics.includes(asked as 'equiv' | 'fdp'))
+    ? asked as (typeof MAP_TABS)[number] : 'mul'
   const rounds = await loadRounds(supabase, user.id)
   const hasClass = (profile.class_code ?? '').trim() !== ''
   const [{ data: global }, { data: klass }] = await Promise.all([
@@ -139,7 +144,7 @@ export default async function MathHomePage() {
 
         <div className="grid lg:grid-cols-2 gap-6">
           <div className="space-y-6 min-w-0">
-            <FactGrid history={history} topics={topics} />
+            <FactGrid history={history} topics={topics} initialTab={tab} />
             <MathRounds rounds={rounds} />
           </div>
           <div className="space-y-8 min-w-0">

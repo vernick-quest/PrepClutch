@@ -22,7 +22,7 @@ import {
   PIN_LEVELS, PIN_LEVEL_LABEL, PIN_RINGS, MAX_PIN_SCORE, pinScore, pinDeckId, pinHref,
 } from '@/lib/geo-pin'
 import type { PinLevel, PinPlace } from '@/lib/geo-pin'
-import { CONTINENT_LABEL, CONTINENT_EMOJI } from '@/lib/geo-meta'
+import { CONTINENT_LABEL, CONTINENT_EMOJI, homeHref } from '@/lib/geo-meta'
 import type { Continent } from '@/lib/geo-meta'
 import WorldMap, { useWorldMap } from '@/components/geo/WorldMap'
 import type { LatLon } from '@/components/geo/WorldMap'
@@ -41,6 +41,7 @@ export default function PinClient({ places, continent, level, canSave }: {
 }) {
   const router = useRouter()
   const deck = pinDeckId(continent, level)
+  const home = homeHref({ continent, group: 'all' })
   const { shapes, failed } = useWorldMap()
   const [idx, setIdx] = useState(0)
   const [pins, setPins] = useState<Pin[]>([])
@@ -164,7 +165,7 @@ export default function PinClient({ places, continent, level, canSave }: {
                     className="bg-sky-500 hover:bg-sky-400 text-black font-bold py-3.5 rounded-2xl transition-colors">
               Play again
             </button>
-            <Link href="/geo"
+            <Link href={home}
                   className="flex items-center justify-center bg-white/5 border border-white/10 hover:border-white/25 text-white font-medium py-3.5 rounded-2xl transition-colors">
               Geography home
             </Link>
@@ -185,7 +186,7 @@ export default function PinClient({ places, continent, level, canSave }: {
     <div className="fixed inset-0 overflow-hidden bg-[#0a0a0f] flex flex-col" style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
       <div className="border-b border-white/5 bg-[#0a0a0f]/90">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-4">
-          <Link href="/geo" className="text-zinc-500 hover:text-white text-sm transition-colors shrink-0">← Exit</Link>
+          <Link href={home} className="text-zinc-500 hover:text-white text-sm transition-colors shrink-0">← Exit</Link>
           <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
             <div className="h-full rounded-full bg-sky-400 transition-all duration-300" style={{ width: `${(idx / places.length) * 100}%` }} />
           </div>

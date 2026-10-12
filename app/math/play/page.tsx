@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { buildDeck, parseDeckOptions } from '@/lib/math-facts'
+import { buildDeck, parseDeckOptions, homeHref } from '@/lib/math-facts'
 import { loadFactHistory, availableTopics } from '@/lib/math-history'
 import FactsClient from '@/components/math/FactsClient'
 import RoundGuard from '@/components/ui/RoundGuard'
@@ -8,7 +8,7 @@ import { loginUrl } from '@/lib/tracks'
 
 export const dynamic = 'force-dynamic'
 
-interface Props { searchParams: Promise<{ op?: string; type?: string; t?: string }> }
+interface Props { searchParams: Promise<{ topic?: string; op?: string; type?: string; t?: string; f?: string }> }
 
 export default async function MathPlayPage({ searchParams }: Props) {
   const supabase = await createClient()
@@ -30,5 +30,5 @@ export default async function MathPlayPage({ searchParams }: Props) {
     ? `${opts.op === 'mixed' ? 'times' : opts.op}${opts.tables.length === 1 ? `:${opts.tables[0]}` : ''}`
     : opts.topic
 
-  return <RoundGuard round={crypto.randomUUID()} home="/math"><FactsClient key={deck.map(c => c.key).join()} deck={deck} deckId={deckId} /></RoundGuard>
+  return <RoundGuard round={crypto.randomUUID()} home={homeHref(opts)}><FactsClient key={deck.map(c => c.key).join()} deck={deck} deckId={deckId} home={homeHref(opts)} /></RoundGuard>
 }

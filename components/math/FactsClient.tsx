@@ -23,10 +23,12 @@ interface Badge { key: string; label: string; icon_emoji: string; description: s
 type Feedback = { kind: 'fast' | 'slow' | 'wrong'; ms: number; given: string } | null
 
 
-export default function FactsClient({ deck, deckId }: {
+export default function FactsClient({ deck, deckId, home }: {
   deck: FactCard[]
   /** What was played, for round history: mul, div, equiv, fdp, or mul:7. */
   deckId: string
+  /** Math Facts home on this deck's fact-map tab. */
+  home: string
 }) {
   const router = useRouter()
   const [queue, setQueue]       = useState<Shown[]>(() => deck.map(card => ({ card, retry: false })))
@@ -236,7 +238,7 @@ export default function FactsClient({ deck, deckId }: {
               Play again
             </button>
             <Link
-              href="/math"
+              href={home}
               className="flex items-center justify-center bg-white/5 border border-white/10 hover:border-white/25 text-white font-medium py-3.5 rounded-2xl transition-colors"
             >
               Math Facts home
@@ -265,7 +267,7 @@ export default function FactsClient({ deck, deckId }: {
     >
       <div className="z-30 border-b border-white/5 bg-[#0a0a0f]/90 backdrop-blur-sm">
         <div className="max-w-xl mx-auto px-4 py-3 flex items-center gap-4">
-          <Link href="/math" className="text-zinc-500 hover:text-white text-sm transition-colors shrink-0">← Exit</Link>
+          <Link href={home} className="text-zinc-500 hover:text-white text-sm transition-colors shrink-0">← Exit</Link>
           <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
             <div className="h-full rounded-full bg-amber-400 transition-all duration-300" style={{ width: `${(idx / queue.length) * 100}%` }} />
           </div>

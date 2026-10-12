@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { buildDeck, parseDeckOptions, deckId } from '@/lib/geo'
+import { buildDeck, parseDeckOptions, deckId, homeHref } from '@/lib/geo'
 import { loadGeoHistory, availableGeoKinds } from '@/lib/geo-history'
 import GeoClient from '@/components/geo/GeoClient'
 import RoundGuard from '@/components/ui/RoundGuard'
@@ -27,5 +27,5 @@ export default async function GeoPlayPage({ searchParams }: Props) {
   if (deck.length === 0) redirect('/geo')
 
   // A new deck is a new session: remount so "Play again" starts clean.
-  return <RoundGuard round={crypto.randomUUID()} home="/geo"><GeoClient key={deck.map(c => c.key).join()} deck={deck} deckId={deckId(opts)} /></RoundGuard>
+  return <RoundGuard round={crypto.randomUUID()} home={homeHref(opts)}><GeoClient key={deck.map(c => c.key).join()} deck={deck} deckId={deckId(opts)} home={homeHref(opts)} /></RoundGuard>
 }

@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { parseDeckOptions } from '@/lib/math-facts'
+import { parseDeckOptions, homeHref } from '@/lib/math-facts'
 import { learnDeck } from '@/lib/math-steps'
 import { loadFactHistory, availableTopics } from '@/lib/math-history'
 import { loginUrl } from '@/lib/tracks'
@@ -28,5 +28,5 @@ export default async function MathLearnPage({ searchParams }: Props) {
   if (deck.length === 0) redirect('/math')
 
   const playHref = `/math/play?${new URLSearchParams(Object.entries(params).filter(([, v]) => v) as [string, string][])}`
-  return <RoundGuard round={crypto.randomUUID()} home="/math"><LearnClient key={deck.map(c => c.key).join()} deck={deck} playHref={playHref} /></RoundGuard>
+  return <RoundGuard round={crypto.randomUUID()} home={homeHref(opts)}><LearnClient key={deck.map(c => c.key).join()} deck={deck} playHref={playHref} home={homeHref(opts)} /></RoundGuard>
 }

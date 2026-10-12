@@ -130,6 +130,13 @@ export function deckHref(o: DeckOptions): string {
   return s ? `/geo/play?${s}` : '/geo/play'
 }
 
+/** Geography home on the deck's own continent and chip (/geo?c=af&k=flags),
+ *  so finishing or leaving a round lands where it started. */
+export function homeHref(o: DeckOptions): string {
+  const s = deckHref(o).split('?')[1]
+  return s ? `/geo?${s}` : '/geo'
+}
+
 /** Round-history label, e.g. "af:capitals". */
 export const deckId = (o: DeckOptions) => `${o.continent}:${o.group}`
 

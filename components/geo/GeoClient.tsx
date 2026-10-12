@@ -28,10 +28,12 @@ type Feedback = { kind: 'fast' | 'slow' | 'wrong'; ms: number; given: string } |
 
 const SKIP = '-1'
 
-export default function GeoClient({ deck, deckId }: {
+export default function GeoClient({ deck, deckId, home }: {
   deck: GeoCard[]
   /** What was played, for round history: "af:capitals", "all:all". */
   deckId: string
+  /** Geography home on this deck's continent and chip. */
+  home: string
 }) {
   const router = useRouter()
   const [queue]                 = useState<Shown[]>(() => deck.map(card => ({ card, retry: false })))
@@ -233,7 +235,7 @@ export default function GeoClient({ deck, deckId }: {
               Play again
             </button>
             <Link
-              href="/geo"
+              href={home}
               className="flex items-center justify-center bg-white/5 border border-white/10 hover:border-white/25 text-white font-medium py-3.5 rounded-2xl transition-colors"
             >
               Geography home
@@ -251,7 +253,7 @@ export default function GeoClient({ deck, deckId }: {
         <p className="text-5xl">{mapFailed ? '🗺️' : '🌍'}</p>
         <p className="text-white font-bold">{mapFailed ? 'The map didn’t load.' : 'Loading the map…'}</p>
         {mapFailed && (
-          <Link href="/geo" className="text-sky-300 hover:text-sky-200 text-sm">← Geography home</Link>
+          <Link href={home} className="text-sky-300 hover:text-sky-200 text-sm">← Geography home</Link>
         )}
       </div>
     )
@@ -281,7 +283,7 @@ export default function GeoClient({ deck, deckId }: {
     >
       <div className="border-b border-white/5 bg-[#0a0a0f]/90">
         <div className="max-w-xl mx-auto px-4 py-3 flex items-center gap-4">
-          <Link href="/geo" className="text-zinc-500 hover:text-white text-sm transition-colors shrink-0">← Exit</Link>
+          <Link href={home} className="text-zinc-500 hover:text-white text-sm transition-colors shrink-0">← Exit</Link>
           <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
             <div className="h-full rounded-full bg-sky-400 transition-all duration-300" style={{ width: `${(idx / queue.length) * 100}%` }} />
           </div>

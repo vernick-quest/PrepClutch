@@ -2,7 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { maxGeoPoints, geoCardCount, geoCards, mapCountries, CITIES } from '@/lib/geo'
+import { maxGeoPoints, geoCardCount, geoCards, mapCountries, CITIES, parseDeckOptions, groupKinds } from '@/lib/geo'
 import { loadGeoHistory, loadGeoRounds, availableGeoKinds } from '@/lib/geo-history'
 import GeoMap from '@/components/geo/GeoMap'
 import GeoRounds from '@/components/geo/GeoRounds'
@@ -57,7 +57,7 @@ function Board({ title, rows, me }: { title: string; rows: LbRow[]; me: string }
   )
 }
 
-export default async function GeoHomePage() {
+export default async function GeoHomePage({ searchParams }: { searchParams: Promise<{ c?: string; k?: string }> }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect(loginUrl('/geo'))
@@ -87,6 +87,14 @@ export default async function GeoHomePage() {
 
   const [rounds, kinds] = await Promise.all([loadGeoRounds(supabase, user.id), availableGeoKinds(supabase)])
   const shapes = kinds.includes('shape')
+  // ?c=af&k=flags from a finished round: open on that continent and chip, if
+  // the chip has cards (and isn't Continents inside a continent).
+  const asked = parseDeckOptions(await searchParams)
+  const start = {
+    continent: asked.continent,
+    group: groupKinds(asked.group, kinds).length > 0 && !(asked.group === 'continents' && asked.continent !== 'all')
+      ? asked.group : 'all' as const,
+  }
   const cities = kinds.includes('city')
   const hasClass = (profile.class_code ?? '').trim() !== ''
   const [{ data: global }, { data: klass }] = await Promise.all([
@@ -139,7 +147,7 @@ export default async function GeoHomePage() {
 
         <div className="grid lg:grid-cols-2 gap-6">
           <div className="space-y-6 min-w-0">
-            <GeoMap history={Object.fromEntries(rows)} countries={mapCountries()} kinds={kinds} />
+            <GeoMap history={Object.fromEntries(rows)} countries={mapCountries()} kinds={kinds} initialTab={start.continent} initialGroup={start.group} />
             <GeoRounds rounds={rounds} />
           </div>
           <div className="space-y-8 min-w-0">

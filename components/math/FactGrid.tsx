@@ -29,13 +29,21 @@ const FDP_HEAD: Record<string, [string, string]> = {
   pd: ['%', '→ dec'], pf: ['%', '→ frac'], df: ['dec', '→ frac'],
 }
 
-export default function FactGrid({ history, topics = ['times', 'equiv', 'fdp'], readOnly = false }: {
+export default function FactGrid({ history, topics = ['times', 'equiv', 'fdp'], readOnly = false, initialTab = 'mul' }: {
   history: Record<string, FactHistoryRow>
   topics?: Topic[]
   /** Someone else's map (an admin viewing a student): no Play button. */
   readOnly?: boolean
+  /** From /math?tab=div: a finished round lands back on its own tab. */
+  initialTab?: MapTab
 }) {
-  const [tab, setTab] = useState<MapTab>('mul')
+  const [tab, setTabState] = useState<MapTab>(initialTab)
+  // Keep the URL on the tab too, so Back from a round started here returns
+  // to it. Not on someone else's map: that page has its own URL.
+  const setTab = (t: MapTab) => {
+    setTabState(t)
+    if (!readOnly) window.history.replaceState(null, '', t === 'mul' ? '/math' : `/math?tab=${t}`)
+  }
   const st = (k: string) => cardState(history[k])
 
   let table: React.ReactNode
