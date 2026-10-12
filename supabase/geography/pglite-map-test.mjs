@@ -1,4 +1,4 @@
-// PGlite run of the Geography map migration (NNN_geography_map.sql) on top
+// PGlite run of the Geography map migration (070_geography_map.sql) on top
 // of 062-069, against the same stub of the Supabase schema as
 // pglite-test.mjs (auth.users, auth.uid(), profiles with is_admin,
 // achievement_definitions, user_achievements, roles anon and authenticated,
@@ -20,7 +20,7 @@ import { PGlite } from '@electric-sql/pglite'
 import fs from 'node:fs'
 
 const REPO = process.env.REPO ?? '/Users/robert/PrepClutch'
-const MIG = process.env.MIGRATION ?? 'NNN_geography_map.sql'
+const MIG = process.env.MIGRATION ?? '070_geography_map.sql'
 await import(`${REPO}/supabase/geography/ts-resolve.mts`)
 const read = f => fs.readFileSync(`${REPO}/supabase/migrations/${f}`, 'utf8')
 const SQL = read(MIG)

@@ -1,9 +1,9 @@
-// Generates supabase/migrations/NNN_geography_map.sql (Geography phase 2:
+// Generates supabase/migrations/070_geography_map.sql (Geography phase 2:
 // Name that country + Pin the map) from lib/geo.ts, lib/geo-pin.ts, the
 // already generated 069 migration (for the award function, copied exactly)
-// and NNN.template.sql. Run:
+// and 070.template.sql. Run:
 //
-//   node supabase/geography/map-cards.mts               writes NNN_geography_map.sql
+//   node supabase/geography/map-cards.mts               writes 070_geography_map.sql
 //   node supabase/geography/map-cards.mts --number 070  writes 070_geography_map.sql
 //
 // Refuses to write a file whose string literals contain ; $ or -- because
@@ -23,7 +23,7 @@ const pin = await import('../../lib/geo-pin.ts')
 const here = path.dirname(fileURLToPath(import.meta.url))
 const root = path.resolve(here, '../..')
 const ni = process.argv.indexOf('--number')
-const NUM = ni > 0 ? process.argv[ni + 1] : 'NNN'
+const NUM = ni > 0 ? process.argv[ni + 1] : '070'
 if (!/^(NNN|\d{3})$/.test(NUM)) { console.error(`bad --number ${NUM}`); process.exit(1) }
 
 const RISKY = /;|\$|--/
@@ -92,7 +92,7 @@ const p1points = phase1.reduce((s, c) => s + c.points, 0)
 const maxPts = all.reduce((s, c) => s + c.points, 0)
 const shapeScore = geo.KIND_SCORE.shape
 
-let sql = fs.readFileSync(path.join(here, 'NNN.template.sql'), 'utf8')
+let sql = fs.readFileSync(path.join(here, '070.template.sql'), 'utf8')
   .replace('__ROWS__', rows.join(',\n'))
   .replace('__BADGE_ROWS__', badgeRows)
   .replace('__RETOTAL__', retotal)

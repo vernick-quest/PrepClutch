@@ -1,4 +1,4 @@
--- NNN — Geography map: Name that country cards, Pin the map
+-- 070 — Geography map: Name that country cards, Pin the map
 --
 -- Phase 2 of Geography (069 is phase 1 and must be applied first). Additive:
 -- nothing here changes or removes an existing card, history row or award.
