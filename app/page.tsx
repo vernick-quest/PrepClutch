@@ -75,6 +75,14 @@ export default async function DashboardPage() {
     trainingCounts.set(r.section, (trainingCounts.get(r.section) ?? 0) + 1)
   }
 
+  // Math Facts entry point. Shown only once migration 062 exists, so students
+  // never land on a page that is still waiting for its table.
+  const { error: factsError } = await supabase
+    .from('fact_history')
+    .select('fact_key', { head: true, count: 'exact' })
+    .eq('user_id', user.id)
+  const mathFactsReady = !factsError
+
   type MasteryRow = { section: string; score: number; max_score: number; correct: number; seen: number; total: number }
   const mastery = new Map<string, MasteryRow>(
     (masteryRaw ?? []).map((r: MasteryRow) => [r.section, r])
@@ -262,6 +270,22 @@ export default async function DashboardPage() {
             </div>
           </div>
         </div>
+
+        {mathFactsReady && (
+          <Link
+            href="/math"
+            className="flex items-center gap-4 rounded-2xl border border-amber-500/25 bg-gradient-to-r from-amber-500/10 to-transparent px-5 py-4 transition-all hover:border-amber-500/50 hover:scale-[1.005]"
+          >
+            <span className="text-3xl">🧮</span>
+            <div className="flex-1">
+              <p className="font-bold text-white">Math Facts</p>
+              <p className="text-xs text-zinc-400">
+                Multiplication and division flash cards, with their own Fact Points and leaderboard.
+              </p>
+            </div>
+            <span className="text-amber-300 font-bold">→</span>
+          </Link>
+        )}
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Leaderboards */}
