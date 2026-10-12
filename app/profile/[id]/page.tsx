@@ -7,14 +7,17 @@ import Footer from '@/components/ui/Footer'
 import AttemptReview from '@/components/quiz/AttemptReview'
 import { SECTION_MASTERY_CATEGORY, MATH_FACTS_CATEGORY, GEOGRAPHY_CATEGORY, badgeEmojiStyle, sectionMasteryTier, compareBadges, isSectionComplete } from '@/lib/badges'
 import type { Section, QuizAnswer } from '@/types/database'
-import { loginUrl } from '@/lib/tracks'
+import { loginUrl, TRACK_HOME } from '@/lib/tracks'
+import type { Track } from '@/lib/tracks'
+import TrackSwitcher from '@/components/ui/TrackSwitcher'
+import { MAX_FACT_POINTS } from '@/lib/math-facts'
 import FactGrid from '@/components/math/FactGrid'
 import MathRounds from '@/components/math/MathRounds'
 import { loadFactHistory, loadRounds, availableTopics } from '@/lib/math-history'
 import GeoMap from '@/components/geo/GeoMap'
 import GeoRounds from '@/components/geo/GeoRounds'
 import { loadGeoHistory, loadGeoRounds, availableGeoKinds } from '@/lib/geo-history'
-import { mapCountries } from '@/lib/geo'
+import { mapCountries, maxGeoPoints } from '@/lib/geo'
 
 export const dynamic = 'force-dynamic'
 
@@ -35,17 +38,38 @@ const RARITY_STYLE: Record<string, { border: string; bg: string; text: string; g
   Ascendant: { border: '#06b6d4aa', bg: '#001a1e', text: '#67e8f9', glow: '0 0 56px #06b6d488' },
 }
 
-export default async function PublicProfilePage({ params }: { params: Promise<{ id: string }> }) {
+function Stat({ value, label, accent = false }: { value: number; label: string; accent?: boolean }) {
+  return (
+    <div className={`${accent ? 'bg-amber-500/10 border-amber-500/20' : 'bg-white/5 border-white/10'} border rounded-xl px-4 py-2 text-center`}>
+      <div className={`text-2xl font-black ${accent ? 'text-amber-400' : 'text-white'}`}>{value}</div>
+      <div className="text-xs text-zinc-400">{label}</div>
+    </div>
+  )
+}
+
+const TRACK_NAME: Record<Track, string> = { hspt: 'HSPT', math: 'Math Facts', geo: 'Geography' }
+const HSPT_CATEGORIES = ['First Completion', 'Perfect Score', 'Speed', 'Combo', 'Milestone', SECTION_MASTERY_CATEGORY]
+
+// One track at a time, like your own profile: the one the link came from
+// (a Math Facts leaderboard links ?t=math), else the student's home track.
+// The switcher under the name flips between them.
+export default async function PublicProfilePage({ params, searchParams }: {
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ t?: string }>
+}) {
   const { id } = await params
+  const asked = (await searchParams).t
+  const askedTrack: Track | null = asked === 'hspt' || asked === 'math' || asked === 'geo' ? asked : null
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect(loginUrl(`/profile/${id}`))
 
   // Redirect to own profile page which has extra controls
-  if (id === user.id) redirect('/profile')
+  if (id === user.id) redirect(askedTrack ? `/profile?t=${askedTrack}` : '/profile')
 
   const { data: profile } = await supabase.from('profiles').select('*').eq('id', id).single()
   if (!profile) notFound()
+  const track: Track = askedTrack ?? ((profile as Record<string, unknown>).home_track === 'math' ? 'math' : 'hspt')
 
   // Admins get the full picture: this student's email (display names are not
   // unique) and their expandable answer review. Everyone else keeps seeing
@@ -63,16 +87,16 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
 
   // Admins also see this student's Math Facts progress (migration 068 lets
   // an admin read it). Everyone else sees only the badges.
-  const math = viewerIsAdmin
+  const math = viewerIsAdmin && track === 'math'
     ? await Promise.all([loadFactHistory(supabase, id), loadRounds(supabase, id), availableTopics(supabase)])
     : null
   // Same for Geography (its migration gives admins read access). Before that
   // migration is applied, ready is false and the section does not render.
-  const geo = viewerIsAdmin
+  const geo = viewerIsAdmin && track === 'geo'
     ? await Promise.all([loadGeoHistory(supabase, id), loadGeoRounds(supabase, id), availableGeoKinds(supabase)])
     : null
 
-  const { data: attempts } = await supabase
+  const { data: attempts } = track !== 'hspt' ? { data: null } : await supabase
     .from('quiz_attempts')
     .select('*')
     .eq('user_id', id)
@@ -89,13 +113,13 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
     .select('*')
     .order('category')
 
-  const { data: leaderboardEntry } = await supabase
+  const { data: leaderboardEntry } = track !== 'hspt' ? { data: null } : await supabase
     .from('leaderboard_view')
     .select('*')
     .eq('user_id', id)
     .single()
 
-  const { data: masteryRaw } = await supabase
+  const { data: masteryRaw } = track !== 'hspt' ? { data: null } : await supabase
     .rpc('get_section_mastery', { p_user_id: id })
 
   type MasteryRow = { section: string; score: number; max_score: number; correct: number; seen: number; total: number }
@@ -106,19 +130,33 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
   const totalAttempts = attempts?.length ?? 0
   const earnedKeys = new Set(userAchievements?.map(a => a.achievement_key) ?? [])
   const displayAvatarUrl = (profile as Record<string, unknown>).avatar_url as string | null
-  const badgeCategories = ['First Completion', 'Perfect Score', 'Speed', 'Combo', 'Milestone', SECTION_MASTERY_CATEGORY, MATH_FACTS_CATEGORY, GEOGRAPHY_CATEGORY]
+  const badgeCategories = track === 'math' ? [MATH_FACTS_CATEGORY] : track === 'geo' ? [GEOGRAPHY_CATEGORY] : HSPT_CATEGORIES
+  const trackBadges = (allAchievements ?? []).filter(b => badgeCategories.includes(b.category))
+  const trackEarned = trackBadges.filter(b => earnedKeys.has(b.key)).length
+
+  // Points for Math Facts and Geography come from the public leaderboards,
+  // so classmates see them too; the maps and rounds below stay admin-only.
+  const { data: board } = track === 'hspt' ? { data: null } : await supabase
+    .from(track === 'math' ? 'math_leaderboard_view' : 'geo_leaderboard_view')
+    .select('points, fluent').eq('user_id', id).maybeSingle()
+  const maxPoints = track === 'math'
+    ? MAX_FACT_POINTS
+    : track === 'geo' ? maxGeoPoints(geo ? geo[2] : undefined) : 0
 
   return (
     <div className="min-h-screen bg-[#0a0a0f]">
       <nav className="border-b border-white/5 sticky top-0 z-50 bg-[#0a0a0f]/80 backdrop-blur-sm">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="text-zinc-400 hover:text-white transition-colors text-sm">← Home</Link>
-          <h1 className="text-lg font-bold text-white">{profile.display_name}</h1>
-          <div />
+          <Link href={TRACK_HOME[track]} className="text-zinc-400 hover:text-white transition-colors text-sm">← {TRACK_NAME[track]}</Link>
+          <h1 className="text-lg font-bold text-white truncate w-0 flex-1 text-center px-2">{profile.display_name}</h1>
+          <div className="w-16 shrink-0" />
         </div>
       </nav>
 
       <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
+        <div className="flex justify-center">
+          <TrackSwitcher current={track} hrefFor={t => `/profile/${id}?t=${t}`} />
+        </div>
         {/* Profile header */}
         <div className="bg-white/5 border border-white/10 rounded-3xl p-8 flex flex-col sm:flex-row items-center sm:items-start gap-6">
           <div className="shrink-0">
@@ -140,23 +178,20 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
               </p>
             )}
             <div className="flex flex-wrap gap-3 mt-4 justify-center sm:justify-start">
-              <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-2 text-center">
-                <div className="text-2xl font-black text-amber-400">{leaderboardEntry?.aggregate_score ?? 0}</div>
-                <div className="text-xs text-zinc-400">Clutch Points</div>
-              </div>
-              <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-center">
-                <div className="text-2xl font-black text-white">{totalAttempts}</div>
-                <div className="text-xs text-zinc-400">Quizzes Taken</div>
-              </div>
-              <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-center">
-                <div className="text-2xl font-black text-white">{earnedKeys.size}</div>
-                <div className="text-xs text-zinc-400">Badges Earned</div>
-              </div>
+              {track === 'hspt' && <Stat accent value={leaderboardEntry?.aggregate_score ?? 0} label="Clutch Points" />}
+              {track === 'hspt' && <Stat value={totalAttempts} label="Quizzes Taken" />}
+              {track !== 'hspt' && (
+                <Stat accent value={board?.points ?? 0}
+                  label={`${track === 'math' ? 'Fact' : 'Explorer'} Points${maxPoints ? ` / ${maxPoints}` : ''}`} />
+              )}
+              {track !== 'hspt' && <Stat value={board?.fluent ?? 0} label={track === 'math' ? 'Facts Mastered' : 'Cards Mastered'} />}
+              <Stat value={trackEarned} label={`${TRACK_NAME[track]} Badges`} />
             </div>
           </div>
         </div>
 
         {/* Section performance */}
+        {track === 'hspt' && (
         <div>
           <h3 className="text-xl font-bold text-white mb-4">📊 Performance by Section</h3>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -190,11 +225,13 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
           </div>
         </div>
 
+        )}
+
         {/* Badges */}
         <div>
           <div className="flex items-center gap-3 mb-4">
             <h3 className="text-xl font-bold text-white">🏅 Badges</h3>
-            <span className="text-sm text-zinc-500">{earnedKeys.size} / {allAchievements?.length ?? 0}</span>
+            <span className="text-sm text-zinc-500">{trackEarned} / {trackBadges.length}</span>
           </div>
           {badgeCategories.map(cat => {
             // Easiest first, same ordering the Bestiary uses. The query only

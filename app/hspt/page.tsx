@@ -282,7 +282,7 @@ export default async function DashboardPage() {
                               {entry.display_name}
                             </Link>
                           ) : (
-                            <Link href={`/profile/${entry.user_id}`} className="font-semibold text-white hover:text-amber-400 transition-colors">
+                            <Link href={`/profile/${entry.user_id}?t=hspt`} className="font-semibold text-white hover:text-amber-400 transition-colors">
                               {entry.display_name}
                             </Link>
                           )}
@@ -372,7 +372,7 @@ export default async function DashboardPage() {
                                 {entry.display_name}
                               </Link>
                             ) : (
-                              <Link href={`/profile/${entry.user_id}`} className="font-semibold text-white hover:text-amber-400 transition-colors">
+                              <Link href={`/profile/${entry.user_id}?t=hspt`} className="font-semibold text-white hover:text-amber-400 transition-colors">
                                 {entry.display_name}
                               </Link>
                             )}

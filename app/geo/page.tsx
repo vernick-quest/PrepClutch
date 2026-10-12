@@ -42,7 +42,7 @@ function Board({ title, rows, me }: { title: string; rows: LbRow[]; me: string }
             )}
             <div className="flex-1 min-w-0">
               <Link
-                href={isMe ? '/profile' : `/profile/${r.user_id}`}
+                href={isMe ? '/profile?t=geo' : `/profile/${r.user_id}?t=geo`}
                 className={`block font-semibold truncate transition-colors hover:text-sky-300 ${isMe ? 'text-sky-300' : 'text-white'}`}
               >
                 {r.display_name}{isMe && <span className="text-xs text-sky-400/70"> (you)</span>}
