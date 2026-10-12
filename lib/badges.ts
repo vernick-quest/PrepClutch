@@ -191,7 +191,7 @@ export function mathFactsGroup(key: string): (typeof MATH_FACTS_GROUPS)[number] 
 export const GEOGRAPHY_GROUPS = ['Overall', 'Continents', 'Card types'] as const
 
 const GEO_CONTINENT_ORDER = ['af', 'as', 'eu', 'na', 'sa', 'oc']
-const GEO_TYPE_ORDER = ['capitals', 'flags', 'money', 'languages', 'continents', 'shapes']
+const GEO_TYPE_ORDER = ['capitals', 'flags', 'money', 'languages', 'continents', 'shapes', 'cities']
 
 function geoOrder(key: string): [number, number] | null {
   const m = /^geo_([a-z]+)_(\w+)$/.exec(key)
@@ -200,7 +200,12 @@ function geoOrder(key: string): [number, number] | null {
   const n = rest === 'all' ? Infinity : Number(rest)
   if (kind === 'mastered') return [0, n]
   if (kind === 'perfect')  return [100, 0]
-  if (kind === 'continent') return [1000 + GEO_CONTINENT_ORDER.indexOf(rest), 0]
+  // Each continent's ladder in order: geo_continent_af_25 (cub), _half
+  // (young), then geo_continent_af (the full animal).
+  if (kind === 'continent') {
+    const [ct, step] = rest.split('_')
+    return [1000 + GEO_CONTINENT_ORDER.indexOf(ct), step === '25' ? 1 : step === 'half' ? 2 : 3]
+  }
   const t = GEO_TYPE_ORDER.indexOf(kind)
   return t >= 0 ? [2000 + t * 10, n] : [9000, 0]
 }
