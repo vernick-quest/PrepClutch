@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { AVATAR_COLORS } from '@/lib/constants'
+import { AVATAR_COLORS, normalizeClassCode } from '@/lib/constants'
 
 export default function OnboardingPage() {
   const router = useRouter()
@@ -15,13 +15,26 @@ export default function OnboardingPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!displayName.trim() || !classCode.trim()) {
-      setError('Please fill in all fields.')
+    if (!displayName.trim()) {
+      setError('Please enter a display name.')
       return
     }
 
     setLoading(true)
     setError('')
+
+    // The class code is optional, but a typo must not silently drop a student
+    // into a class of one. Blank = no class (global leaderboard only).
+    const code = classCode.trim()
+    if (code) {
+      const { data: found } = await createClient()
+        .from('classes').select('code').eq('code', code).maybeSingle()
+      if (!found) {
+        setError(`We couldn't find class code ${code}. Check it with your teacher, or leave it blank.`)
+        setLoading(false)
+        return
+      }
+    }
 
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -34,7 +47,7 @@ export default function OnboardingPage() {
     const { error: insertError } = await supabase.from('profiles').insert({
       id: user.id,
       display_name: displayName.trim(),
-      class_code: classCode.trim().toUpperCase(),
+      class_code: code,
       avatar_color: selectedColor,
     })
 
@@ -103,16 +116,20 @@ export default function OnboardingPage() {
 
           {/* Class code */}
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-2">Class / Group Code</label>
+            <label className="block text-sm font-medium text-zinc-300 mb-2">
+              Class Code <span className="font-normal text-zinc-500">(optional)</span>
+            </label>
             <input
               type="text"
               value={classCode}
-              onChange={e => setClassCode(e.target.value.toUpperCase())}
-              placeholder="e.g. MRS-SMITH-2025"
-              maxLength={20}
+              onChange={e => setClassCode(normalizeClassCode(e.target.value))}
+              placeholder="Leave blank if you don't have one"
               className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30 transition-colors font-mono"
             />
-            <p className="mt-1 text-xs text-zinc-500">Ask your teacher for the class code.</p>
+            <p className="mt-1 text-xs text-zinc-500">
+              Only if a teacher or tutor gave you one. It puts you on your class
+              leaderboard. You can add it later from your profile.
+            </p>
           </div>
 
           {error && (
