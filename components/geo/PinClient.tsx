@@ -13,6 +13,11 @@
 // The whole round is saved at the end through record_geo_pin_round, which
 // scores the pins again itself. Before the map migration is applied
 // (canSave false) the round still plays, it just is not saved.
+//
+// Each place is a pin card too (074): a Bullseye or Great pin within the
+// card's target time masters it, for Explorer Points. The server judges that
+// in the same call; `canMaster` (074 is applied) turns on the end screen's
+// Explorer Points and newly mastered list.
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import Link from 'next/link'
@@ -21,11 +26,12 @@ import {
   PIN_ACCURACY, PIN_VERDICT_LABEL, pinScore, pinDeckId, pinVerdict,
 } from '@/lib/geo-pin'
 import type { PinLevel, PinPlace } from '@/lib/geo-pin'
-import { CONTINENT_LABEL, CONTINENT_EMOJI, homeHref } from '@/lib/geo-meta'
+import { CONTINENT_LABEL, CONTINENT_EMOJI, KIND_SCORE, homeHref, pinCardKey } from '@/lib/geo-meta'
 import type { Continent } from '@/lib/geo-meta'
 import WorldMap, { useWorldMap } from '@/components/geo/WorldMap'
 import type { LatLon } from '@/components/geo/WorldMap'
-import PinEnd, { usePinSave } from '@/components/geo/PinEnd'
+import PinEnd, { usePinSave, fastEnough } from '@/components/geo/PinEnd'
+import type { PinMastery } from '@/components/geo/PinEnd'
 
 interface Pin { tap: LatLon | null; ms: number; km: number | null; points: number }
 
@@ -33,14 +39,16 @@ const SHOW_MS = 3200
 const fmtKm = (km: number) => (km < 10 ? km.toFixed(1) : Math.round(km).toLocaleString('en-US'))
 const VERDICT_TONE = { bull: 'text-emerald-300', great: 'text-emerald-300', close: 'text-sky-300', off: 'text-amber-300', way: 'text-rose-300', skip: 'text-zinc-400' }
 
-export default function PinClient({ places, continent, level, canSave }: {
+export default function PinClient({ places, continent, level, canSave, canMaster = false }: {
   places: PinPlace[]
   continent: Continent
   level: PinLevel
   canSave: boolean
+  /** The catalogue has pin cards (074): the round masters them. */
+  canMaster?: boolean
 }) {
   const deck = pinDeckId(continent, level)
-  const home = homeHref({ continent, group: 'all' })
+  const home = homeHref({ continent, group: 'pin' })
   const { shapes, failed } = useWorldMap()
   const box = useMemo(() => pinViewBox(continent, places), [continent, places])
   const [idx, setIdx] = useState(0)
@@ -71,6 +79,16 @@ export default function PinClient({ places, continent, level, canSave }: {
   }, [pins.length, idx])
   const next = () => { if (pins.length === idx + 1) setIdx(i => i + 1) }
 
+  // The round's pin cards. Perfect = every pin Bullseye or Great and fast
+  // enough to master, judged as the server judges it.
+  const mastery: PinMastery | null = canMaster && canSave ? {
+    cards: places.map(pl => ({ key: pinCardKey(pl.key), label: `${pl.kind === 'city' ? '🏙️' : '🏛️'} ${pl.name}`, points: KIND_SCORE.pin.points })),
+    perfect: pins.length === places.length && pins.every(p => {
+      const v = pinVerdict(continent, p.km)
+      return fastEnough(v === 'bull' || v === 'great', p.ms, KIND_SCORE.pin.targetMs)
+    }),
+  } : null
+
   // Saved once, at the end. The server's score is the one that counts.
   const save = usePinSave(done, canSave, deck, 'record_geo_pin_round', () => ({
     p_deck: deck,
@@ -80,7 +98,7 @@ export default function PinClient({ places, continent, level, canSave }: {
       lon: p.tap ? Math.round(p.tap.lon * 1e4) / 1e4 : null,
       ms: p.ms,
     })),
-  }))
+  }), mastery)
 
   const total = pins.reduce((s, p) => s + p.points, 0)
   const acc = PIN_ACCURACY[continent]
@@ -94,6 +112,7 @@ export default function PinClient({ places, continent, level, canSave }: {
         level={level}
         mode="place"
         save={save}
+        mastery={mastery}
         footnote={`On the ${CONTINENT_LABEL[continent]} map: 100 points within ${acc.bull} km, fewer the farther off, none from ${acc.zero.toLocaleString('en-US')} km. Up to +10 for speed.`}
         rows={places.map((pl, i) => {
           const p = pins[i]

@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { buildDeck, parseDeckOptions, deckId, homeHref } from '@/lib/geo'
+import { buildDeck, parseDeckOptions, deckId, homeHref, playHref, PIN_KINDS } from '@/lib/geo'
 import { loadGeoHistory, availableGeoKinds } from '@/lib/geo-history'
 import GeoClient from '@/components/geo/GeoClient'
 import RoundGuard from '@/components/ui/RoundGuard'
@@ -23,6 +23,8 @@ export default async function GeoPlayPage({ searchParams }: Props) {
   // Only kinds the catalogue has: a shape card before the map migration
   // would be refused when saved.
   const opts = parseDeckOptions(await searchParams)
+  // Find and Pin are played in Pin the map, never as a quiz deck.
+  if ((PIN_KINDS as string[]).includes(opts.group)) redirect(playHref(opts))
   const deck = buildDeck(opts, rows, await availableGeoKinds(supabase))
   if (deck.length === 0) redirect('/geo')
 

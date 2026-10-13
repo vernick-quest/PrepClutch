@@ -3,6 +3,7 @@
 // just to draw a tab bar. lib/geo.ts re-exports everything in this file.
 
 import type { Continent } from './geo-data'
+import { pinHref, pinPlaceKey } from './geo-pin'
 
 export type { Continent }
 
@@ -22,33 +23,52 @@ export const CONTINENT_EMOJI: Record<Continent, string> = {
   af: '🦁', as: '🐼', eu: '🦔', na: '🦅', sa: '🦙', oc: '🦘',
 }
 
-export type GeoKind = 'cap' | 'capr' | 'flag' | 'flagr' | 'cur' | 'lang' | 'cont' | 'shape' | 'city'
+export type GeoKind = 'cap' | 'capr' | 'flag' | 'flagr' | 'cur' | 'lang' | 'cont' | 'shape' | 'city' | 'find' | 'pin'
 // Currency and language cards ('cur', 'lang') are built and validated but NOT
 // in the catalogue: Robert judged them too hard for the age group. Their data
 // stays in lib/geo-data.ts so they can return later as an opt-in Expert mode.
 export const EXPERT_KINDS: GeoKind[] = ['cur', 'lang']
-export const KINDS: GeoKind[] = ['cap', 'capr', 'flag', 'flagr', 'cont', 'shape', 'city']
+/** Every kind in the catalogue (geo_cards), once every migration is applied. */
+export const KINDS: GeoKind[] = ['cap', 'capr', 'flag', 'flagr', 'cont', 'shape', 'city', 'find', 'pin']
 /** The kinds migration 069 loaded. 'shape' (Name that country, on the map)
  *  and 'city' (Which country is Rio de Janeiro in?) arrive with the map
  *  migration (070); until it is applied the catalogue has neither and pages
  *  offer only these (see availableGeoKinds). */
 export const KINDS_069: GeoKind[] = ['cap', 'capr', 'flag', 'flagr', 'cont']
-/** One card per country and kind. City cards are one per city instead. */
-export const COUNTRY_KINDS: GeoKind[] = KINDS.filter(k => k !== 'city')
+/** The kinds the catalogue had after 070 (071-073 added none). The 070 and
+ *  072 generators and their tests count these, so they still regenerate
+ *  byte-identical files now that 074 has added more. */
+export const KINDS_070: GeoKind[] = ['cap', 'capr', 'flag', 'flagr', 'cont', 'shape', 'city']
+/** Pin the map's cards (074): 'find' (Find Kenya on the map, one per country
+ *  Find the country asks) and 'pin' (Pin Nairobi, one per Pin the map
+ *  place). They are mastered by playing Pin the map, never in a quiz deck:
+ *  they have no four choices, and deckPool leaves them out. */
+export const PIN_KINDS: GeoKind[] = ['find', 'pin']
+/** The multiple-choice kinds a quiz round can ask. */
+export const QUIZ_KINDS: GeoKind[] = KINDS.filter(k => !PIN_KINDS.includes(k))
+/** One card per country and kind. City cards are one per city, pin cards
+ *  one per Pin the map place (capitals and cities) instead. */
+export const COUNTRY_KINDS: GeoKind[] = KINDS.filter(k => k !== 'city' && k !== 'pin')
 
 /** The groups a student can pick to play. One group = one or two kinds. */
-export type KindGroup = 'all' | 'capitals' | 'flags' | 'money' | 'languages' | 'continents' | 'shapes' | 'cities'
-export const GROUPS: KindGroup[] = ['all', 'capitals', 'flags', 'continents', 'shapes', 'cities']
+// 'find' and 'pin' are the Pin the map groups: on the fact map they show
+// those cards, and ▶ Play starts Pin the map (playHref), not a quiz.
+// 'all' on the map is every card; a quiz deck of 'all' is QUIZ_KINDS only.
+export type KindGroup = 'all' | 'capitals' | 'flags' | 'money' | 'languages' | 'continents' | 'shapes' | 'cities' | 'find' | 'pin'
+export const GROUPS: KindGroup[] = ['all', 'capitals', 'flags', 'continents', 'shapes', 'cities', 'find', 'pin']
 export const GROUP_KINDS: Record<KindGroup, GeoKind[]> = {
   all: KINDS, capitals: ['cap', 'capr'], flags: ['flag', 'flagr'],
   money: ['cur'], languages: ['lang'], continents: ['cont'], shapes: ['shape'], cities: ['city'],
+  find: ['find'], pin: ['pin'],
 }
 export const GROUP_LABEL: Record<KindGroup, string> = {
   all: 'Everything', capitals: 'Capitals', flags: 'Flags', money: 'Money',
   languages: 'Languages', continents: 'Continents', shapes: 'Shapes', cities: 'Cities',
+  find: 'Find', pin: 'Pin',
 }
 export const GROUP_EMOJI: Record<KindGroup, string> = {
   all: '✨', capitals: '🏛️', flags: '🚩', money: '🪙', languages: '💬', continents: '🗺️', shapes: '🧩', cities: '🏙️',
+  find: '🗺️', pin: '📍',
 }
 /** A group's kinds that the catalogue has (empty = do not offer the group). */
 export const groupKinds = (g: KindGroup, available: GeoKind[]) => GROUP_KINDS[g].filter(k => available.includes(k))
@@ -68,11 +88,19 @@ export const KIND_SCORE: Record<GeoKind, { points: number; targetMs: number }> =
   // (the city is not the one the country is known for), but the cities are
   // ones kids have heard of, so the same 10 points and 7 seconds.
   city:  { points: 10, targetMs: 7000 },
+  // Pin the map (074). Finding a country on a blank map is the same map
+  // skill as naming one from its outline, recalled rather than recognised,
+  // so a shape card's 15 points and 8 seconds (the extra second for taking
+  // in the map). Pinning a place within a Great verdict is the most precise
+  // skill in Geography, but the prompt names its country, so it is worth
+  // the same 15 and 8 seconds rather than more.
+  find:  { points: 15, targetMs: 8000 },
+  pin:   { points: 15, targetMs: 8000 },
 }
 export const KIND_LABEL: Record<GeoKind, string> = {
   cap: 'Capital', capr: 'Capital → country', flag: 'Flag', flagr: 'Find the flag',
   cur: 'Currency', lang: 'Language', cont: 'Continent', shape: 'Name that country',
-  city: 'City → country',
+  city: 'City → country', find: 'Find on the map', pin: 'Pin on the map',
 }
 
 export interface GeoOption {
@@ -105,6 +133,9 @@ export interface GeoCard {
 }
 
 export const geoKey = (kind: GeoKind, iso: string) => `${kind}:${iso.toLowerCase()}`
+/** A Pin the map place's card: 'pin:cap:ke', 'pin:city:rio-de-janeiro'
+ *  (the place key of lib/geo-pin.ts, which geo_pin_places is keyed by). */
+export const pinCardKey = (placeKey: string) => `pin:${placeKey.toLowerCase()}`
 
 /** Path of a bundled flag (public/flags, from flag-icons, MIT). */
 export const flagSrc = (iso: string) => `/flags/${iso.toLowerCase()}.svg`
@@ -120,6 +151,14 @@ export function parseDeckOptions(p: { c?: string; k?: string }): DeckOptions {
   const continent = (CONTINENTS as string[]).includes(p.c ?? '') ? p.c as Continent : 'all'
   const group = (GROUPS as string[]).includes(p.k ?? '') ? p.k as KindGroup : 'all'
   return { continent, group }
+}
+
+/** Where ▶ Play goes: a quiz deck, or Pin the map for the Find and Pin
+ *  groups (on World, its picker, on the matching step). */
+export function playHref(o: DeckOptions): string {
+  if (o.group === 'find') return o.continent === 'all' ? '/geo/pin' : pinHref(o.continent, 1, 'country')
+  if (o.group === 'pin') return o.continent === 'all' ? '/geo/pin?m=place' : pinHref(o.continent, 1, 'place')
+  return deckHref(o)
 }
 
 export function deckHref(o: DeckOptions): string {
@@ -167,14 +206,22 @@ export function geoCardState(h: GeoHistoryRow | undefined): GeoCardState {
 }
 
 /** One map tile: a country, without the rest of its data. `cities` are its
- *  famous cities' card keys and names (lib/geo-cities.ts), often none. */
+ *  famous cities' card keys and names (lib/geo-cities.ts), often none.
+ *  `skip` lists the per-country kinds it has NO card of (a disputed outline
+ *  has no shape card, Israel no find card); absent when there are none. */
 export interface MapCountry {
   iso: string; name: string; continent: Continent; capital: string
   cities: { key: string; name: string }[]
+  skip?: GeoKind[]
 }
 
 /** The cards one kind has for a country: one per country, except cities
- *  (one per famous city, so none for most countries). */
+ *  (one per famous city, so none for most countries) and pins (its
+ *  capital's and each famous city's), and none of a kind it skips. */
 export function countryCardKeys(c: MapCountry, kind: GeoKind): string[] {
-  return kind === 'city' ? c.cities.map(x => x.key) : [geoKey(kind, c.iso)]
+  if (c.skip?.includes(kind)) return []
+  if (kind === 'city') return c.cities.map(x => x.key)
+  // A city card's key is the city's place key too ('city:rio-de-janeiro').
+  if (kind === 'pin') return [pinCardKey(pinPlaceKey('capital', c.iso)), ...c.cities.map(x => pinCardKey(x.key))]
+  return [geoKey(kind, c.iso)]
 }

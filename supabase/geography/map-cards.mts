@@ -37,11 +37,13 @@ function q(s: string): string {
 }
 
 // ── Cards ────────────────────────────────────────────────────────────────────
-const NEW_KINDS = geo.KINDS.filter(k => !geo.KINDS_069.includes(k))
+// 070's kinds (KINDS_070), not KINDS: 074 added find and pin cards since,
+// and this must still regenerate 070 exactly as applied.
+const NEW_KINDS = geo.KINDS_070.filter(k => !geo.KINDS_069.includes(k))
 if (NEW_KINDS.join() !== 'shape,city') { console.error(`expected exactly the shape and city kinds to be new, found ${NEW_KINDS}`); process.exit(1) }
 const shapes = geo.geoCards(['shape'])
 const cities = geo.geoCards(['city'])
-const all = geo.allGeoCards()
+const all = geo.geoCards(geo.KINDS_070)
 const phase1 = geo.geoCards(geo.KINDS_069)
 const fresh = geo.geoCards(NEW_KINDS)
 if (phase1.length + fresh.length !== all.length) { console.error('the catalogue is not 069 cards + new cards'); process.exit(1) }

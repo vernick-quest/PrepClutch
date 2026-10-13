@@ -43,7 +43,9 @@ const RUNGS: Record<Ct, [[string, string, string, string], [string, string, stri
        ['Young Kangaroo', '🦘', 'Rare', 'Half of Oceania learned. It bounds from Sydney to Suva and lands every jump.']],
 }
 
-const countOf = (ct: Ct) => geo.allGeoCards().filter((c: any) => c.continent === ct && c.kind !== 'cont').length
+// 070's kinds (KINDS_070): 074 added find and pin cards since, and this must
+// still regenerate 072 exactly as applied (074 re-derives the half rungs).
+const countOf = (ct: Ct) => geo.geoCards(geo.KINDS_070).filter((c: any) => c.continent === ct && c.kind !== 'cont').length
 const q = (s: string) => {
   if (/[;$]|--/.test(s)) { console.error('risky characters in literal:', s.slice(0, 60)); process.exit(1) }
   return `'${s.replace(/'/g, "''")}'`

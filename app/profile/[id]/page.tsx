@@ -139,9 +139,11 @@ export default async function PublicProfilePage({ params, searchParams }: {
   const { data: board } = track === 'hspt' ? { data: null } : await supabase
     .from(track === 'math' ? 'math_leaderboard_view' : 'geo_leaderboard_view')
     .select('points, fluent').eq('user_id', id).maybeSingle()
+  // Out of what the catalogue has (availableGeoKinds), not every kind lib/
+  // knows: before a Geography migration is applied its cards are not there.
   const maxPoints = track === 'math'
     ? MAX_FACT_POINTS
-    : track === 'geo' ? maxGeoPoints(geo ? geo[2] : undefined) : 0
+    : track === 'geo' ? maxGeoPoints(geo ? geo[2] : await availableGeoKinds(supabase)) : 0
 
   return (
     <div className="min-h-screen bg-[#0a0a0f]">

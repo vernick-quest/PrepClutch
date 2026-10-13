@@ -13,6 +13,11 @@
 // Saved at the end through record_geo_country_round (073), which re-checks
 // every tap's tiny-ring and disputed-land rules and scores the round itself.
 // Until 073 is applied (canSave false) the round plays but is not saved.
+//
+// Each country is a find card too (074): found within the card's target
+// time masters it, for Explorer Points, judged by the server in the same
+// call. `canMaster` (074 is applied) turns on the end screen's Explorer
+// Points and newly mastered list.
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import Link from 'next/link'
@@ -21,11 +26,12 @@ import {
   COUNTRY_RING_KM, NEUTRAL_NAMES, countryDeckId, countryHit, countryPoints, disputedAreaAt,
 } from '@/lib/geo-pin'
 import type { CountryHow, PinCountry, PinLevel } from '@/lib/geo-pin'
-import { CONTINENT_LABEL, CONTINENT_EMOJI, homeHref } from '@/lib/geo-meta'
+import { CONTINENT_LABEL, CONTINENT_EMOJI, KIND_SCORE, geoKey, homeHref } from '@/lib/geo-meta'
 import type { Continent } from '@/lib/geo-meta'
 import WorldMap, { useWorldMap } from '@/components/geo/WorldMap'
 import type { LatLon, MapMark } from '@/components/geo/WorldMap'
-import PinEnd, { usePinSave } from '@/components/geo/PinEnd'
+import PinEnd, { usePinSave, fastEnough } from '@/components/geo/PinEnd'
+import type { PinMastery } from '@/components/geo/PinEnd'
 
 interface Pin {
   tap: LatLon | null
@@ -40,16 +46,18 @@ interface Pin {
 
 const SHOW_MS = 3200
 
-export default function CountryPinClient({ countries, names, continent, level, canSave }: {
+export default function CountryPinClient({ countries, names, continent, level, canSave, canMaster = false }: {
   countries: PinCountry[]
   /** Every UN member's display name by ISO, to say what was tapped. */
   names: Record<string, string>
   continent: Continent
   level: PinLevel
   canSave: boolean
+  /** The catalogue has find cards (074): the round masters them. */
+  canMaster?: boolean
 }) {
   const deck = countryDeckId(continent, level)
-  const home = homeHref({ continent, group: 'all' })
+  const home = homeHref({ continent, group: 'find' })
   const { shapes, failed } = useWorldMap()
   const box = useMemo(() => pinViewBox(continent, countries), [continent, countries])
   const a3Of = useMemo(() => new Map((shapes ?? []).filter(s => s.iso).map(s => [s.iso!, s.a3])), [shapes])
@@ -82,6 +90,13 @@ export default function CountryPinClient({ countries, names, continent, level, c
   }, [pins.length, idx])
   const next = () => { if (pins.length === idx + 1) setIdx(i => i + 1) }
 
+  // The round's find cards. Perfect = every country found fast enough to
+  // master, judged as the server judges it.
+  const mastery: PinMastery | null = canMaster && canSave ? {
+    cards: countries.map(c => ({ key: geoKey('find', c.iso), label: `🗺️ ${c.name}`, points: KIND_SCORE.find.points })),
+    perfect: pins.length === countries.length && pins.every(p => fastEnough(!!p.hit, p.ms, KIND_SCORE.find.targetMs)),
+  } : null
+
   const save = usePinSave(done, canSave, deck, 'record_geo_country_round', () => ({
     p_deck: deck,
     p_pins: pins.map((p, i) => ({
@@ -91,7 +106,7 @@ export default function CountryPinClient({ countries, names, continent, level, c
       lon: p.tap ? Math.round(p.tap.lon * 1e4) / 1e4 : null,
       ms: p.ms,
     })),
-  }))
+  }), mastery)
 
   /** What the student tapped, in words, without taking a side. */
   const tappedName = (p: Pin) => {
@@ -113,6 +128,7 @@ export default function CountryPinClient({ countries, names, continent, level, c
         level={level}
         mode="country"
         save={save}
+        mastery={mastery}
         footnote={`100 points for each country found, up to +10 for speed. Tiny countries count within ${COUNTRY_RING_KM} km of their capital.`}
         rows={countries.map((c, i) => {
           const p = pins[i]
