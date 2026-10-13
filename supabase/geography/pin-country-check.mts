@@ -291,5 +291,25 @@ const cap = (iso: string) => ({ iso, lat: C(iso).capitals[0].lat, lon: C(iso).ca
   check('Europe opens tighter than its region when the round allows', eu.e - eu.w < gm.REGION_BOX.eu.e - gm.REGION_BOX.eu.w)
 }
 
+// ── Coastlines: a tap just off a coast is that coast ────────────────────────
+{
+  // A tap on every asked country's capital finds it, even the ones the
+  // 1:50m coastline leaves in the sea (Lisbon, Stockholm, Dakar ...).
+  const askable = geo.COUNTRIES.filter(c => !geo.COUNTRY_NOT_ASKED.has(c.iso))
+  const offshore = askable.filter(c => !gm.shapeAt(shapes, cap(c.iso).lat, cap(c.iso).lon))
+  const lost = askable.filter(c => {
+    const t = cap(c.iso)
+    const code = gm.tapCode(gm.shapeNear(shapes, t.lat, t.lon, c.iso))
+    return !pin.countryHit({ iso: c.iso, lat: t.lat, lon: t.lon }, { code, lat: t.lat, lon: t.lon })
+  })
+  check(`a tap on the capital finds every asked country (${offshore.length} capitals are off the drawn coast)`, !lost.length, lost.map(c => c.iso).join(' '))
+  const near = (lat: number, lon: number, prefer?: string) => gm.tapCode(gm.shapeNear(shapes, lat, lon, prefer))
+  check('a sea tap 10 km off Lisbon is Portugal', near(38.72, -9.25, 'PT') === 'PT')
+  check('a sea tap 10 km off Lisbon is Portugal even when asked for Spain', near(38.72, -9.25, 'ES') === 'PT')
+  check('a tap 60 km out to sea off Lisbon is the sea', near(38.72, -9.85, 'PT') === null)
+  check('the middle of the Atlantic is the sea', near(30, -40, 'PT') === null)
+  check('a tap on land is that land whatever was asked', near(48.86, 2.35, 'DE') === 'FR')
+}
+
 console.log(fails ? `\n${fails} FAILED` : '\nall passed')
 process.exit(fails ? 1 : 0)

@@ -264,6 +264,48 @@ export function shapeAt(shapes: MapShape[], lat: number, lon: number): MapShape 
   return neutral
 }
 
+/** A sea tap this close to land counts as that land: 1:50m coastlines are
+ *  coarse (Lisbon, Stockholm and Dakar sit just off theirs), and a finger is
+ *  wider than the line. */
+export const COAST_SNAP_KM = 25
+
+/** Shortest distance in km from (lon, lat) to the shape's outline. Flat
+ *  approximation around the tap, fine at COAST_SNAP_KM scales. */
+export function kmToShape(s: MapShape, lon: number, lat: number): number {
+  const kx = 111.32 * Math.cos((lat * Math.PI) / 180), ky = 110.57
+  let best = Infinity
+  s.rings.forEach((r, ri) => {
+    const x0 = s.mids[ri] + wrapLon(lon - s.mids[ri])
+    for (let i = 0, j = r.length - 2; i < r.length; j = i, i += 2) {
+      const ax = (r[j] - x0) * kx, ay = (r[j + 1] - lat) * ky
+      const bx = (r[i] - x0) * kx, by = (r[i + 1] - lat) * ky
+      const dx = bx - ax, dy = by - ay, len = dx * dx + dy * dy
+      const t = len > 0 ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / len)) : 0
+      const px = ax + t * dx, py = ay + t * dy
+      const d = px * px + py * py
+      if (d < best) best = d
+    }
+  })
+  return Math.sqrt(best)
+}
+
+/** shapeAt, but a sea tap within COAST_SNAP_KM of land is that land: the
+ *  shape `prefer` names (the country asked for) if it is in reach, so a
+ *  tap just off its coast is never judged on how the coast was drawn, else
+ *  the nearest. Still null for open sea. */
+export function shapeNear(shapes: MapShape[], lat: number, lon: number, prefer?: string): MapShape | null {
+  const under = shapeAt(shapes, lat, lon)
+  if (under) return under
+  let nearest: MapShape | null = null, nearestKm = COAST_SNAP_KM
+  for (const s of shapes) {
+    const km = kmToShape(s, lon, lat)
+    if (km > COAST_SNAP_KM) continue
+    if (prefer && s.iso === prefer) return s
+    if (km < nearestKm) { nearest = s; nearestKm = km }
+  }
+  return nearest
+}
+
 /** What a tap reports to record_geo_country_round: a UN member's alpha-2,
  *  a neutral shape's alpha-3 (Kosovo is 'KOS'), or null for the sea. */
 export const tapCode = (s: MapShape | null) => (s ? s.iso ?? s.a3 : null)

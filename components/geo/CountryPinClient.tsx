@@ -3,7 +3,7 @@
 // ── Pin the map: find the country ────────────────────────────────────────────
 //
 // "Tap Kenya": tap anywhere inside it. Step 1 of Pin the map, before the
-// places. The tap is matched to the shape under it on the client (shapeAt),
+// places. The tap is matched to the shape under it on the client (shapeNear: a tap just off a coast counts as that coast),
 // then lib/geo-pin.ts countryHit decides: inside the country, within a tiny
 // country's ring, or on land it shares a dispute over all count. Feedback
 // lights the country green (with its ring if it is tiny) and, on a miss,
@@ -21,7 +21,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import Link from 'next/link'
-import { REGION_BOX, pinViewBox, shapeAt, tapCode } from '@/lib/geo-map'
+import { REGION_BOX, pinViewBox, shapeNear, tapCode } from '@/lib/geo-map'
 import {
   COUNTRY_RING_KM, NEUTRAL_NAMES, countryDeckId, countryHit, countryPoints, disputedAreaAt,
 } from '@/lib/geo-pin'
@@ -77,7 +77,8 @@ export default function CountryPinClient({ countries, names, continent, level, c
     if (!shapes || done || answered.current) return
     answered.current = true
     const ms = Math.round(performance.now() - shownAt.current)
-    const under = tap ? shapeAt(shapes, tap.lat, tap.lon) : null
+    // A tap just off a coast counts as that coast (shapeNear, COAST_SNAP_KM).
+    const under = tap ? shapeNear(shapes, tap.lat, tap.lon, country.iso) : null
     const code = tapCode(under)
     const hit = countryHit(country, tap ? { code, lat: tap.lat, lon: tap.lon } : null)
     setPins(p => [...p, { tap, code, a3: under?.a3 ?? null, ms, hit, points: countryPoints(hit, ms) }])
