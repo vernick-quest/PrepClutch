@@ -16,11 +16,20 @@
 //   cur    Which currency does Japan use?               15     8s
 //   shape  [map, one country lit] Which country is this? 15    8s
 //   city   Which country is Rio de Janeiro in?          10     7s
+//   find   Find Kenya on the map (Pin the map)          15     8s
+//   pin    Pin Nairobi (Pin the map)                    15     8s
 //
 // Currency and language cards are built but not in the catalogue
 // (EXPERT_KINDS). The other five kinds came with migration 069 (KINDS_069).
 // Shape and city cards come with the map migration (070); until it is
 // applied pages ask availableGeoKinds and leave them out.
+//
+// Find and pin cards (PIN_KINDS) come with 074 and are mastered by playing
+// Pin the map: one find card per country Find the country asks, one pin
+// card per Pin the map place (capitals and famous cities). The round
+// functions judge them in SQL (a find within 8 s; a Bullseye or Great pin
+// within 8 s), so every game feeds the same Explorer Points. They have no
+// four choices and are never in a quiz deck (deckPool).
 //
 // Every card is multiple choice with 4 options. The three wrong options are
 // chosen from the same continent first (for shape cards: from the nearest
@@ -46,7 +55,8 @@ import type { PinLevel, PinPlace, PinCountry } from './geo-pin'
 import type { Country, Continent } from './geo-data'
 import type { City } from './geo-cities'
 import {
-  CONTINENTS, CONTINENT_LABEL, KINDS, COUNTRY_KINDS, EXPERT_KINDS, GROUP_KINDS, KIND_SCORE, SESSION_SIZE, geoKey, geoCardState,
+  CONTINENTS, CONTINENT_LABEL, KINDS, COUNTRY_KINDS, EXPERT_KINDS, GROUP_KINDS, KIND_SCORE, PIN_KINDS, SESSION_SIZE, geoKey, geoCardState,
+  pinCardKey,
 } from './geo-meta'
 import type { GeoKind, GeoOption, GeoCard, DeckOptions, GeoHistoryRow, GeoCardState, MapCountry } from './geo-meta'
 
@@ -190,6 +200,13 @@ function makeCard(c: Country, kind: GeoKind): GeoCard {
     }
     case 'city':
       throw new Error('city cards are made per city (makeCityCard)')
+    case 'pin':
+      throw new Error('pin cards are made per place (makePinCard)')
+    case 'find':
+      // Played in Find the country (components/geo/CountryPinClient.tsx),
+      // never as a quiz card: no options.
+      return { ...base, prompt: `Find ${of} on the map`, answer: c.iso, options: [],
+        full: `${atStart(c)} is in ${CONTINENT_LABEL[c.continent]}.` }
     case 'cont': {
       const also = c.alsoContinent ?? []
       const rnd = seed(key)
@@ -238,16 +255,33 @@ export const SHAPE_DISPUTED = new Set([
   'GE', 'MD', 'GY', 'VE', 'SD', 'SS', 'EG',
 ])
 
+/** "Pin Nairobi": one per Pin the map place, keyed by the place
+ *  ('pin:cap:ke', 'pin:city:rio-de-janeiro'). iso and continent are the
+ *  place's. Played in Pin the map (components/geo/PinClient.tsx) only. */
+function makePinCard(p: PinPlace): GeoCard {
+  return {
+    key: pinCardKey(p.key), iso: p.iso, kind: 'pin', continent: p.continent, ...KIND_SCORE.pin,
+    prompt: `Pin ${p.name}`, answer: p.key, options: [], full: `${p.name} is ${p.where}.`,
+  }
+}
+
+/** Whether a country has a card of a per-country kind: no shape card for a
+ *  disputed outline, no find card for a country Find the country never asks. */
+const hasCountryCard = (iso: string, k: GeoKind) =>
+  !(k === 'shape' && SHAPE_DISPUTED.has(iso)) && !(k === 'find' && COUNTRY_NOT_ASKED.has(iso))
+
 let ALL: GeoCard[] | null = null
 /** Every card of every kind, including any the catalogue may not have yet:
- *  the country cards in country order, then one card per city. */
+ *  the country cards in country order, then one card per city, then one
+ *  pin card per Pin the map place (pinPlaces order). */
 export function allGeoCards(): GeoCard[] {
   if (ALL) return ALL
   return (ALL = [
     ...COUNTRIES.flatMap(c => COUNTRY_KINDS.filter(k => KINDS.includes(k))
-      .filter(k => !(k === 'shape' && SHAPE_DISPUTED.has(c.iso)))
+      .filter(k => hasCountryCard(c.iso, k))
       .map(k => makeCard(c, k))),
     ...(KINDS.includes('city') ? CITIES.map(makeCityCard) : []),
+    ...(KINDS.includes('pin') ? pinPlaces().map(makePinCard) : []),
   ])
 }
 /** The cards of the given kinds, e.g. the ones the catalogue has. */
@@ -274,10 +308,14 @@ export function countryByIso(iso: string): Country | undefined { return byIso.ge
 /** The map's tiles: just what a tile needs, so the page can pass it to the
  *  client without the rest of the data. */
 export function mapCountries(): MapCountry[] {
-  return COUNTRIES.map(c => ({
-    iso: c.iso, name: c.name, continent: c.continent, capital: c.capitals[0].name,
-    cities: CITIES.filter(x => x.iso === c.iso).map(x => ({ key: geoKey('city', x.id), name: x.name })),
-  }))
+  return COUNTRIES.map(c => {
+    const skip = COUNTRY_KINDS.filter(k => !hasCountryCard(c.iso, k))
+    return {
+      iso: c.iso, name: c.name, continent: c.continent, capital: c.capitals[0].name,
+      cities: CITIES.filter(x => x.iso === c.iso).map(x => ({ key: geoKey('city', x.id), name: x.name })),
+      ...(skip.length ? { skip } : {}),
+    }
+  })
 }
 
 // ── Rounds ───────────────────────────────────────────────────────────────────
@@ -286,7 +324,8 @@ export function mapCountries(): MapCountry[] {
 export function deckPool(o: DeckOptions, available: GeoKind[] = KINDS): GeoCard[] {
   // Inside one continent, "which continent is Kenya on?" answers itself, so a
   // continent round never asks it. Those cards come up in World rounds.
-  const kinds = GROUP_KINDS[o.group].filter(k => available.includes(k) && !(k === 'cont' && o.continent !== 'all'))
+  // Find and pin cards are Pin the map's, never a quiz's.
+  const kinds = GROUP_KINDS[o.group].filter(k => available.includes(k) && !PIN_KINDS.includes(k) && !(k === 'cont' && o.continent !== 'all'))
   return allGeoCards().filter(c => (o.continent === 'all' || c.continent === o.continent) && kinds.includes(c.kind))
 }
 

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import {
   CONTINENTS, CONTINENT_LABEL, CONTINENT_SHORT, CONTINENT_EMOJI, GROUPS, GROUP_LABEL,
-  GROUP_EMOJI, KINDS_069, KIND_LABEL, geoCardState, deckHref, homeHref, groupKinds, countryCardKeys,
+  GROUP_EMOJI, KINDS_069, KIND_LABEL, PIN_KINDS, geoCardState, playHref, homeHref, groupKinds, countryCardKeys,
 } from '@/lib/geo-meta'
 import type { Continent, KindGroup, GeoHistoryRow, GeoCardState, GeoKind, MapCountry } from '@/lib/geo-meta'
 import { pinHref } from '@/lib/geo-pin'
@@ -26,6 +26,11 @@ import Flag from '@/components/geo/Flag'
 // the Cities chip only countries with famous cities are shown); tapping a
 // tile lists them. 📍 Pin opens Pin the map on the chosen continent (or its
 // continent picker, from World).
+//
+// 🗺️ Find and 📍 Pin (074) are Pin the map's cards: Find the country's one
+// per country, Pin the map's one per capital and famous city (on its
+// country's tile). Their ▶ Play starts Pin the map on the matching step, not
+// a quiz (playHref), so the extra 📍 Pin button is not shown beside it.
 
 type Tab = Continent | 'all'
 const TABS: Tab[] = ['all', ...CONTINENTS]
@@ -46,7 +51,8 @@ export default function GeoMap({ history, countries, readOnly = false, kinds: av
   initialGroup?: KindGroup
 }) {
   const [tab, setTab] = useState<Tab>(initialTab)
-  const [group, setGroup] = useState<KindGroup>(initialGroup)
+  // A chip the catalogue has no cards for yet (a Find link before 074) opens Everything.
+  const [group, setGroup] = useState<KindGroup>(groupKinds(initialGroup, available).length > 0 ? initialGroup : 'all')
 
   // Keep the URL on the selection too, so Back from a round started here
   // returns to it. Not on someone else's map: that page has its own URL.
@@ -115,15 +121,17 @@ export default function GeoMap({ history, countries, readOnly = false, kinds: av
         </div>
         {!readOnly && (
           <div className="shrink-0 flex items-center gap-1.5">
+            {!(PIN_KINDS as string[]).includes(group) && (
+              <Link
+                href={tab === 'all' ? '/geo/pin' : pinHref(tab, 1, 'country')}
+                title="Pin the map: find the countries, then the capitals and famous cities, on the map"
+                className="flex items-center bg-white/5 border border-white/15 hover:border-white/30 text-white font-bold px-3 py-3 rounded-xl transition-colors"
+              >
+                📍 Pin
+              </Link>
+            )}
             <Link
-              href={tab === 'all' ? '/geo/pin' : pinHref(tab, 1, 'country')}
-              title="Pin the map: find the countries, then the capitals and famous cities, on the map"
-              className="flex items-center bg-white/5 border border-white/15 hover:border-white/30 text-white font-bold px-3 py-3 rounded-xl transition-colors"
-            >
-              📍 Pin
-            </Link>
-            <Link
-              href={deckHref({ continent: tab, group })}
+              href={playHref({ continent: tab, group })}
               className="flex items-center gap-2 bg-sky-500 hover:bg-sky-400 text-black font-bold px-4 sm:px-5 py-3 rounded-xl transition-colors"
             >
               ▶ Play
@@ -179,9 +187,9 @@ export default function GeoMap({ history, countries, readOnly = false, kinds: av
               <>
                 <p className="font-bold text-white">{pickedCountry.name} <span className="font-normal text-zinc-400">· capital {pickedCountry.capital}</span></p>
                 <div className="flex flex-wrap gap-1 mt-1.5">
-                  {available.filter(k => k !== 'city').map(k => (
+                  {available.filter(k => k !== 'city' && countryCardKeys(pickedCountry, k).length > 0).map(k => (
                     <span key={k} className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${CELL_CLASS[cellTone(countryCardKeys(pickedCountry, k).map(st))]}`}>
-                      {KIND_LABEL[k]}
+                      {k === 'find' ? '🗺️ ' : k === 'pin' ? '📍 ' : ''}{KIND_LABEL[k]}
                     </span>
                   ))}
                   {available.includes('city') && pickedCountry.cities.map(x => (

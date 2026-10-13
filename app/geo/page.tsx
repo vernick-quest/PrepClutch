@@ -96,6 +96,7 @@ export default async function GeoHomePage({ searchParams }: { searchParams: Prom
       ? asked.group : 'all' as const,
   }
   const cities = kinds.includes('city')
+  const pinCards = kinds.includes('find') || kinds.includes('pin')
   const hasClass = (profile.class_code ?? '').trim() !== ''
   const [{ data: global }, { data: klass }] = await Promise.all([
     supabase.from('geo_leaderboard_view').select('*').gt('points', 0)
@@ -129,7 +130,7 @@ export default async function GeoHomePage({ searchParams }: { searchParams: Prom
             <h1 className="text-3xl font-black text-white">🌍 Geography</h1>
             <p className="text-zinc-400 text-sm mt-1">
               Capitals, flags and continents for all 193 countries{shapes ? ', and every country on the map' : ''}{cities ? `, plus ${CITIES.length} famous cities` : ''}.
-              A card is mastered when you get it right <em>fast</em>.
+              A card is mastered when you get it right <em>fast</em>{pinCards ? ', in a quiz or on 📍 Pin the map' : ''}.
             </p>
           </div>
           <div className="text-right">

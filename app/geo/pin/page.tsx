@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { buildPinRound, buildCountryRound, COUNTRIES } from '@/lib/geo'
-import { pinReady, countryPinReady } from '@/lib/geo-history'
+import { pinReady, countryPinReady, geoKindReady } from '@/lib/geo-history'
 import { CONTINENTS, CONTINENT_LABEL, CONTINENT_EMOJI, homeHref } from '@/lib/geo-meta'
 import type { Continent } from '@/lib/geo-meta'
 import { PIN_LEVELS, PIN_LEVEL_LABEL, COUNTRY_LEVEL_LABEL, pinHref } from '@/lib/geo-pin'
@@ -83,24 +83,26 @@ export default async function GeoPinPage({ searchParams }: Props) {
     )
   }
 
-  const home = homeHref({ continent, group: 'all' })
   // A new round is a new session: remount so "Play again" starts clean.
+  // canMaster: migration 074 is applied (the catalogue has find or pin
+  // cards), so the round masters cards; until then it only saves its score.
   if (p.m === 'country') {
     const countries = buildCountryRound(continent, level)
     const names = Object.fromEntries(COUNTRIES.map(c => [c.iso, c.name]))
-    const canSave = await countryPinReady(supabase)
+    const [canSave, canMaster] = await Promise.all([countryPinReady(supabase), geoKindReady(supabase, 'find')])
     return (
-      <RoundGuard round={crypto.randomUUID()} home={home}>
+      <RoundGuard round={crypto.randomUUID()} home={homeHref({ continent, group: 'find' })}>
         <CountryPinClient key={countries.map(x => x.iso).join()} countries={countries} names={names}
-                          continent={continent} level={level} canSave={canSave} />
+                          continent={continent} level={level} canSave={canSave} canMaster={canMaster} />
       </RoundGuard>
     )
   }
   const places = buildPinRound(continent, level)
-  const canSave = await pinReady(supabase)
+  const [canSave, canMaster] = await Promise.all([pinReady(supabase), geoKindReady(supabase, 'pin')])
   return (
-    <RoundGuard round={crypto.randomUUID()} home={home}>
-      <PinClient key={places.map(x => x.key).join()} places={places} continent={continent} level={level} canSave={canSave} />
+    <RoundGuard round={crypto.randomUUID()} home={homeHref({ continent, group: 'pin' })}>
+      <PinClient key={places.map(x => x.key).join()} places={places} continent={continent} level={level}
+                 canSave={canSave} canMaster={canMaster} />
     </RoundGuard>
   )
 }

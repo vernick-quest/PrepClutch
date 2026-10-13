@@ -123,10 +123,22 @@ function validateCards(): string[] {
   const cards = [...live, ...geo.expertGeoCards()]
   if (geo.expertGeoCards().length !== COUNTRIES.length * geo.EXPERT_KINDS.length) p.push('expert cards missing')
   const keys = new Set<string>()
+  const pinKeys = new Set(geo.pinPlaces().map(x => geo.pinCardKey(x.key)))
+  const askable = COUNTRIES.filter(x => !geo.COUNTRY_NOT_ASKED.has(x.iso)).length
+  if (live.filter(x => x.kind === 'find').length !== askable) p.push(`expected ${askable} find cards`)
+  if (live.filter(x => x.kind === 'pin').length !== pinKeys.size) p.push(`expected ${pinKeys.size} pin cards`)
   for (const card of cards) {
     if (keys.has(card.key)) p.push(`duplicate card key ${card.key}`)
     keys.add(card.key)
     const c = geo.countryByIso(card.iso)!
+    // Pin the map's cards (074) have no options: one find card per country
+    // Find the country asks, one pin card per Pin the map place.
+    if (geo.PIN_KINDS.includes(card.kind)) {
+      if (card.options.length) p.push(`${card.key}: a ${card.kind} card has options`)
+      if (card.kind === 'find' && (card.key !== geo.geoKey('find', c.iso) || geo.COUNTRY_NOT_ASKED.has(c.iso))) p.push(`${card.key}: not a find card of an asked country`)
+      if (card.kind === 'pin' && !pinKeys.has(card.key)) p.push(`${card.key}: not a Pin the map place`)
+      continue
+    }
     const values = card.options.map(o => o.value)
     const labels = card.options.map(o => lc(o.label))
     if (card.options.length !== 4) p.push(`${card.key}: ${card.options.length} options`)

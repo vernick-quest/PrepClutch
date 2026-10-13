@@ -61,7 +61,15 @@
 //
 // Scores are worked out again in SQL (record_geo_pin_round,
 // record_geo_country_round) from the taps, so a saved score always follows
-// these rules. Pins never touch Explorer Points or card mastery.
+// these rules. The score is the round's own feedback (stars, best boards).
+//
+// Since 074 the same taps also master cards, the one thing that earns
+// Explorer Points everywhere in Geography: a country found within its find
+// card's target time masters it, and so does a place pinned Bullseye or
+// Great (pinVerdict) within its pin card's (lib/geo-meta.ts KIND_SCORE). A
+// slow find or a Close pin counts as right but does not master. The round
+// functions judge this in SQL (geo_pin_master, geo_pin_grade); keep
+// PIN_VERDICT_SHARE in step with them.
 //
 // Client-safe: no country table. No '@/' imports.
 
@@ -141,7 +149,8 @@ export function pinScore070(target: { lat: number; lon: number }, tap: { lat: nu
 
 export type PinVerdict ='bull' | 'great' | 'close' | 'off' | 'way' | 'skip'
 /** Upper bounds as fractions of the continent's zero radius ('bull' is its
- *  own radius). For the words only: points come from distancePoints. */
+ *  own radius). Points come from distancePoints; the verdict decides card
+ *  mastery (Bullseye or Great, 074). Mirrored in SQL (geo_pin_grade, 074). */
 export const PIN_VERDICT_SHARE = { great: 0.2, close: 0.4 }
 export const PIN_VERDICT_LABEL: Record<PinVerdict, string> = {
   bull: '🎯 Bullseye', great: '🔥 Great', close: '👍 Close', off: '😬 Off', way: '🙈 Way off', skip: 'Skipped',

@@ -115,7 +115,10 @@ let res = await db.exec('BEGIN;\n' + SQL + '\nCOMMIT;')
 const v1 = res.at(-2).rows[0]
 console.log('verification (first run):', JSON.stringify(v1))
 const P1_CARDS = phase1.length, P1_POINTS = geo.maxGeoPoints(geo.KINDS_069)
-const ALL_CARDS = geo.allGeoCards().length, ALL_POINTS = geo.maxGeoPoints()
+// 070's catalogue (KINDS_070): 074 added Pin the map's find and pin cards
+// since, and this test checks 070 as applied.
+const CARDS_070 = geo.geoCards(geo.KINDS_070)
+const ALL_CARDS = CARDS_070.length, ALL_POINTS = geo.maxGeoPoints(geo.KINDS_070)
 const P1_BADGES = (fs.readFileSync(`${REPO}/supabase/migrations/069_geography.sql`, 'utf8').match(/^\('geo_[a-z0-9_]+', /gm) ?? []).length
 const ALL_BADGES = P1_BADGES + (SQL.match(/^\('geo_[a-z0-9_]+', /gm) ?? []).length
 const SHAPES = geo.geoCards(['shape']).length, CITIES = geo.geoCards(['city']).length
@@ -154,7 +157,7 @@ check("award_geo_badges_for = 069's text plus exactly the shapes and cities rung
 
 // ── 3. Parity: the whole catalogue against lib/geo.ts ────────────────────────
 const sqlCards = (await db.query('SELECT card_key, iso, kind, continent, points, target_ms FROM geo_cards ORDER BY card_key')).rows
-const tsCards = geo.allGeoCards().map(c => ({ card_key: c.key, iso: c.iso, kind: c.kind, continent: c.continent, points: c.points, target_ms: c.targetMs }))
+const tsCards = CARDS_070.map(c => ({ card_key: c.key, iso: c.iso, kind: c.kind, continent: c.continent, points: c.points, target_ms: c.targetMs }))
   .sort((x, y) => (x.card_key < y.card_key ? -1 : 1))
 check(`parity: ${ALL_CARDS} cards, same keys, points and targets as lib/geo.ts`, JSON.stringify(sqlCards) === JSON.stringify(tsCards), `${sqlCards.length} vs ${tsCards.length}`)
 const pinSql = (await db.query('SELECT place_key, kind, name, iso, continent, tier, lat, lon FROM geo_pin_places ORDER BY place_key')).rows
@@ -232,7 +235,7 @@ check(`B holds all ${ALL_BADGES} Geography badges but Perfect Passport (${ALL_BA
 const defs = (await db.query(`SELECT key, threshold, category FROM achievement_definitions WHERE key = 'geo_mastered_all' OR key ~ '^geo_(continent_[a-z]{2}|shapes_|cities_)' ORDER BY key`)).rows
 const wantDefs = [
   ['geo_cities_25', 25], ['geo_cities_all', CITIES],
-  ...geo.CONTINENTS.map(ct => [`geo_continent_${ct}`, geo.allGeoCards().filter(c => c.continent === ct).length]),
+  ...geo.CONTINENTS.map(ct => [`geo_continent_${ct}`, CARDS_070.filter(c => c.continent === ct).length]),
   ['geo_mastered_all', ALL_CARDS], ['geo_shapes_25', 25], ['geo_shapes_all', SHAPES],
 ]
 wantDefs.sort((x, y) => (x[0] < y[0] ? -1 : 1))
@@ -241,7 +244,7 @@ check('every-card, continent, shape and city badge thresholds = the catalogue (c
 const descs = (await db.query(`SELECT key, description FROM achievement_definitions WHERE key ~ '^geo_continent_[a-z]{2}$' OR key = 'geo_mastered_all'`)).rows
 check('…and their descriptions state the same totals', descs.every(d => {
   const ct = d.key.replace('geo_continent_', '')
-  const n = d.key === 'geo_mastered_all' ? ALL_CARDS : geo.allGeoCards().filter(c => c.continent === ct).length
+  const n = d.key === 'geo_mastered_all' ? ALL_CARDS : CARDS_070.filter(c => c.continent === ct).length
   return d.description.includes(` ${n} `)
 }), JSON.stringify(descs))
 check('award_geo_badges_for refused under SET ROLE authenticated', /permission denied/.test(await refused(A, 'authenticated', `SELECT * FROM award_geo_badges_for('${A}', true)`)))

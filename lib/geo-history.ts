@@ -8,14 +8,22 @@ import type { GeoHistoryRow, GeoKind } from '@/lib/geo-meta'
 // probed on its own, so a catalogue that has one but not the other (an
 // older draft of 070, say) offers only what it really has: a card the
 // catalogue lacks would be refused when saved.
+//
+// Find and pin cards (Pin the map's, 074) are probed the same way: until
+// 074 is applied the map has no Find or Pin chip, points and "N of M" leave
+// them out, and Pin the map rounds save without touching geo_history.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function availableGeoKinds(supabase: any): Promise<GeoKind[]> {
   const later = KINDS.filter(k => !KINDS_069.includes(k))
-  const found = await Promise.all(later.map(async k => {
-    const { data, error } = await supabase.from('geo_cards').select('card_key').eq('kind', k).limit(1)
-    return !error && data?.length ? k : null
-  }))
+  const found = await Promise.all(later.map(async k => (await geoKindReady(supabase, k)) ? k : null))
   return KINDS.filter(k => KINDS_069.includes(k) || found.includes(k))
+}
+
+/** Whether the catalogue has any card of this kind. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function geoKindReady(supabase: any, kind: GeoKind): Promise<boolean> {
+  const { data, error } = await supabase.from('geo_cards').select('card_key').eq('kind', kind).limit(1)
+  return !error && !!data?.length
 }
 
 /** Whether Pin the map rounds can be saved: the map migration is applied,
