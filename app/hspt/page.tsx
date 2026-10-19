@@ -46,12 +46,16 @@ export default async function DashboardPage() {
         .from('leaderboard_view')
         .select('*')
         .eq('class_code', profile.class_code)
+        // Only students with Clutch Points: the view has a row for every
+        // profile, so Math Facts and Geography players showed here at 0.
+        .gt('aggregate_score', 0)
         .order('aggregate_score', { ascending: false })
     : { data: null }
 
   const { data: globalLeaderboard } = await supabase
     .from('leaderboard_view')
     .select('*')
+    .gt('aggregate_score', 0)
     .order('aggregate_score', { ascending: false })
     .limit(50)
 
@@ -323,7 +327,7 @@ export default async function DashboardPage() {
               }) : (
                 <div className="text-center py-16 text-zinc-500 bg-white/2 border border-white/5 rounded-2xl">
                   <p className="text-4xl mb-2">🏫</p>
-                  <p>No classmates yet.</p>
+                  <p>No one in your class has Clutch Points yet.</p>
                   <p className="text-sm mt-1">Share code <strong className="text-zinc-300">{profile.class_code}</strong> with your class!</p>
                 </div>
               )}
